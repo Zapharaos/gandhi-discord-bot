@@ -33,7 +33,7 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
         console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
         // The put method is used to fully refresh all commands with the current set
-        await rest.put(
+        const data = await rest.put(
             Routes.applicationCommands(process.env.APP_ID),
             { body: commands },
         );

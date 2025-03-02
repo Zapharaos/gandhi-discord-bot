@@ -3,6 +3,11 @@ const path = require('node:path');
 const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
 require("dotenv").config();
 
+// Create table if not exists
+const sqlite3 = require("sqlite3").verbose();
+const db = new sqlite3.Database(process.env.DB_PATH);
+db.run("CREATE TABLE IF NOT EXISTS servers (guild_id TEXT PRIMARY KEY, log_channel_id TEXT)");
+
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates] });
 
 client.commands = new Collection();
