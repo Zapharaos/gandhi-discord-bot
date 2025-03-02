@@ -1,30 +1,75 @@
-const { Events } = require('discord.js');
+const { Events, ChannelType } = require('discord.js');
+
+// Maps to store user activity timestamps
+const voiceJoinTimes = new Map();
+const muteTimes = new Map();
+const deafTimes = new Map();
 
 module.exports = {
     name: Events.VoiceStateUpdate,
-    once: false, // Change to 'false' to allow multiple events
+    once: false,
     execute(oldState, newState) {
         const user = newState.member.user;
+        const guild = newState.guild;
 
-        // Detect joins/leaves
+        const logChannelId = process.env.LOG_CHANNEL_ID;
+        const logChannel = guild.channels.cache.get(logChannelId);
+
+        if (!logChannel || logChannel.type !== ChannelType.GuildText) return;
+
+        let message = null;
+        const now = Date.now();
+
+        // Track join time
         if (!oldState.channelId && newState.channelId) {
-            console.log(`${user.tag} joined ${newState.channel.name}`);
-        } else if (oldState.channelId && !newState.channelId) {
-            console.log(`${user.tag} left ${oldState.channel.name}`);
+            voiceJoinTimes.set(user.id, now);
+            message = `➡️ **${user.tag}** joined **${newState.channel.name}**`;
+        }
+        // Calculate time spent in channel when leaving
+        else if (oldState.channelId && !newState.channelId) {
+            if (voiceJoinTimes.has(user.id)) {
+                const joinTime = voiceJoinTimes.get(user.id);
+                const duration = ((now - joinTime) / 1000).toFixed(2);
+                message = `⬅️ **${user.tag}** left **${oldState.channel.name}** after **${duration} seconds**`;
+                voiceJoinTimes.delete(user.id);
+            } else {
+                message = `⬅️ **${user.tag}** left **${oldState.channel.name}**`;
+            }
         }
 
-        // Detect mic mute/unmute
+        // Track mute time
         if (!oldState.selfMute && newState.selfMute) {
-            console.log(`${user.tag} muted their microphone`);
+            muteTimes.set(user.id, now);
+            message = `🤐️ **${user.tag}** muted their microphone`;
         } else if (oldState.selfMute && !newState.selfMute) {
-            console.log(`${user.tag} unmuted their microphone`);
+            if (muteTimes.has(user.id)) {
+                const muteTime = muteTimes.get(user.id);
+                const muteDuration = ((now - muteTime) / 1000).toFixed(2);
+                message = `🎙️ **${user.tag}** unmuted their microphone after **${muteDuration} seconds**`;
+                muteTimes.delete(user.id);
+            } else {
+                message = `🎙️ **${user.tag}** unmuted their microphone`;
+            }
         }
 
-        // Detect headphone mute (deafen) / unmute (undeafen)
+        // Track deafen time
         if (!oldState.selfDeaf && newState.selfDeaf) {
-            console.log(`${user.tag} deafened themselves`);
+            deafTimes.set(user.id, now);
+            message = `🔇 **${user.tag}** deafened themselves`;
         } else if (oldState.selfDeaf && !newState.selfDeaf) {
-            console.log(`${user.tag} undeafened themselves`);
+            if (deafTimes.has(user.id)) {
+                const deafTime = deafTimes.get(user.id);
+                const deafDuration = ((now - deafTime) / 1000).toFixed(2);
+                message = `🔊 **${user.tag}** undeafened themselves after **${deafDuration} seconds**`;
+                deafTimes.delete(user.id);
+            } else {
+                message = `🔊 **${user.tag}** undeafened themselves`;
+            }
+        }
+
+        // Send log message to text channel
+        if (message) {
+            logChannel.send(message);
         }
     },
 };
