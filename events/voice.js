@@ -47,6 +47,10 @@ module.exports = {
                     message = `⬅️ **${user.tag}** left **${oldState.channel.name}**`;
                 }
             }
+            // User switches voice channels
+            else if (oldState.channelId && newState.channelId && oldState.channelId !== newState.channelId) {
+                message = `🔄 **${user.tag}** switched from **${oldState.channel.name}** to **${newState.channel.name}**`;
+            }
 
             // Track mute time
             if (!oldState.selfMute && newState.selfMute) {
