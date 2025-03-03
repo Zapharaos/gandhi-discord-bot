@@ -4,5 +4,8 @@ services:
     ports:
       - "${PORT}:${PORT}"
     volumes:
-      - .:/usr/src/app
+      - sqlite_data:/app/data
     restart: unless-stopped
+
+volumes:
+  sqlite_data:

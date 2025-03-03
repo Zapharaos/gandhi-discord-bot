@@ -1,14 +1,14 @@
 FROM node:latest
 
 # Set the working directory
-WORKDIR /usr/src/app
+WORKDIR /app
 
 # Install app dependencies
-COPY package.json ./
+COPY package*.json ./
 RUN npm install
 
 # Copy the rest of the application code
-COPY . /usr/src/app/
+COPY . .
 
 # Run the deploy script with debugging
 RUN node deploy-commands.js

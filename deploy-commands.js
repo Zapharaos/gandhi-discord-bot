@@ -3,6 +3,15 @@ const fs = require('node:fs');
 const path = require('node:path');
 require("dotenv").config();
 
+// Create db folder if not exists
+if (!fs.existsSync('./data')) {
+    fs.mkdirSync('./data');
+}
+
+// Create table if not exists
+const sqlite3 = require("sqlite3").verbose();
+const db = new sqlite3.Database(process.env.DB_PATH);
+
 const commands = [];
 // Grab all the command folders from the commands directory you created earlier
 const foldersPath = path.join(__dirname, 'commands');
