@@ -49,7 +49,14 @@ module.exports = {
             }
             // User switches voice channels
             else if (oldState.channelId && newState.channelId && oldState.channelId !== newState.channelId) {
-                message = `🔄 **${user.tag}** switched from **${oldState.channel.name}** to **${newState.channel.name}**`;
+                if (voiceJoinTimes.has(user.id)) {
+                    const joinTime = voiceJoinTimes.get(user.id);
+                    const duration = ((now - joinTime) / 1000).toFixed(2);
+                    message = `🔄 **${user.tag}** switched from **${oldState.channel.name}** to **${newState.channel.name}** after **${duration} seconds**`;
+                    voiceJoinTimes.set(user.id, now); // Reset join time
+                } else {
+                    message = `🔄 **${user.tag}** switched from **${oldState.channel.name}** to **${newState.channel.name}**`;
+                }
             }
 
             // Track mute time
