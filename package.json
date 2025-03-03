@@ -5,9 +5,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "author": "Matthieu FREITAG",
+  "license": "MIT",
+  "description": "Bot that tracks every user in every voice channels and logs it back",
   "dependencies": {
     "discord.js": "^14.18.0",
     "dotenv": "^16.4.7",

@@ -1,0 +1,8 @@
+services:
+  bot:
+    build: .
+    ports:
+      - "${PORT}:${PORT}"
+    volumes:
+      - .:/usr/src/app
+    restart: unless-stopped
