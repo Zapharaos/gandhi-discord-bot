@@ -15,6 +15,7 @@ module.exports = {
     execute(oldState, newState) {
         const user = newState.member.user;
         const guild = newState.guild;
+        const guildNickname = newState.member.nickname || user.displayName; // The user's nickname in the guild (fallback to username)
 
         // Get log channel ID from database
         db.get("SELECT log_channel_id FROM servers WHERE guild_id = ?", [guild.id], (err, row) => {
@@ -34,17 +35,17 @@ module.exports = {
             // Track join time
             if (!oldState.channelId && newState.channelId) {
                 voiceJoinTimes.set(user.id, now);
-                message = `➡️ **${user.tag}** joined **${newState.channel.name}**`;
+                message = `➡️ **${guildNickname}** joined **${newState.channel.name}**`;
             }
             // Calculate time spent in channel when leaving
             else if (oldState.channelId && !newState.channelId) {
                 if (voiceJoinTimes.has(user.id)) {
                     const joinTime = voiceJoinTimes.get(user.id);
                     const duration = ((now - joinTime) / 1000).toFixed(2);
-                    message = `⬅️ **${user.tag}** left **${oldState.channel.name}** after **${duration} seconds**`;
+                    message = `⬅️ **${guildNickname}** left **${oldState.channel.name}** after **${duration} seconds**`;
                     voiceJoinTimes.delete(user.id);
                 } else {
-                    message = `⬅️ **${user.tag}** left **${oldState.channel.name}**`;
+                    message = `⬅️ **${guildNickname}** left **${oldState.channel.name}**`;
                 }
             }
             // User switches voice channels
@@ -52,40 +53,40 @@ module.exports = {
                 if (voiceJoinTimes.has(user.id)) {
                     const joinTime = voiceJoinTimes.get(user.id);
                     const duration = ((now - joinTime) / 1000).toFixed(2);
-                    message = `🔄 **${user.tag}** switched from **${oldState.channel.name}** to **${newState.channel.name}** after **${duration} seconds**`;
+                    message = `🔄 **${guildNickname}** switched from **${oldState.channel.name}** to **${newState.channel.name}** after **${duration} seconds**`;
                     voiceJoinTimes.set(user.id, now); // Reset join time
                 } else {
-                    message = `🔄 **${user.tag}** switched from **${oldState.channel.name}** to **${newState.channel.name}**`;
+                    message = `🔄 **${guildNickname}** switched from **${oldState.channel.name}** to **${newState.channel.name}**`;
                 }
             }
 
             // Track mute time
             if (!oldState.selfMute && newState.selfMute) {
                 muteTimes.set(user.id, now);
-                message = `🤐️ **${user.tag}** muted their microphone`;
+                message = `🤐️ **${guildNickname}** muted their microphone`;
             } else if (oldState.selfMute && !newState.selfMute) {
                 if (muteTimes.has(user.id)) {
                     const muteTime = muteTimes.get(user.id);
                     const muteDuration = ((now - muteTime) / 1000).toFixed(2);
-                    message = `🎙️ **${user.tag}** unmuted their microphone after **${muteDuration} seconds**`;
+                    message = `🎙️ **${guildNickname}** unmuted their microphone after **${muteDuration} seconds**`;
                     muteTimes.delete(user.id);
                 } else {
-                    message = `🎙️ **${user.tag}** unmuted their microphone`;
+                    message = `🎙️ **${guildNickname}** unmuted their microphone`;
                 }
             }
 
             // Track deafen time
             if (!oldState.selfDeaf && newState.selfDeaf) {
                 deafTimes.set(user.id, now);
-                message = `🔇 **${user.tag}** deafened themselves`;
+                message = `🔇 **${guildNickname}** deafened themselves`;
             } else if (oldState.selfDeaf && !newState.selfDeaf) {
                 if (deafTimes.has(user.id)) {
                     const deafTime = deafTimes.get(user.id);
                     const deafDuration = ((now - deafTime) / 1000).toFixed(2);
-                    message = `🔊 **${user.tag}** undeafened themselves after **${deafDuration} seconds**`;
+                    message = `🔊 **${guildNickname}** undeafened themselves after **${deafDuration} seconds**`;
                     deafTimes.delete(user.id);
                 } else {
-                    message = `🔊 **${user.tag}** undeafened themselves`;
+                    message = `🔊 **${guildNickname}** undeafened themselves`;
                 }
             }
 
