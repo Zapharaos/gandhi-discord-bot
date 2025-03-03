@@ -5,6 +5,7 @@ const sqlite3 = require("sqlite3").verbose();
 const voiceJoinTimes = new Map();
 const muteTimes = new Map();
 const deafTimes = new Map();
+const screenShareTimes = new Map();
 
 // Connect to SQLite database
 const db = new sqlite3.Database(process.env.DB_PATH);
@@ -105,6 +106,21 @@ module.exports = {
                     deafTimes.delete(user.id);
                 } else {
                     message = `🔊 **${guildNickname}** undeafened themselves`;
+                }
+            }
+
+            // Track screen sharing time
+            if (!oldState.streaming && newState.streaming) {
+                screenShareTimes.set(user.id, now);
+                message = `📺 **${guildNickname}** started screen sharing`;
+            } else if (oldState.streaming && !newState.streaming) {
+                if (screenShareTimes.has(user.id)) {
+                    const screenShareTime = screenShareTimes.get(user.id);
+                    const screenShareDuration = now - screenShareTime;
+                    message = `🛑 **${guildNickname}** stopped screen sharing after **${formatDuration(screenShareDuration)}**`;
+                    screenShareTimes.delete(user.id);
+                } else {
+                    message = `🛑 **${guildNickname}** stopped screen sharing`;
                 }
             }
 
