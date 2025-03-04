@@ -4,9 +4,6 @@ const {connect} = require("./utils/sqlite");
 
 // TODO : Rollback to specific migration
 
-const migrationsDir = path.join(__dirname, 'migrations');
-const migrationFiles = fs.readdirSync(migrationsDir).sort();
-
 // Create db folder if not exists
 if (!fs.existsSync('./data')) {
     fs.mkdirSync('./data');
@@ -14,16 +11,6 @@ if (!fs.existsSync('./data')) {
 
 // Connect to the database
 const db = connect();
-
-// Ensure the migrations table exists
-db.serialize(() => {
-    db.run(`
-        CREATE TABLE IF NOT EXISTS migrations (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT UNIQUE
-        )
-    `);
-});
 
 // Function to get applied migrations
 function getAppliedMigrations() {
@@ -60,25 +47,42 @@ function runMigration(file) {
     });
 }
 
-// Run all pending migrations
-(async () => {
-    try {
-        const appliedMigrations = await getAppliedMigrations();
-        const migrationFiles = fs.readdirSync(path.join(__dirname, 'migrations')).filter(file => file.endsWith('.js'));
-
-        const pendingMigrations = migrationFiles.filter(file => !appliedMigrations.includes(file));
-
-        if (pendingMigrations.length === 0) {
-            console.log("✅  No new migrations to apply.");
-        } else {
-            for (const migration of pendingMigrations) {
-                await runMigration(migration);
-            }
-            console.log("✅  All migrations applied successfully.");
+// Ensure the migrations table exists
+db.serialize(() => {
+    db.run(`
+        CREATE TABLE IF NOT EXISTS migrations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE
+        )
+    `, async (err) => {
+        if (err) {
+            console.error("❌  Error creating migrations table:", err);
+            db.close();
+            return;
         }
-    } catch (error) {
-        console.error("❌  Migration error:", error);
-    } finally {
-        db.close();
-    }
-})();
+
+        // Run all pending migrations
+        try {
+            const appliedMigrations = await getAppliedMigrations();
+            console.log("Applied migrations:", appliedMigrations);
+            const migrationFiles = fs.readdirSync(path.join(__dirname, 'migrations')).filter(file => file.endsWith('.js'));
+            console.log("Available migrations:", migrationFiles);
+
+            const pendingMigrations = migrationFiles.filter(file => !appliedMigrations.includes(file));
+            console.log("Pending migrations:", pendingMigrations);
+
+            if (pendingMigrations.length === 0) {
+                console.log("✅  No new migrations to apply.");
+            } else {
+                for (const migration of pendingMigrations) {
+                    await runMigration(migration);
+                }
+                console.log("✅  All migrations applied successfully.");
+            }
+        } catch (error) {
+            console.error("❌  Migration error:", error);
+        } finally {
+            db.close();
+        }
+    });
+});
