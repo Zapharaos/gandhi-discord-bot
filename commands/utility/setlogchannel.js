@@ -1,8 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
-const sqlite3 = require("sqlite3").verbose();
-
-// Connect to SQLite database
-const db = new sqlite3.Database(process.env.DB_PATH);
+const {connect} = require("../../utils/sqlite");
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -21,6 +18,9 @@ module.exports = {
             return interaction.reply({ content: "❌ Please select a **text channel**!", ephemeral: true });
         }
 
+        // Connect to the SQLite database
+        const db = connect();
+
         // Store the Guild ID and Log Channel ID in the database
         db.run(
             "INSERT INTO servers (guild_id, log_channel_id) VALUES (?, ?) ON CONFLICT(guild_id) DO UPDATE SET log_channel_id = ?",
@@ -33,5 +33,8 @@ module.exports = {
                 interaction.reply(`✅ Log channel set to **${channel.name}**`);
             }
         );
+
+        // Close the database connection
+        db.close();
     },
 };

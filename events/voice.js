@@ -8,9 +8,6 @@ const muteTimes = new Map();
 const deafTimes = new Map();
 const screenShareTimes = new Map();
 
-// Connect to SQLite database
-const db = connect();
-
 module.exports = {
     name: Events.VoiceStateUpdate,
     once: false,
@@ -18,6 +15,9 @@ module.exports = {
         const user = newState.member.user;
         const guild = newState.guild;
         const guildNickname = newState.member.nickname || user.displayName; // The user's nickname in the guild (fallback to username)
+
+        // Connect to SQLite database
+        const db = connect();
 
         // Get log channel ID from database
         db.get("SELECT log_channel_id FROM servers WHERE guild_id = ?", [guild.id], (err, row) => {
@@ -117,5 +117,8 @@ module.exports = {
                 logChannel.send(message);
             }
         });
+
+        // Close database connection
+        db.close();
     },
 };

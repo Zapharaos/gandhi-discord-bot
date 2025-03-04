@@ -21,6 +21,7 @@ module.exports = {
         const guildId = interaction.guild.id;
         const userId = target.id;
 
+        // Connect to the database
         const db = connect();
 
         db.get(`
@@ -46,6 +47,7 @@ module.exports = {
             interaction.reply(statsMessage);
         });
 
+        // Close the database connection
         db.close();
     },
 };

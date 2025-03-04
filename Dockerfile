@@ -1,5 +1,8 @@
 FROM node:latest
 
+# Install sqlite3
+RUN apt-get update && apt-get install -y sqlite3
+
 # Set the working directory
 WORKDIR /app
 
@@ -10,8 +13,6 @@ RUN npm install
 # Copy the rest of the application code
 COPY . .
 
-# Run the deploy script with debugging
-RUN node deploy-commands.js
-
-# Command to run the application
-CMD ["node", "index.js"]
+# Command to run the start script
+RUN chmod +x start.sh
+CMD ["./start.sh"]

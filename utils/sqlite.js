@@ -1,33 +1,7 @@
 const sqlite3 = require("sqlite3").verbose();
-const fs = require('node:fs');
+require("dotenv").config();
 
-module.exports = { setup, connect, updateUserStats };
-
-function setup() {
-    // Create db folder if not exists
-    if (!fs.existsSync('./data')) {
-        fs.mkdirSync('./data');
-    }
-
-    // Create SQLite database if not exists
-    let db = connect();
-
-    // Create tables if not exists
-    db.run("CREATE TABLE IF NOT EXISTS servers (guild_id TEXT PRIMARY KEY, log_channel_id TEXT)");
-    db.run(`
-    CREATE TABLE IF NOT EXISTS user_stats (
-        guild_id TEXT,
-        user_id TEXT,
-        time_connected INTEGER DEFAULT 0,
-        time_muted INTEGER DEFAULT 0,
-        time_deafened INTEGER DEFAULT 0,
-        time_screen_sharing INTEGER DEFAULT 0,
-        daily_streak INTEGER DEFAULT 0,
-        total_joins INTEGER DEFAULT 0,
-        PRIMARY KEY (guild_id, user_id)
-    )
-`);
-}
+module.exports = { connect, updateUserStats };
 
 function connect() {
     return new sqlite3.Database(process.env.DB_PATH);
