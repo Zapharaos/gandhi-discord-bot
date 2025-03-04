@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
-// const {connect} = require("../../utils/sqlite");
-// const {formatDuration} = require("../../utils/time");
+const {connect} = require("../../utils/sqlite");
+const {formatDuration} = require("../../utils/time");
 
 
 module.exports = {
@@ -13,8 +13,8 @@ module.exports = {
                 .setRequired(true)),
     async execute(interaction) {
         const target = interaction.options.getMember('target');
-        const guildNickname = target.nickname || target.user.displayName;
-        const guildId = interaction.guild.id;
+        const guildNickname = target.displayName;
+        const guildId = interaction.guildId;
         const userId = target.id;
 
         // Connect to the database
@@ -32,18 +32,42 @@ module.exports = {
                 return interaction.reply(`No stats found for user ${guildNickname}.`);
             }
 
+            var streak_message1 = '';
+            var streak_message2 = '';
+            const streak = row.daily_streak;
+            function getPP(num){
+                var ppsize='';
+                for (let i = 0; i < num; i++){
+                     ppsize += '=';
+                }
+                return ppsize;
+            }
+
+            switch (streak){
+                default:
+                    streak_message1 = 'Oh ';
+                    streak_message2 = 'hihi small pp 🤭';
+                    break;
+                case 5 <= streak >= 3:
+                    streak_message1 = 'Hey ';
+                    streak_message2 = 'Nice pp 🥵';
+                    break;
+                case 10 <= streak > 5:
+                    streak_message1 = 'Oh wow ';
+                    streak_message2 = '🥵 Sheesh nice pp 🍆💦';
+                    break;
+                case streak > 10:
+                    streak_message1 = 'Oooooh Mmmmmabouttocuuum 😫';
+                    streak_message2 = '🥵 Holy shit Big big PP 🍆💦🍑';
+                    break;
+            }
+
             const statsMessage = `
-                **Stats for ${guildNickname}**
-                \`Time Connected =\` ${formatDuration(row.time_connected)}
-                \`Time Muted =\` ${formatDuration(row.time_muted)}
-                \`Time Deafened =\` ${formatDuration(row.time_deafened)}
-                \`Time Screen Sharing =\` ${formatDuration(row.time_screen_sharing)}
+                ${streak_message1} ${guildNickname}
+                ${streak_message2}
+                \`8\`${getPP(streak)}\`D\`
             `.replace(/^\s+/gm, ''); // Remove leading spaces from each line
 
-
-
-
-            
             interaction.reply(statsMessage);
         });
 
