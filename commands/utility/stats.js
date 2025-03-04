@@ -2,7 +2,6 @@ const { SlashCommandBuilder } = require('discord.js');
 const {connect} = require("../../utils/sqlite");
 const {formatDuration} = require("../../utils/time");
 
-// TODO : leaving must stop other timers (muted, deafened, screen sharing) anc include them in the database
 // TODO : ranking system
 // TODO : user stats -> % of time spent in voice channels
 
