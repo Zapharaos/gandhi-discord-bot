@@ -29,11 +29,11 @@ module.exports = {
                 return interaction.reply(`No stats found for user ${guildNickname}.`);
             }
 
-            var streak_message1 = '';
-            var streak_message2 = '';
+            let streak_message1 = '';
+            let streak_message2 = '';
             const streak = row.daily_streak;
             function getPP(num){
-                var ppsize='';
+                let ppsize='';
                 for (let i = 0; i < num; i++){
                      ppsize += '=';
                 }
