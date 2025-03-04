@@ -62,7 +62,7 @@ module.exports = {
             const statsMessage = `
                 ${streak_message1} ${guildNickname}
                 ${streak_message2}
-                \`8\`${getPP(streak)}\`D\`
+                \`8${getPP(streak)}D\`
             `.replace(/^\s+/gm, ''); // Remove leading spaces from each line
 
             interaction.reply(statsMessage);
