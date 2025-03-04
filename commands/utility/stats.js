@@ -3,7 +3,6 @@ const {connect} = require("../../utils/sqlite");
 const {formatDuration} = require("../../utils/time");
 
 // TODO : ranking system
-// TODO : user stats -> % of time spent in voice channels
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -37,9 +36,9 @@ module.exports = {
             const statsMessage = `
                 **Stats for ${guildNickname}**
                 \`Time Connected =\` ${formatDuration(row.time_connected)}
-                \`Time Muted =\` ${formatDuration(row.time_muted)}
-                \`Time Deafened =\` ${formatDuration(row.time_deafened)}
-                \`Time Screen Sharing =\` ${formatDuration(row.time_screen_sharing)}
+                \`Time Muted =\` ${formatDuration(row.time_muted)} (${((row.time_muted / row.time_connected) * 100).toFixed(2)}%)
+                \`Time Deafened =\` ${formatDuration(row.time_deafened)} (${((row.time_deafened / row.time_connected) * 100).toFixed(2)}%)
+                \`Time Screen Sharing =\` ${formatDuration(row.time_screen_sharing)} (${((row.time_screen_sharing / row.time_connected) * 100).toFixed(2)}%)
                 \`Last Activity =\` ${new Date(row.last_activity).toLocaleString()}
                 \`Daily Streak =\` ${row.daily_streak}
                 \`Total Joins =\` ${row.total_joins}
