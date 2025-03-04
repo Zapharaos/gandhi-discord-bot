@@ -22,6 +22,8 @@ function setup() {
         time_muted INTEGER DEFAULT 0,
         time_deafened INTEGER DEFAULT 0,
         time_screen_sharing INTEGER DEFAULT 0,
+        daily_streak INTEGER DEFAULT 0,
+        total_joins INTEGER DEFAULT 0,
         PRIMARY KEY (guild_id, user_id)
     )
 `);
@@ -29,18 +31,6 @@ function setup() {
 
 function connect() {
     return new sqlite3.Database(process.env.DB_PATH);
-}
-
-function getUserStats(db, guildId, userId) {
-    db.get(`
-        SELECT * FROM user_stats WHERE guild_id = ? AND user_id = ?
-    `, [guildId, userId], (err, row) => {
-        if (err) {
-            console.error("Error fetching updated row:", err.message);
-        } else {
-            console.log("Updated row:", row, row.time_muted);
-        }
-    });
 }
 
 function updateUserStats(db, guildId, userId, column, duration) {

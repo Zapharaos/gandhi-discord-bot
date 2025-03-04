@@ -1,6 +1,8 @@
 module.exports = { formatDuration };
 
 function formatDuration(ms) {
+    if (ms < 1000) return `${(ms / 1000).toFixed(3)}s`;
+
     const seconds = Math.floor(ms / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);

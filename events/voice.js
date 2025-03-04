@@ -45,7 +45,7 @@ module.exports = {
                     const joinTime = voiceJoinTimes.get(user.id);
                     const duration = now - joinTime;
                     updateUserStats(db, guild.id, user.id, 'time_connected', duration);
-                    message = `⬅️ **${guildNickname}** left **${oldState.channel.name}** after **${formatDuration(duration)} seconds**`;
+                    message = `⬅️ **${guildNickname}** left **${oldState.channel.name}** after **${formatDuration(duration)}**`;
                     voiceJoinTimes.delete(user.id);
                 } else {
                     message = `⬅️ **${guildNickname}** left **${oldState.channel.name}**`;
