@@ -46,7 +46,7 @@ module.exports = {
                     streak_message2 = 'hihi small pp 🤭';
                     break;
                 case 5 <= streak >= 3:
-                    streak_message1 = 'Hey ';
+                    streak_message1 = 'Hey';
                     streak_message2 = 'Nice pp 🥵';
                     break;
                 case 10 <= streak > 5:
