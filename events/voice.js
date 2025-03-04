@@ -7,6 +7,7 @@ const voiceJoinTimes = new Map();
 const muteTimes = new Map();
 const deafTimes = new Map();
 const screenShareTimes = new Map();
+const cameraTimes = new Map();
 
 let userProps = {
     id: null,
@@ -52,6 +53,9 @@ module.exports = {
 
             // Track screen sharing time
             handleScreensharing(db, now, logChannel, oldState, newState, userProps);
+
+            // Track camera time
+            handleCamera(db, now, logChannel, oldState, newState, userProps);
         });
 
         // Close database connection
@@ -136,7 +140,7 @@ function handleMute(db, now, logChannel, oldState, newState, userProps) {
     // Start mute
     if (!oldState.selfMute && newState.selfMute) {
         muteTimes.set(userProps.id, now);
-        logChannel.send(`🤐️ **${userProps.guildNickname}** muted their microphone`);
+        logChannel.send(`🙊️ **${userProps.guildNickname}** muted their microphone`);
         console.log(`Mute for user: ${userProps.guildNickname} at ${now}`);
         return;
     }
@@ -219,6 +223,36 @@ function handleScreensharing(db, now, logChannel, oldState, newState, userProps)
     // Time was not tracked, send default message
     logChannel.send(`🛑 **${userProps.guildNickname}** stopped screen sharing`);
     console.log(`Screen sharing stopped for user: ${userProps.guildNickname} but no start time was tracked`);
+}
+
+function handleCamera(db, now, logChannel, oldState, newState, userProps) {
+    // Same state: do nothing
+    if (oldState.selfVideo === newState.selfVideo) return;
+
+    console.log(`handleCamera called with user: ${userProps.guildNickname}, oldState: ${oldState.selfVideo}, newState: ${newState.selfVideo}`);
+
+    // Start camera
+    if (!oldState.selfVideo && newState.selfVideo) {
+        cameraTimes.set(userProps.id, now);
+        logChannel.send(`📷 **${userProps.guildNickname}** turned on their camera`);
+        console.log(`Camera started for user: ${userProps.guildNickname} at ${now}`);
+        return;
+    }
+
+    // Stop camera
+    // Time tracked: calculate duration and update database
+    if (cameraTimes.has(userProps.id)) {
+        const duration = now - cameraTimes.get(userProps.id);
+        updateUserStats(db, userProps.guildId, userProps.id, 'time_camera', duration, now);
+        logChannel.send(`🙈 **${userProps.guildNickname}** turned off their camera after **${formatDuration(duration)}**`);
+        console.log(`Camera stopped for user: ${userProps.guildNickname} after ${duration} ms`);
+        cameraTimes.delete(userProps.id);
+        return;
+    }
+
+    // Time was not tracked, send default message
+    logChannel.send(`🙈 **${userProps.guildNickname}** turned off their camera`);
+    console.log(`Camera stopped for user: ${userProps.guildNickname} but no start time was tracked`);
 }
 
 function hasDeafenAction(oldState, newState) {

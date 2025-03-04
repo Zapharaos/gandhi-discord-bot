@@ -1,6 +1,7 @@
 // migrations/002_update_user_stats.js
 module.exports = {
     up: function(db) {
+        db.run(`ALTER TABLE user_stats ADD COLUMN time_camera INTEGER DEFAULT 0`);
         db.run(`ALTER TABLE user_stats ADD COLUMN last_activity INTEGER DEFAULT 0`);
         db.run(`ALTER TABLE user_stats ADD COLUMN daily_streak INTEGER DEFAULT 0`);
         db.run(`ALTER TABLE user_stats ADD COLUMN total_joins INTEGER DEFAULT 0`);
