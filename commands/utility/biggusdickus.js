@@ -50,7 +50,7 @@ module.exports = {
                     streak_message2 = 'Nice pp 🥵';
                     break;
                 case 10 <= streak > 5:
-                    streak_message1 = 'Oh wow ';
+                    streak_message1 = 'Oh wow';
                     streak_message2 = '🥵 Sheesh nice pp 🍆💦';
                     break;
                 case streak > 10:
