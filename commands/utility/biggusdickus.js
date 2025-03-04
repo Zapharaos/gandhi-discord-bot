@@ -1,8 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js');
 const {connect} = require("../../utils/sqlite");
-const {formatDuration} = require("../../utils/time");
-
-
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('streak')
