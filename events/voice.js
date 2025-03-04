@@ -45,17 +45,20 @@ module.exports = {
             // Track join time
             handleVoiceChannel(db, now, logChannel, oldState, newState, userProps);
 
-            // Track mute time
-            handleMute(db, now, logChannel, oldState, newState, userProps);
+            // Only track other states if the user was already in a channel
+            if (oldState.channelId) {
+                // Track mute time
+                handleMute(db, now, logChannel, oldState, newState, userProps);
 
-            // Track deafen time
-            handleDeafen(db, now, logChannel, oldState, newState, userProps);
+                // Track deafen time
+                handleDeafen(db, now, logChannel, oldState, newState, userProps);
 
-            // Track screen sharing time
-            handleScreensharing(db, now, logChannel, oldState, newState, userProps);
+                // Track screen sharing time
+                handleScreensharing(db, now, logChannel, oldState, newState, userProps);
 
-            // Track camera time
-            handleCamera(db, now, logChannel, oldState, newState, userProps);
+                // Track camera time
+                handleCamera(db, now, logChannel, oldState, newState, userProps);
+            }
         });
 
         // Close database connection
@@ -118,6 +121,14 @@ function handleVoiceChannel(db, now, logChannel, oldState, newState, userProps) 
             updateUserStats(db, userProps.guildId, userProps.id, 'time_screen_sharing', duration, now);
             console.log(`Screen sharing stopped for user: ${userProps.guildNickname} after ${duration} ms`);
             screenShareTimes.delete(userProps.id);
+        }
+
+        // Stop camera
+        if (cameraTimes.has(userProps.id)) {
+            const duration = now - cameraTimes.get(userProps.id);
+            updateUserStats(db, userProps.guildId, userProps.id, 'time_camera', duration, now);
+            console.log(`Camera stopped for user: ${userProps.guildNickname} after ${duration} ms`);
+            cameraTimes.delete(userProps.id);
         }
     }
 
