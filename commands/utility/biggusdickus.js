@@ -42,7 +42,7 @@ module.exports = {
 
             switch (streak){
                 default:
-                    streak_message1 = 'Oh ';
+                    streak_message1 = 'Oh';
                     streak_message2 = 'hihi small pp 🤭';
                     break;
                 case 5 <= streak >= 3:
