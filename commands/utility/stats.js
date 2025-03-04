@@ -4,7 +4,6 @@ const {formatDuration} = require("../../utils/time");
 
 // TODO : leaving must stop other timers (muted, deafened, screen sharing) anc include them in the database
 // TODO : ranking system
-// TODO : user stats -> daily streak
 // TODO : user stats -> % of time spent in voice channels
 
 module.exports = {
@@ -42,6 +41,9 @@ module.exports = {
                 \`Time Muted =\` ${formatDuration(row.time_muted)}
                 \`Time Deafened =\` ${formatDuration(row.time_deafened)}
                 \`Time Screen Sharing =\` ${formatDuration(row.time_screen_sharing)}
+                \`Last Activity =\` ${new Date(row.last_activity).toLocaleString()}
+                \`Daily Streak =\` ${row.daily_streak}
+                \`Total Joins =\` ${row.total_joins}
             `.replace(/^\s+/gm, ''); // Remove leading spaces from each line
 
             interaction.reply(statsMessage);

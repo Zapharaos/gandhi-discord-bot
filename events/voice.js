@@ -1,6 +1,6 @@
 const { Events, ChannelType } = require('discord.js');
 const { formatDuration } = require('../utils/time');
-const { connect, updateUserStats } = require('../utils/sqlite');
+const { connect, updateUserStats, incrementTotalJoins } = require('../utils/sqlite');
 
 // Maps to store user activity timestamps
 const voiceJoinTimes = new Map();
@@ -37,6 +37,7 @@ module.exports = {
             // Track join time
             if (!oldState.channelId && newState.channelId) {
                 voiceJoinTimes.set(user.id, now);
+                incrementTotalJoins(db, guild.id, user.id, now);
                 message = `➡️ **${guildNickname}** joined **${newState.channel.name}**`;
             }
             // Calculate time spent in channel when leaving
@@ -44,7 +45,7 @@ module.exports = {
                 if (voiceJoinTimes.has(user.id)) {
                     const joinTime = voiceJoinTimes.get(user.id);
                     const duration = now - joinTime;
-                    updateUserStats(db, guild.id, user.id, 'time_connected', duration);
+                    updateUserStats(db, guild.id, user.id, 'time_connected', duration, now);
                     message = `⬅️ **${guildNickname}** left **${oldState.channel.name}** after **${formatDuration(duration)}**`;
                     voiceJoinTimes.delete(user.id);
                 } else {
@@ -56,7 +57,7 @@ module.exports = {
                 if (voiceJoinTimes.has(user.id)) {
                     const joinTime = voiceJoinTimes.get(user.id);
                     const duration = now - joinTime;
-                    updateUserStats(db, guild.id, user.id, 'time_connected', duration);
+                    updateUserStats(db, guild.id, user.id, 'time_connected', duration, now);
                     message = `🔄 **${guildNickname}** switched from **${oldState.channel.name}** to **${newState.channel.name}** after **${formatDuration(duration)}**`;
                     voiceJoinTimes.set(user.id, now); // Reset join time
                 } else {
@@ -72,7 +73,7 @@ module.exports = {
                 if (muteTimes.has(user.id)) {
                     const muteTime = muteTimes.get(user.id);
                     const muteDuration = now - muteTime;
-                    updateUserStats(db, guild.id, user.id, 'time_muted', muteDuration);
+                    updateUserStats(db, guild.id, user.id, 'time_muted', muteDuration, now);
                     message = `🎙️ **${guildNickname}** unmuted their microphone after **${formatDuration(muteDuration)}**`;
                     muteTimes.delete(user.id);
                 } else {
@@ -88,7 +89,7 @@ module.exports = {
                 if (deafTimes.has(user.id)) {
                     const deafTime = deafTimes.get(user.id);
                     const deafDuration = now - deafTime;
-                    updateUserStats(db, guild.id, user.id, 'time_deafened', deafDuration);
+                    updateUserStats(db, guild.id, user.id, 'time_deafened', deafDuration, now);
                     message = `🔊 **${guildNickname}** undeafened themselves after **${formatDuration(deafDuration)}**`;
                     deafTimes.delete(user.id);
                 } else {
@@ -104,7 +105,7 @@ module.exports = {
                 if (screenShareTimes.has(user.id)) {
                     const screenShareTime = screenShareTimes.get(user.id);
                     const screenShareDuration = now - screenShareTime;
-                    updateUserStats(db, guild.id, user.id, 'time_screen_sharing', screenShareDuration);
+                    updateUserStats(db, guild.id, user.id, 'time_screen_sharing', screenShareDuration, now);
                     message = `🛑 **${guildNickname}** stopped screen sharing after **${formatDuration(screenShareDuration)}**`;
                     screenShareTimes.delete(user.id);
                 } else {
