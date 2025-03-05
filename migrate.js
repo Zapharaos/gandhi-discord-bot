@@ -64,12 +64,9 @@ db.serialize(() => {
         // Run all pending migrations
         try {
             const appliedMigrations = await getAppliedMigrations();
-            console.log("Applied migrations:", appliedMigrations);
             const migrationFiles = fs.readdirSync(path.join(__dirname, 'migrations')).filter(file => file.endsWith('.js'));
-            console.log("Available migrations:", migrationFiles);
 
             const pendingMigrations = migrationFiles.filter(file => !appliedMigrations.includes(file));
-            console.log("Pending migrations:", pendingMigrations);
 
             if (pendingMigrations.length === 0) {
                 console.log("✅  No new migrations to apply.");

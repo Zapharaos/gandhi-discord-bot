@@ -2,6 +2,7 @@ const { Events, ChannelType } = require('discord.js');
 const { formatDuration } = require('../utils/time');
 const { connect, updateUserStats, incrementTotalJoins } = require('../utils/sqlite');
 
+// TODO : store these into the database
 // Maps to store user activity timestamps
 const voiceJoinTimes = new Map();
 const muteTimes = new Map();
@@ -73,6 +74,7 @@ function handleVoiceChannel(db, now, logChannel, oldState, newState, userProps) 
 
     console.log(`handleVoiceChannel called with user: ${userProps.guildNickname}, oldState: ${oldState.channelId}, newState: ${newState.channelId}`);
 
+    // TODO : check if the user joins as muted or deafened
     // Join channel
     if (!oldState.channelId && newState.channelId) {
         voiceJoinTimes.set(userProps.id, now);

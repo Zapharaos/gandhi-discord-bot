@@ -17,8 +17,45 @@ function updateUserStats(db, guildId, userId, column, duration, now) {
             console.error("Error running SQL query:", err.message);
             return;
         }
+        updateUserDailyStats(db, guildId, userId, column, duration, now);
         updateLastActivity(db, guildId, userId, now);
     });
+}
+
+function updateUserDailyStats(db, guildId, userId, column, duration, now) {
+
+    // Generic function to call to update the daily stats
+    function update(db, guildId, userId, column, date, duration) {
+        db.run(`
+            INSERT INTO daily_stats (guild_id, user_id, day_timestamp, ${column})
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(guild_id, user_id, day_timestamp) DO UPDATE SET ${column} = ${column} + ?
+        `, [guildId, userId, date, duration, duration], function(err) {
+            if (err) {
+                console.error("Error running SQL query:", err.message);
+            }
+        });
+    }
+
+    const currentDate = new Date(now).setHours(0, 0, 0, 0);
+
+    // TODO : only works for midnight overlapping, not multiple days
+    // If the duration overlaps multiple days, split it
+    const todayMaxDuration = now - currentDate;
+    if (duration > todayMaxDuration) {
+
+        // Retrieve yesterday's stats
+        let yesterdayDuration = duration - todayMaxDuration;
+
+        // Update yesterday's stats
+        update(db, guildId, userId, column, currentDate, yesterdayDuration);
+
+        // Get the remaining duration, for today
+        duration = duration - yesterdayDuration;
+    }
+
+    // Update today's stats
+    update(db, guildId, userId, column, currentDate, duration);
 }
 
 function incrementTotalJoins(db, guildId, userId, now) {

@@ -32,6 +32,8 @@ module.exports = {
                 return interaction.reply(`No stats found for user ${guildNickname}.`);
             }
 
+            // TODO : date stat into dd/mm/yyyy format
+
             const statsMessage = `
                 **Stats for ${guildNickname}**
                 \`Time Connected\` ${formatDuration(row.time_connected)}
