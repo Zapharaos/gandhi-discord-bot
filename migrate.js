@@ -29,8 +29,8 @@ function getAppliedMigrations() {
 
 // Function to run a migration
 function runMigration(file) {
-    return new Promise((resolve, reject) => {
-        const migration = import(pathToFileURL(path.join(migrations, file)).href);
+    return new Promise(async (resolve, reject) => {
+        const migration = await import(pathToFileURL(path.join(migrations, file)).href);
 
         console.log(`Applying migration: ${file}`);
 
@@ -39,7 +39,8 @@ function runMigration(file) {
 
             migration.up(db);
 
-            db.run(`INSERT INTO migrations (name) VALUES (?)`, [file], (err) => {
+            db.run(`INSERT INTO migrations (name)
+                    VALUES (?)`, [file], (err) => {
                 if (err) {
                     db.run("ROLLBACK");
                     return reject(err);

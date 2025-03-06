@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from 'discord.js';
 import { connect } from '../../utils/sqlite.js';
-import { formatDuration } from '../../utils/time.js';
+import { formatDuration, formatDate } from '../../utils/time.js';
 import { getPercentageString } from '../../utils/utils.js';
 
 export const data = new SlashCommandBuilder()
@@ -33,8 +33,6 @@ export async function execute(interaction) {
             return interaction.reply(`No stats found for user ${guildNickname}.`);
         }
 
-        // TODO : date stat into dd/mm/yyyy format
-
         const statsMessage = `
             **Stats for ${guildNickname}**
             \`Time Connected\` ${formatDuration(row.time_connected)}
@@ -42,7 +40,7 @@ export async function execute(interaction) {
             \`Time Deafened\` ${formatDuration(row.time_deafened)} **(${getPercentageString(row.time_deafened, row.time_connected)})**
             \`Time Screen Sharing\` ${formatDuration(row.time_screen_sharing)} **(${getPercentageString(row.time_screen_sharing, row.time_connected)})**
             \`Time Camera\` ${formatDuration(row.time_camera)} **(${getPercentageString(row.time_camera, row.time_connected)})**
-            \`Last Activity\` ${new Date(row.last_activity).toLocaleString()}
+            \`Last Activity\` ${formatDate(new Date(row.last_activity))}
             \`Daily Streak\` ${row.daily_streak}
             \`Total Joins\` ${row.total_joins}
         `.replace(/^\s+/gm, ''); // Remove leading spaces from each line
