@@ -3,6 +3,7 @@ import puppeteer from 'puppeteer';
 import { connect } from '../../utils/sqlite.js';
 import { AttachmentBuilder } from 'discord.js';
 
+// TODO : option to get raw file instead of image
 export const data = new SlashCommandBuilder()
     .setName('heatmap')
     .setDescription('Generates a calendar heatmap of time spent connected per day')

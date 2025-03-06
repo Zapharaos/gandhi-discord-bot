@@ -1,4 +1,4 @@
-module.exports = { formatDuration };
+export { formatDuration };
 
 function formatDuration(ms) {
     if (ms < 1000*60) return `${(ms / 1000).toFixed(3)}s`;

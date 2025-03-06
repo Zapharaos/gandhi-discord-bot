@@ -1,6 +1,7 @@
-const fs = require('fs');
-const path = require('path');
-const {connect} = require("./utils/sqlite");
+import fs from 'fs';
+import path from 'path';
+import { connect } from './utils/sqlite.js';
+import {fileURLToPath, pathToFileURL} from "url";
 
 // TODO : Rollback to specific migration
 
@@ -8,6 +9,10 @@ const {connect} = require("./utils/sqlite");
 if (!fs.existsSync('./data')) {
     fs.mkdirSync('./data');
 }
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const migrations = path.join(__dirname, 'migrations');
 
 // Connect to the database
 const db = connect();
@@ -25,7 +30,7 @@ function getAppliedMigrations() {
 // Function to run a migration
 function runMigration(file) {
     return new Promise((resolve, reject) => {
-        const migration = require(path.join(__dirname, 'migrations', file));
+        const migration = import(pathToFileURL(path.join(migrations, file)).href);
 
         console.log(`Applying migration: ${file}`);
 
@@ -65,7 +70,6 @@ db.serialize(() => {
         try {
             const appliedMigrations = await getAppliedMigrations();
             const migrationFiles = fs.readdirSync(path.join(__dirname, 'migrations')).filter(file => file.endsWith('.js'));
-
             const pendingMigrations = migrationFiles.filter(file => !appliedMigrations.includes(file));
 
             if (pendingMigrations.length === 0) {

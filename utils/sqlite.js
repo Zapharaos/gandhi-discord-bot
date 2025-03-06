@@ -1,7 +1,10 @@
-const sqlite3 = require("sqlite3").verbose();
-require("dotenv").config();
+import sqlite3 from "sqlite3";
+import dotenv from "dotenv";
 
-module.exports = { connect, updateUserStats, incrementTotalJoins };
+sqlite3.verbose();
+dotenv.config();
+
+export { connect, updateUserStats, incrementTotalJoins };
 
 function connect() {
     return new sqlite3.Database(process.env.DB_PATH);

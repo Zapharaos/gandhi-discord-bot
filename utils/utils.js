@@ -1,4 +1,4 @@
-module.exports = { getPercentageString };
+export { getPercentageString };
 
 function getPercentage(value, total) {
   if (isNaN(value) || isNaN(total) || total === 0) {

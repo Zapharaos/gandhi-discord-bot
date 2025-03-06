@@ -8,9 +8,12 @@
   "author": "Matthieu FREITAG",
   "license": "MIT",
   "description": "Bot that tracks every user in every voice channels and logs it back",
+  "type": "module",
   "dependencies": {
+    "cal-heatmap": "^4.2.4",
     "discord.js": "^14.18.0",
     "dotenv": "^16.4.7",
+    "puppeteer": "^24.3.1",
     "sqlite3": "^5.1.7"
   }
 }

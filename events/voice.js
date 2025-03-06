@@ -1,6 +1,6 @@
-const { Events, ChannelType } = require('discord.js');
-const { formatDuration } = require('../utils/time');
-const { connect, updateUserStats, incrementTotalJoins } = require('../utils/sqlite');
+import { Events, ChannelType } from 'discord.js';
+import { formatDuration } from '../utils/time.js';
+import { connect, updateUserStats, incrementTotalJoins } from '../utils/sqlite.js';
 
 // TODO : store these into the database
 // Maps to store user activity timestamps
@@ -17,55 +17,53 @@ let userProps = {
     now: null
 };
 
-module.exports = {
-    name: Events.VoiceStateUpdate,
-    once: false,
-    execute(oldState, newState) {
-        const user = newState.member.user;
-        const guild = newState.guild;
-        const guildNickname = newState.member.nickname || user.displayName; // The user's nickname in the guild (fallback to username)
+export const name = Events.VoiceStateUpdate;
+export const once = false;
+export function execute(oldState, newState) {
+    const user = newState.member.user;
+    const guild = newState.guild;
+    const guildNickname = newState.member.nickname || user.displayName; // The user's nickname in the guild (fallback to username)
 
-        // Connect to SQLite database
-        const db = connect();
+    // Connect to SQLite database
+    const db = connect();
 
-        // Get log channel ID from database
-        db.get("SELECT log_channel_id FROM servers WHERE guild_id = ?", [guild.id], (err, row) => {
-            if (err) {
-                console.error(err);
-                return;
-            }
-            if (!row) return; // No log channel set for this server
+    // Get log channel ID from database
+    db.get("SELECT log_channel_id FROM servers WHERE guild_id = ?", [guild.id], (err, row) => {
+        if (err) {
+            console.error(err);
+            return;
+        }
+        if (!row) return; // No log channel set for this server
 
-            const logChannelId = row.log_channel_id;
-            const logChannel = guild.channels.cache.get(logChannelId);
-            if (!logChannel || logChannel.type !== ChannelType.GuildText) return;
+        const logChannelId = row.log_channel_id;
+        const logChannel = guild.channels.cache.get(logChannelId);
+        if (!logChannel || logChannel.type !== ChannelType.GuildText) return;
 
-            userProps = { id: user.id, guildId: guild.id, guildNickname: guildNickname };
-            let now = Date.now();
+        userProps = { id: user.id, guildId: guild.id, guildNickname: guildNickname };
+        let now = Date.now();
 
-            // Track join time
-            handleVoiceChannel(db, now, logChannel, oldState, newState, userProps);
+        // Track join time
+        handleVoiceChannel(db, now, logChannel, oldState, newState, userProps);
 
-            // Only track other states if the user was already in a channel
-            if (oldState.channelId) {
-                // Track mute time
-                handleMute(db, now, logChannel, oldState, newState, userProps);
+        // Only track other states if the user was already in a channel
+        if (oldState.channelId) {
+            // Track mute time
+            handleMute(db, now, logChannel, oldState, newState, userProps);
 
-                // Track deafen time
-                handleDeafen(db, now, logChannel, oldState, newState, userProps);
+            // Track deafen time
+            handleDeafen(db, now, logChannel, oldState, newState, userProps);
 
-                // Track screen sharing time
-                handleScreensharing(db, now, logChannel, oldState, newState, userProps);
+            // Track screen sharing time
+            handleScreensharing(db, now, logChannel, oldState, newState, userProps);
 
-                // Track camera time
-                handleCamera(db, now, logChannel, oldState, newState, userProps);
-            }
-        });
+            // Track camera time
+            handleCamera(db, now, logChannel, oldState, newState, userProps);
+        }
+    });
 
-        // Close database connection
-        db.close();
-    },
-};
+    // Close database connection
+    db.close();
+}
 
 function handleVoiceChannel(db, now, logChannel, oldState, newState, userProps) {
 
