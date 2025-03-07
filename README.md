@@ -12,13 +12,14 @@ It tracks the following user activities in voice channels:
 - camera on/off actions
 
 It provides the following statistics (same field for the ranks):
-- total time spent in voice channels
 - time spent muted
 - time spent deafened
 - time spent screen sharing
 - time spent with camera on
+- a yearly calendar heatmap for each time statistic mentioned above
 - daily streaks (how many days in a row the user has been active)
 - total joins (how many times the user has joined a voice channel)
+- total time spent in voice channels
 
 ## Download
 
@@ -35,6 +36,7 @@ The following commands are available:
 - `/setlogchannel [channel]` - Set the log channel for the bot
 - `/stats [user]` - Display user statistics
 - `/rank [stat]` - Display rank for a specific statistic
+- `/heatmap [user] [stat] [format]` - Display a heatmap for a specific statistic (default to you, time_connected, png).
 
 ## Development
 
