@@ -3,14 +3,12 @@ import puppeteer from 'puppeteer';
 import { connect } from '../../utils/sqlite.js';
 import { AttachmentBuilder } from 'discord.js';
 
-// TODO : html page title
 export const data = new SlashCommandBuilder()
     .setName('heatmap')
     .setDescription('Generates a calendar heatmap of time spent connected per day')
     .addUserOption(option =>
         option.setName('target')
             .setDescription('The user to get heatmap for')
-            .setRequired(true)
     )
     .addStringOption(option =>
         option.setName('stat')
@@ -36,7 +34,13 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction) {
     const guildId = interaction.guild.id;
+    const guildName = interaction.guild.name;
+    const guildIcon = interaction.guild.iconURL();
+
     const userId = interaction.user.id;
+    const userName = interaction.options.getMember('target')?.nickname ?? interaction.user.displayName;
+    const userAvatar = interaction.user.avatarURL();
+
     const stat = interaction.options.getString('stat') || 'time_connected';
     const format = interaction.options.getString('format') || 'png';
 
@@ -57,14 +61,15 @@ export async function execute(interaction) {
 
         // Convert rows into a format that cal-heatmap can consume
         const data = formatHeatmapData(rows, stat);
+        console.log(data);
 
         if (format === 'html') {
-            const html = getHtml(data, stat);
-            const attachment = new AttachmentBuilder(Buffer.from(html), { name: getFileName('html') });
+            const html = getHtml(data, stat, userAvatar, userName, guildIcon, guildName);
+            const attachment = new AttachmentBuilder(Buffer.from(html), { name: getFileName('html', stat) });
             await interaction.reply({ files: [attachment] });
         } else {
             await interaction.deferReply();
-            const imagePath = await getPNGHeatmap(data, stat);
+            const imagePath = await getPNGHeatmap(data, stat, userAvatar, userName, guildIcon, guildName);
             const attachment = new AttachmentBuilder(imagePath);
             await interaction.editReply({ files: [attachment] });
         }
@@ -97,13 +102,13 @@ function formatHeatmapData(rows, stat) {
     return heatmapData
 }
 
-function getFileName(extension) {
-    return `heatmap_${new Date().toISOString().split('T')[0].replace(/-/g, '')}.${extension}`;
+function getFileName(extension, stat) {
+    return `heatmap_${stat}_${new Date().toISOString().split('T')[0].replace(/-/g, '')}.${extension}`;
 }
 
-async function getPNGHeatmap(data, stat) {
+async function getPNGHeatmap(data, stat, userIcon, userName, guildIcon, guildName) {
 
-    const imagePath = getFileName('png');
+    const imagePath = getFileName('png', stat);
 
     const browser = await puppeteer.launch({
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
@@ -120,10 +125,10 @@ async function getPNGHeatmap(data, stat) {
     });
 
     // Set custom viewport (width & height)
-    await page.setViewport({ width: 800, height: 175 });
+    await page.setViewport({ width: 800, height: 200 });
 
     // Set the content of the page
-    await page.setContent(getHtml(data, stat));
+    await page.setContent(getHtml(data, stat, userIcon, userName, guildIcon, guildName));
 
     // Wait for the cal-heatmap element to be painted
     await page.evaluate(() => {
@@ -139,9 +144,7 @@ async function getPNGHeatmap(data, stat) {
     return imagePath;
 }
 
-function getHtml(data, stat) {
-
-    const htmlTitle = "";
+function getHtml(data, stat, userIcon, userName, guildIcon, guildName) {
 
     let heatmapLegend = "";
     switch (stat) {
@@ -168,7 +171,6 @@ function getHtml(data, stat) {
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>` + htmlTitle + `</title>
                 <script src="https://d3js.org/d3.v7.min.js"></script>
                 <script src="https://d3js.org/d3.v6.min.js"></script>
                 <script src="https://unpkg.com/cal-heatmap/dist/cal-heatmap.min.js"></script>
@@ -188,14 +190,55 @@ function getHtml(data, stat) {
                         color: #f0f6fc;
                         background-color: #0d1117;
                     }
+                    .main {
+                        max-width: 750px;
+                    }
+                    .org-header {
+                        display: flex;
+                        justify-content: space-between;
+                    }
+                    .org-container {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                    }
+                    img {
+                        width: 25px;
+                        height: 25px;
+                        border-radius: 50%;
+                    }
+                    #cal-heatmap {
+                        width: 100%;
+                    }
+                    .legend-header {
+                        font-size: 0.6rem;
+                        padding-left: 2rem;
+                        padding-top: 0.5rem;
+                        color: #9198a1;
+                        display: flex;
+                        justify-content: space-between;
+                    }
+                    .legend-items {
+                        display:flex;
+                        float:right;
+                        align-items: center;
+                    }
                 </style>
             </head>
             <body>
-                <div style="max-width: 750px">
-                    <div id="cal-heatmap" style="width: 100%;"></div>
-                    <div style="font-size: 0.6rem; padding-left: 2rem; padding-top: 0.5rem; color: #9198a1;">
-                        <div style="float: left;">` + heatmapLegend + `</div>
-                        <div style="display:flex; float:right; align-items: center;">
+                 <div class="main">
+                    <div class="org-header">
+                        <div class="org-container">
+                            <img src="` + userIcon + `">` + userName + `
+                        </div>
+                        <div class="org-container">
+                            ` + guildName + `<img src="` + guildIcon + `">
+                        </div>
+                    </div>
+                    <div id="cal-heatmap"></div>
+                    <div class="legend-header">
+                        <div>` + heatmapLegend + `</div>
+                        <div class="legend">
                             <span>Less</span>
                             <div id="ex-ghDay-legend" style="display: inline-block; margin: 0 4px;"></div>
                             <span>More</span>
