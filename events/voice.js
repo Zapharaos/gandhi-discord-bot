@@ -72,13 +72,23 @@ function handleVoiceChannel(db, now, logChannel, oldState, newState, userProps) 
 
     console.log(`handleVoiceChannel called with user: ${userProps.guildNickname}, oldState: ${oldState.channelId}, newState: ${newState.channelId}`);
 
-    // TODO : check if the user joins as muted or deafened
     // Join channel
     if (!oldState.channelId && newState.channelId) {
         voiceJoinTimes.set(userProps.id, now);
         incrementTotalJoins(db, userProps.guildId, userProps.id, now);
         logChannel.send(`➡️ **${userProps.guildNickname}** joined **${newState.channel.name}**`);
         console.log(`User ${userProps.guildNickname} joined ${newState.channel.name} at ${now}`);
+
+        // Joins as muted or deafened
+        if (newState.selfDeaf) {
+            deafTimes.set(userProps.id, now);
+            console.log(`User ${userProps.guildNickname} joined deafened`);
+        }
+        else if (newState.selfMute) {
+            muteTimes.set(userProps.id, now);
+            console.log(`User ${userProps.guildNickname} joined muted`);
+        }
+
         return;
     }
 
@@ -177,7 +187,7 @@ function handleDeafen(db, now, logChannel, oldState, newState, userProps) {
     // Same state : do nothing
     if (oldState.selfDeaf === newState.selfDeaf) return;
 
-    console.log(`handleDeafen called with user: ${userProps.guildNickname}, oldState: ${oldState.streaming}, newState: ${newState.streaming}`);
+    console.log(`handleDeafen called with user: ${userProps.guildNickname}, oldState: ${oldState.selfDeaf}, newState: ${newState.selfDeaf}`);
 
     // Start deafen
     if (!oldState.selfDeaf && newState.selfDeaf) {
