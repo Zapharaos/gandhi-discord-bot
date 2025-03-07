@@ -1,7 +1,7 @@
 FROM node:latest
 
 # Install sqlite3
-RUN apt-get update && apt-get install -y sqlite3
+RUN apt-get update && apt-get install -y sqlite3 chromium
 
 # Set the working directory
 WORKDIR /app

@@ -3,6 +3,7 @@ import puppeteer from 'puppeteer';
 import { connect } from '../../utils/sqlite.js';
 import { AttachmentBuilder } from 'discord.js';
 
+// TODO : get different cal scales depending on the stat
 export const data = new SlashCommandBuilder()
     .setName('heatmap')
     .setDescription('Generates a calendar heatmap of time spent connected per day')
@@ -57,16 +58,17 @@ export async function execute(interaction) {
         // Convert rows into a format that cal-heatmap can consume
         const data = formatHeatmapData(rows, stat);
 
-        let attachment;
         if (format === 'html') {
-            const config = configCalHeatmap(data);
-            const html = getHtml(config);
-            attachment = new AttachmentBuilder(Buffer.from(html), { name: `heatmap_${new Date().toISOString().split('T')[0].replace(/-/g, '')}.html` });
+            // const paintCal = paintCalHeatmap(data);
+            const html = getHtml(data);
+            const attachment = new AttachmentBuilder(Buffer.from(html), { name: getFileName('html') });
+            await interaction.reply({ files: [attachment] });
         } else {
+            await interaction.deferReply();
             const imagePath = await getPNGHeatmap(data);
-            attachment = new AttachmentBuilder(imagePath);
+            const attachment = new AttachmentBuilder(imagePath);
+            await interaction.editReply({ files: [attachment] });
         }
-        await interaction.reply({ files: [attachment] });
 
         // Close the database connection
         db.close();
@@ -81,15 +83,23 @@ function formatHeatmapData(rows, stat) {
     rows.forEach(row => {
         const timestamp = new Date(row.day_timestamp).toISOString().split('T')[0];  // Convert to YYYY-MM-DD format
         const minutes = Math.round(row[stat] / 1000 / 60);  // Convert milliseconds to minutes
-        console.log(minutes, row[stat]);
         heatmapData.push({ date: timestamp, value: minutes });
     });
 
     return heatmapData
 }
 
+function getFileName(extension) {
+    return `heatmap_${new Date().toISOString().split('T')[0].replace(/-/g, '')}.${extension}`;
+}
+
 async function getPNGHeatmap(data) {
-    const browser = await puppeteer.launch();
+
+    const imagePath = getFileName('png');
+
+    const browser = await puppeteer.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
     const page = await browser.newPage();
 
     // Log console messages from the page
@@ -105,21 +115,24 @@ async function getPNGHeatmap(data) {
     await page.setViewport({ width: 800, height: 150 });
 
     // Set the content of the page
-    await page.setContent(getHtml());
 
-    // Inject the data into the page
-    await page.evaluate((configCal) => {
-        eval(configCal);
-    }, configCalHeatmap(data));
+    await page.setContent(getHtml(data));
 
-    const imagePath = "./heatmap.png";
+    // Wait for the cal-heatmap element to be painted
+    await page.evaluate(() => {
+        return new Promise((resolve) => {
+            document.addEventListener('heatmapRendered', resolve, { once: true });
+        });
+    });
+
+    // Take a screenshot of the page
     await page.screenshot({ path: imagePath });
     await browser.close();
 
     return imagePath;
 }
 
-function getHtml(configCalHeatmap) {
+function getHtml(data) {
     return `
         <!DOCTYPE html>
         <html lang="en">
@@ -152,150 +165,146 @@ function getHtml(configCalHeatmap) {
                 <div id="cal-heatmap" style="width: 100%;"></div>
             </body>
             <script>
-                ${configCalHeatmap}
+                // Create the heatmap
+                const cal = new CalHeatmap();
+        
+                // Define the date range for the heatmap
+                const today = new Date();
+                const calStart = new Date();
+                calStart.setDate(today.getDate() - (51 * 7)); // Go back 51 weeks
+                while (calStart.getDay() !== 0) {  // Ensure it's a Sunday
+                    calStart.setDate(calStart.getDate() - 1);
+                }
+        
+                function getStartDate(date, dateHelper) {
+                    const firstOfMonth = dateHelper.date(date);
+                    return firstOfMonth.isBefore(calStart) ? calStart : firstOfMonth.toDate();
+                }
+                function getEndDate(date, dateHelper) {
+                    const endOfMonth = dateHelper.date(new Date(date.getFullYear(), date.getMonth() + 1, 0));
+                    return endOfMonth.isAfter(today) ? today : endOfMonth;
+                }
+        
+                // Define the template for the yearly round heatmap
+                let YearlyRoundTemplate = (dateHelper, { domain }) => ({
+                    name: 'yr',
+                    allowedDomainType: ['month'],
+                    rowsCount() {
+                        return 7;  // Always 7 rows (representing the days of the week)
+                    },
+                    columnsCount(d) {
+                        const startDate = getStartDate(d, dateHelper);
+                        const endDate = getEndDate(startDate, dateHelper);
+        
+                        const start = dateHelper.date(startDate).startOf('week');
+                        if (endDate === today) {
+                            const end = dateHelper.date(endDate);
+                            return end.diff(start, 'week') + 1;
+                        }
+        
+                        const end = dateHelper.date(endDate).startOf('week');
+                        return end.diff(start, 'week');
+                    },
+                    mapping: (startDate, endDate, defaultValues) => {
+                        const start = getStartDate(startDate, dateHelper);
+                        const end = getEndDate(start, dateHelper);
+        
+                        const clampStart = dateHelper.date(start).startOf('week');
+        
+                        endDate = dateHelper.date(endDate).toDate();
+                        const clampEnd = (endDate > today) ? end : dateHelper.getFirstWeekOfMonth(endDate);
+        
+                        let x = -1;
+                        const pivotDay = clampStart.weekday();
+        
+                        return dateHelper.intervals('day', clampStart, clampEnd, false).map((ts) => {
+                            const weekday = dateHelper.date(ts).weekday();
+                            if (weekday === pivotDay) {
+                                x += 1;
+                            }
+                            return {
+                                t: ts,
+                                x,
+                                y: weekday,
+                            };
+                        });
+                    },
+                    format: {
+                        date: 'Do',  // Day format: "1st, 2nd, 3rd"
+                        legend: 'Do',  // Legend format: "1st, 2nd, 3rd"
+                    },
+                    extractUnit(d) {
+                        return dateHelper.date(d).startOf('day').valueOf();  // Return the timestamp of the day
+                    }
+                });
+                cal.addTemplates(YearlyRoundTemplate);
+        
+                const plugins = [
+                    [
+                        Tooltip,
+                        {
+                            text: function (date, value, dayjsDate) {
+                                return (
+                                    (value ? ("" + Math.floor(value / 60) + "h" + value % 60) : "No time spent") +
+                                    " on " +
+                                    dayjsDate.format("dddd, MMMM D, YYYY")
+                                );
+                            },
+                        }
+                    ],
+                    [
+                        LegendLite,
+                        {
+                            includeBlank: true,
+                            itemSelector: "#ex-ghDay-legend",
+                            radius: 2,
+                            width: 11,
+                            height: 11,
+                            gutter: 4
+                        }
+                    ],
+                    [
+                        CalendarLabel,
+                        {
+                            width: 30,
+                            textAlign: "start",
+                            text: () => dayjs.weekdaysShort().map((d, i) => (i % 2 == 0 ? "" : d)),
+                            padding: [25, 0, 0, 0]
+                        }
+                    ]
+                ];
+                
+                cal.paint(
+                    {
+                        data: {
+                            source: ` + JSON.stringify(data) + `,
+                            x: 'date',
+                            y: 'value',
+                            defaultValue: 0,
+                        },
+                        date: { start: calStart },
+                        theme: "dark",
+                        scale: {
+                            color: {
+                                type: 'threshold',
+                                range: ['#161b22', '#0E4429', '#196834', '#248C3E', '#2EAF49', '#39D353', '#FFFF00', '#FFCC00', '#FF3300'],
+                                domain: [1, 60, 3*60, 6*60, 9*60, 12*60, 16*60, 20*60, 24*60],
+                            },
+                        },
+                        range: 13,
+                        domain: {
+                            type: "month",
+                            gutter: 4,
+                            label: { text: "MMM", textAlign: "start", position: "top" },
+                            sort: 'asc',
+                        },
+                        subDomain: { type: "yr", radius: 2, width: 11, height: 11, gutter: 4 },
+                        itemSelector: "#cal-heatmap"
+                    }, plugins
+                ).then(() => {
+                    document.dispatchEvent(new Event('heatmapRendered'));
+                });
             </script>
         </html>
-    `
-}
-
-function configCalHeatmap(data) {
-    return `
-        // Create the heatmap
-        const cal = new CalHeatmap();
-
-        // Define the date range for the heatmap
-        const today = new Date();
-        const calStart = new Date();
-        calStart.setDate(today.getDate() - (51 * 7)); // Go back 51 weeks
-        while (calStart.getDay() !== 0) {  // Ensure it's a Sunday
-            calStart.setDate(calStart.getDate() - 1);
-        }
-
-        function getStartDate(date, dateHelper) {
-            const firstOfMonth = dateHelper.date(date);
-            return firstOfMonth.isBefore(calStart) ? calStart : firstOfMonth.toDate();
-        }
-        function getEndDate(date, dateHelper) {
-            const endOfMonth = dateHelper.date(new Date(date.getFullYear(), date.getMonth() + 1, 0));
-            return endOfMonth.isAfter(today) ? today : endOfMonth;
-        }
-
-        // Define the template for the yearly round heatmap
-        let YearlyRoundTemplate = (dateHelper, { domain }) => ({
-            name: 'yr',
-            allowedDomainType: ['month'],
-            rowsCount() {
-                return 7;  // Always 7 rows (representing the days of the week)
-            },
-            columnsCount(d) {
-                const startDate = getStartDate(d, dateHelper);
-                const endDate = getEndDate(startDate, dateHelper);
-
-                const start = dateHelper.date(startDate).startOf('week');
-                if (endDate === today) {
-                    const end = dateHelper.date(endDate);
-                    return end.diff(start, 'week') + 1;
-                }
-
-                const end = dateHelper.date(endDate).startOf('week');
-                return end.diff(start, 'week');
-            },
-            mapping: (startDate, endDate, defaultValues) => {
-                const start = getStartDate(startDate, dateHelper);
-                const end = getEndDate(start, dateHelper);
-
-                const clampStart = dateHelper.date(start).startOf('week');
-
-                endDate = dateHelper.date(endDate).toDate();
-                const clampEnd = (endDate > today) ? end : dateHelper.getFirstWeekOfMonth(endDate);
-
-                let x = -1;
-                const pivotDay = clampStart.weekday();
-
-                return dateHelper.intervals('day', clampStart, clampEnd, false).map((ts) => {
-                    const weekday = dateHelper.date(ts).weekday();
-                    if (weekday === pivotDay) {
-                        x += 1;
-                    }
-                    return {
-                        t: ts,
-                        x,
-                        y: weekday,
-                    };
-                });
-            },
-            format: {
-                date: 'Do',  // Day format: "1st, 2nd, 3rd"
-                legend: 'Do',  // Legend format: "1st, 2nd, 3rd"
-            },
-            extractUnit(d) {
-                return dateHelper.date(d).startOf('day').valueOf();  // Return the timestamp of the day
-            }
-        });
-        cal.addTemplates(YearlyRoundTemplate);
-
-        const plugins = [
-            [
-                Tooltip,
-                {
-                    text: function (date, value, dayjsDate) {
-                        return (
-                            (value ? ("" + Math.floor(value / 60) + "h" + value % 60) : "No time spent") +
-                            " on " +
-                            dayjsDate.format("dddd, MMMM D, YYYY")
-                        );
-                    },
-                }
-            ],
-            [
-                LegendLite,
-                {
-                    includeBlank: true,
-                    itemSelector: "#ex-ghDay-legend",
-                    radius: 2,
-                    width: 11,
-                    height: 11,
-                    gutter: 4
-                }
-            ],
-            [
-                CalendarLabel,
-                {
-                    width: 30,
-                    textAlign: "start",
-                    text: () => dayjs.weekdaysShort().map((d, i) => (i % 2 == 0 ? "" : d)),
-                    padding: [25, 0, 0, 0]
-                }
-            ]
-        ];
-
-        cal.paint(
-            {
-                data: {
-                    source: ${JSON.stringify(data)},
-                    x: 'date',
-                    y: 'value',
-                    defaultValue: 0,
-                },
-                date: { start: calStart },
-                theme: "dark",
-                scale: {
-                    color: {
-                        type: 'threshold',
-                        range: ['#161b22', '#0E4429', '#196834', '#248C3E', '#2EAF49', '#39D353', '#FFFF00', '#FFCC00', '#FF3300'],
-                        domain: [1, 60, 3*60, 6*60, 9*60, 12*60, 16*60, 20*60, 24*60],
-                    },
-                },
-                range: 13,
-                domain: {
-                    type: "month",
-                    gutter: 4,
-                    label: { text: "MMM", textAlign: "start", position: "top" },
-                    sort: 'asc',
-                },
-                subDomain: { type: "yr", radius: 2, width: 11, height: 11, gutter: 4 },
-                itemSelector: "#cal-heatmap"
-            }, plugins
-        );
     `
 }
