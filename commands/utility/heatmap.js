@@ -37,8 +37,9 @@ export async function execute(interaction) {
     const guildName = interaction.guild.name;
     const guildIcon = interaction.guild.iconURL();
 
-    const userId = interaction.user.id;
-    const userName = interaction.options.getMember('target')?.nickname ?? interaction.user.displayName;
+    const target = interaction.options.getMember('target');
+    const userId = target?.user.id ?? interaction.user.id;
+    const userName = target?.displayName ?? interaction.user.displayName;
     const userAvatar = interaction.user.avatarURL();
 
     const stat = interaction.options.getString('stat') || 'time_connected';

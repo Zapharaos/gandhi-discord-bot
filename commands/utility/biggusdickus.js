@@ -12,8 +12,10 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction) {
 
     const guildId = interaction.guildId;
-    const userId = interaction.user.id;
-    const userName = interaction.options.getMember('target')?.nickname ?? interaction.user.displayName;
+
+    const target = interaction.options.getMember('target');
+    const userId = target?.user.id ?? interaction.user.id;
+    const userName = target?.displayName ?? interaction.user.displayName;
 
     // Connect to the database
     const db = connect();
