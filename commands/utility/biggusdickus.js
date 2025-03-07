@@ -7,14 +7,13 @@ export const data = new SlashCommandBuilder()
     .addUserOption(option =>
         option.setName('target')
             .setDescription('The user to get juicy streak from')
-            .setRequired(true)
     );
 
 export async function execute(interaction) {
-    const target = interaction.options.getMember('target');
-    const guildNickname = target.displayName;
+
     const guildId = interaction.guildId;
-    const userId = target.id;
+    const userId = interaction.user.id;
+    const userName = interaction.options.getMember('target')?.nickname ?? interaction.user.displayName;
 
     // Connect to the database
     const db = connect();
@@ -28,7 +27,7 @@ export async function execute(interaction) {
         }
 
         if (!row) {
-            return interaction.reply(`No stats found for user ${guildNickname}.`);
+            return interaction.reply(`No stats found for user ${userName}.`);
         }
 
         let streak_message1 = '';
@@ -62,7 +61,7 @@ export async function execute(interaction) {
         }
 
         const statsMessage = `
-            ${streak_message1} ${guildNickname}
+            ${streak_message1} ${userName}
             ${streak_message2}
             \`8${getPP(streak)}D\`
         `.replace(/^\s+/gm, ''); // Remove leading spaces from each line

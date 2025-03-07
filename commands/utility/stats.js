@@ -9,14 +9,12 @@ export const data = new SlashCommandBuilder()
     .addUserOption(option =>
         option.setName('target')
             .setDescription('The user to get stats for')
-            .setRequired(true)
     );
 
 export async function execute(interaction) {
-    const target = interaction.options.getMember('target');
-    const guildNickname = target.nickname || target.user.displayName;
     const guildId = interaction.guild.id;
-    const userId = target.id;
+    const userId = interaction.user.id;
+    const userName = interaction.options.getMember('target')?.nickname ?? interaction.user.displayName;
 
     // Connect to the database
     const db = connect();
@@ -30,11 +28,11 @@ export async function execute(interaction) {
         }
 
         if (!row) {
-            return interaction.reply(`No stats found for user ${guildNickname}.`);
+            return interaction.reply(`No stats found for user ${userName}.`);
         }
 
         const statsMessage = `
-            **Stats for ${guildNickname}**
+            **Stats for ${userName}**
             \`Time Connected\` ${formatDuration(row.time_connected)}
             \`Time Muted\` ${formatDuration(row.time_muted)} **(${getPercentageString(row.time_muted, row.time_connected)})**
             \`Time Deafened\` ${formatDuration(row.time_deafened)} **(${getPercentageString(row.time_deafened, row.time_connected)})**

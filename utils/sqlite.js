@@ -40,7 +40,7 @@ function updateUserDailyStats(db, guildId, userId, column, duration, now) {
         });
     }
 
-    const currentDate = new Date(now).setHours(0, 0, 0, 0);
+    const currentDate = new Date(now).setUTCHours(0, 0, 0, 0);
 
     // TODO : only works for midnight overlapping, not multiple days
     // If the duration overlaps multiple days, split it
@@ -86,8 +86,8 @@ function updateLastActivity(db, guildId, userId, now) {
 
         let newStreak = 1;
         if (row) {
-            const lastActivityDate = new Date(row.last_activity).setHours(0, 0, 0, 0);
-            const currentDate = new Date(now).setHours(0, 0, 0, 0);
+            const lastActivityDate = new Date(row.last_activity).setUTCHours(0, 0, 0, 0);
+            const currentDate = new Date(now).setUTCHours(0, 0, 0, 0);
             const oneDay = 24 * 60 * 60 * 1000;
 
             if (currentDate - lastActivityDate === oneDay) {
