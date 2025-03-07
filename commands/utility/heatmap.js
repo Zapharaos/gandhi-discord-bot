@@ -3,7 +3,7 @@ import puppeteer from 'puppeteer';
 import { connect } from '../../utils/sqlite.js';
 import { AttachmentBuilder } from 'discord.js';
 
-// TODO : get different cal scales depending on the stat
+// TODO : html page title
 export const data = new SlashCommandBuilder()
     .setName('heatmap')
     .setDescription('Generates a calendar heatmap of time spent connected per day')
@@ -44,7 +44,7 @@ export async function execute(interaction) {
     const db = connect();
 
     db.all(`
-        SELECT day_timestamp, ${stat} FROM daily_stats WHERE guild_id = ? AND user_id = ?
+        SELECT day_timestamp, time_connected, ${stat} FROM daily_stats WHERE guild_id = ? AND user_id = ?
     `, [guildId, userId], async (err, rows) => {
         if (err) {
             console.error(err);
@@ -59,13 +59,12 @@ export async function execute(interaction) {
         const data = formatHeatmapData(rows, stat);
 
         if (format === 'html') {
-            // const paintCal = paintCalHeatmap(data);
-            const html = getHtml(data);
+            const html = getHtml(data, stat);
             const attachment = new AttachmentBuilder(Buffer.from(html), { name: getFileName('html') });
             await interaction.reply({ files: [attachment] });
         } else {
             await interaction.deferReply();
-            const imagePath = await getPNGHeatmap(data);
+            const imagePath = await getPNGHeatmap(data, stat);
             const attachment = new AttachmentBuilder(imagePath);
             await interaction.editReply({ files: [attachment] });
         }
@@ -82,8 +81,17 @@ function formatHeatmapData(rows, stat) {
     // Assuming 'rows' is an array of objects with timestamp and value fields
     rows.forEach(row => {
         const timestamp = new Date(row.day_timestamp).toISOString().split('T')[0];  // Convert to YYYY-MM-DD format
-        const minutes = Math.round(row[stat] / 1000 / 60);  // Convert milliseconds to minutes
-        heatmapData.push({ date: timestamp, value: minutes });
+        let value = 0;
+
+        // Normalize the value based on the maximum value for the stat
+        if (stat !== 'time_connected') {
+            const max = row.time_connected;
+            value = max === 0 ? 0 : row[stat] * 100 / max;  // Calculate percentage
+        } else {
+            value = Math.round(row[stat] / 1000 / 60);  // Convert milliseconds to minutes
+        }
+
+        heatmapData.push({ date: timestamp, value: value });
     });
 
     return heatmapData
@@ -93,7 +101,7 @@ function getFileName(extension) {
     return `heatmap_${new Date().toISOString().split('T')[0].replace(/-/g, '')}.${extension}`;
 }
 
-async function getPNGHeatmap(data) {
+async function getPNGHeatmap(data, stat) {
 
     const imagePath = getFileName('png');
 
@@ -112,11 +120,10 @@ async function getPNGHeatmap(data) {
     });
 
     // Set custom viewport (width & height)
-    await page.setViewport({ width: 800, height: 150 });
+    await page.setViewport({ width: 800, height: 175 });
 
     // Set the content of the page
-
-    await page.setContent(getHtml(data));
+    await page.setContent(getHtml(data, stat));
 
     // Wait for the cal-heatmap element to be painted
     await page.evaluate(() => {
@@ -132,14 +139,36 @@ async function getPNGHeatmap(data) {
     return imagePath;
 }
 
-function getHtml(data) {
+function getHtml(data, stat) {
+
+    const htmlTitle = "";
+
+    let heatmapLegend = "";
+    switch (stat) {
+        case "time_connected":
+            heatmapLegend = "Time connected (hours)";
+            break;
+        case "time_muted":
+            heatmapLegend = "Time muted (%)";
+            break;
+        case "time_deafened":
+            heatmapLegend = "Time deafened (%)";
+            break;
+        case "time_screen_sharing":
+            heatmapLegend = "Time screen sharing (%)";
+            break;
+        case "time_camera":
+            heatmapLegend = "Time camera (%)";
+            break;
+    }
+
     return `
         <!DOCTYPE html>
         <html lang="en">
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Calendar Heatmap</title>
+                <title>` + htmlTitle + `</title>
                 <script src="https://d3js.org/d3.v7.min.js"></script>
                 <script src="https://d3js.org/d3.v6.min.js"></script>
                 <script src="https://unpkg.com/cal-heatmap/dist/cal-heatmap.min.js"></script>
@@ -162,7 +191,17 @@ function getHtml(data) {
                 </style>
             </head>
             <body>
-                <div id="cal-heatmap" style="width: 100%;"></div>
+                <div style="max-width: 750px">
+                    <div id="cal-heatmap" style="width: 100%;"></div>
+                    <div style="font-size: 0.6rem; padding-left: 2rem; padding-top: 0.5rem; color: #9198a1;">
+                        <div style="float: left;">` + heatmapLegend + `</div>
+                        <div style="display:flex; float:right; align-items: center;">
+                            <span>Less</span>
+                            <div id="ex-ghDay-legend" style="display: inline-block; margin: 0 4px;"></div>
+                            <span>More</span>
+                        </div>
+                    </div>
+                </div>
             </body>
             <script>
                 // Create the heatmap
@@ -183,6 +222,25 @@ function getHtml(data) {
                 function getEndDate(date, dateHelper) {
                     const endOfMonth = dateHelper.date(new Date(date.getFullYear(), date.getMonth() + 1, 0));
                     return endOfMonth.isAfter(today) ? today : endOfMonth;
+                }
+                
+                function getHeatmapScale(stat) {
+                    if (stat === "time_connected") {
+                        return {
+                            color: {
+                                type: 'threshold',
+                                range: ['#161b22', '#0E4429', '#196834', '#248C3E', '#2EAF49', '#39D353', '#FFFF00', '#FFCC00', '#FF3300'],
+                                domain: [1, 60, 3*60, 6*60, 9*60, 12*60, 16*60, 20*60, 24*60],
+                            }
+                        };
+                    }
+                    return {
+                        color: {
+                            type: 'threshold',
+                            range: ['#161b22', '#0E4429', '#006d32', '#26a641', '#39d353'],
+                            domain: [1, 10, 25, 50],
+                        }
+                    }
                 }
         
                 // Define the template for the yearly round heatmap
@@ -255,7 +313,7 @@ function getHtml(data) {
                     [
                         LegendLite,
                         {
-                            includeBlank: true,
+                            includeBlank: false,
                             itemSelector: "#ex-ghDay-legend",
                             radius: 2,
                             width: 11,
@@ -284,13 +342,7 @@ function getHtml(data) {
                         },
                         date: { start: calStart },
                         theme: "dark",
-                        scale: {
-                            color: {
-                                type: 'threshold',
-                                range: ['#161b22', '#0E4429', '#196834', '#248C3E', '#2EAF49', '#39D353', '#FFFF00', '#FFCC00', '#FF3300'],
-                                domain: [1, 60, 3*60, 6*60, 9*60, 12*60, 16*60, 20*60, 24*60],
-                            },
-                        },
+                        scale: getHeatmapScale("` + stat + `"),
                         range: 13,
                         domain: {
                             type: "month",
