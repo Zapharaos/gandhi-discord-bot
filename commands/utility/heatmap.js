@@ -3,7 +3,6 @@ import puppeteer from 'puppeteer';
 import { connect } from '../../utils/sqlite.js';
 import { AttachmentBuilder } from 'discord.js';
 
-// TODO : option to get raw file instead of image
 export const data = new SlashCommandBuilder()
     .setName('heatmap')
     .setDescription('Generates a calendar heatmap of time spent connected per day')
@@ -23,12 +22,22 @@ export const data = new SlashCommandBuilder()
                 { name: 'Time Screen Sharing', value: 'time_screen_sharing' },
                 { name: 'Time Camera', value: 'time_camera' },
             )
+    )
+    .addStringOption(option =>
+        option.setName('format')
+            .setDescription('The format of the output (default: png)')
+            .setRequired(false)
+            .addChoices(
+                { name: 'PNG', value: 'png' },
+                { name: 'HTML', value: 'html' },
+            )
     );
 
 export async function execute(interaction) {
     const guildId = interaction.guild.id;
     const userId = interaction.user.id;
     const stat = interaction.options.getString('stat') || 'time_connected';
+    const format = interaction.options.getString('format') || 'png';
 
     // Connect to the database
     const db = connect();
@@ -45,8 +54,18 @@ export async function execute(interaction) {
             return interaction.reply('No data found for generating the heatmap.');
         }
 
-        const imagePath = await generateHeatmap(rows, stat);
-        const attachment = new AttachmentBuilder(imagePath);
+        // Convert rows into a format that cal-heatmap can consume
+        const data = formatHeatmapData(rows, stat);
+
+        let attachment;
+        if (format === 'html') {
+            const config = configCalHeatmap(data);
+            const html = getHtml(config);
+            attachment = new AttachmentBuilder(Buffer.from(html), { name: `heatmap_${new Date().toISOString().split('T')[0].replace(/-/g, '')}.html` });
+        } else {
+            const imagePath = await getPNGHeatmap(data);
+            attachment = new AttachmentBuilder(imagePath);
+        }
         await interaction.reply({ files: [attachment] });
 
         // Close the database connection
@@ -54,21 +73,24 @@ export async function execute(interaction) {
     });
 }
 
-async function generateHeatmap(rows, stat) {
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-
+function formatHeatmapData(rows, stat) {
     // Convert rows into a format that cal-heatmap can consume
     const heatmapData = [];
 
     // Assuming 'rows' is an array of objects with timestamp and value fields
     rows.forEach(row => {
         const timestamp = new Date(row.day_timestamp).toISOString().split('T')[0];  // Convert to YYYY-MM-DD format
-        const minutes = row[stat] / 1000 / 60;  // Convert milliseconds to minutes
+        const minutes = Math.round(row[stat] / 1000 / 60);  // Convert milliseconds to minutes
+        console.log(minutes, row[stat]);
         heatmapData.push({ date: timestamp, value: minutes });
     });
 
-    console.log(heatmapData);
+    return heatmapData
+}
+
+async function getPNGHeatmap(data) {
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
 
     // Log console messages from the page
     page.on('console', (msg) => {
@@ -83,7 +105,22 @@ async function generateHeatmap(rows, stat) {
     await page.setViewport({ width: 800, height: 150 });
 
     // Set the content of the page
-    await page.setContent(`
+    await page.setContent(getHtml());
+
+    // Inject the data into the page
+    await page.evaluate((configCal) => {
+        eval(configCal);
+    }, configCalHeatmap(data));
+
+    const imagePath = "./heatmap.png";
+    await page.screenshot({ path: imagePath });
+    await browser.close();
+
+    return imagePath;
+}
+
+function getHtml(configCalHeatmap) {
+    return `
         <!DOCTYPE html>
         <html lang="en">
             <head>
@@ -114,12 +151,15 @@ async function generateHeatmap(rows, stat) {
             <body>
                 <div id="cal-heatmap" style="width: 100%;"></div>
             </body>
+            <script>
+                ${configCalHeatmap}
+            </script>
         </html>
-    `);
+    `
+}
 
-    // Inject the data into the page
-    await page.evaluate((data) => {
-
+function configCalHeatmap(data) {
+    return `
         // Create the heatmap
         const cal = new CalHeatmap();
 
@@ -232,7 +272,7 @@ async function generateHeatmap(rows, stat) {
         cal.paint(
             {
                 data: {
-                    source: data,
+                    source: ${JSON.stringify(data)},
                     x: 'date',
                     y: 'value',
                     defaultValue: 0,
@@ -242,8 +282,8 @@ async function generateHeatmap(rows, stat) {
                 scale: {
                     color: {
                         type: 'threshold',
-                        range: ['#161b22', '#0E4429', '#196834', '#248C3E', '#2EAF49', '#39D353'],
-                        domain: [1, 3*60, 6*60, 12*60, 18*60],
+                        range: ['#161b22', '#0E4429', '#196834', '#248C3E', '#2EAF49', '#39D353', '#FFFF00', '#FFCC00', '#FF3300'],
+                        domain: [1, 60, 3*60, 6*60, 9*60, 12*60, 16*60, 20*60, 24*60],
                     },
                 },
                 range: 13,
@@ -257,11 +297,5 @@ async function generateHeatmap(rows, stat) {
                 itemSelector: "#cal-heatmap"
             }, plugins
         );
-    }, heatmapData);
-
-    const imagePath = "./heatmap.png";
-    await page.screenshot({ path: imagePath });
-    await browser.close();
-
-    return imagePath;
+    `
 }
