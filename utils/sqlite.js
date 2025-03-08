@@ -40,25 +40,27 @@ function updateUserDailyStats(db, guildId, userId, column, duration, now) {
         });
     }
 
-    const currentDate = new Date(now).setUTCHours(0, 0, 0, 0);
+    const days = [];
+    let remainingDuration = duration;
+    let dayLimit = now;
+    let currentDay = new Date(now).setUTCHours(0, 0, 0, 0);
 
-    // TODO : only works for midnight overlapping, not multiple days
-    // If the duration overlaps multiple days, split it
-    const todayMaxDuration = now - currentDate;
-    if (duration > todayMaxDuration) {
+    // Split the duration into days
+    while (remainingDuration > 0) {
+        // Calculate the duration for the current day
+        const dayDuration = Math.min(remainingDuration, dayLimit - currentDay);
+        days.push({ date: currentDay, duration: dayDuration });
 
-        // Retrieve yesterday's stats
-        let yesterdayDuration = duration - todayMaxDuration;
-
-        // Update yesterday's stats
-        update(db, guildId, userId, column, currentDate, yesterdayDuration);
-
-        // Get the remaining duration, for today
-        duration = duration - yesterdayDuration;
+        // Update the remaining duration and the current day
+        remainingDuration -= dayDuration;
+        dayLimit = currentDay;
+        currentDay = new Date(currentDay).setUTCHours(-24, 0, 0, 0);
     }
 
-    // Update today's stats
-    update(db, guildId, userId, column, currentDate, duration);
+    // Update the daily stats for each day
+    days.forEach(day => {
+        update(db, guildId, userId, column, day.date, day.duration);
+    });
 }
 
 function incrementTotalJoins(db, guildId, userId, now) {
