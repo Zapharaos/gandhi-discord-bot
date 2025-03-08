@@ -1,25 +1,17 @@
 import { Events, ChannelType } from 'discord.js';
 import { formatDuration } from '../utils/time.js';
-import { connect, updateUserStats, incrementTotalJoins } from '../utils/sqlite.js';
-
-// TODO : store these into the database
-// Maps to store user activity timestamps
-const voiceJoinTimes = new Map();
-const muteTimes = new Map();
-const deafTimes = new Map();
-const screenShareTimes = new Map();
-const cameraTimes = new Map();
+import {connect, updateUserStats, incrementTotalJoins, getStartTimestamps, setStartTimestamp} from '../utils/sqlite.js';
 
 let userProps = {
     id: null,
     guildId: null,
     guildNickname: null,
-    now: null
+    startTimestamps: null,
 };
 
 export const name = Events.VoiceStateUpdate;
 export const once = false;
-export function execute(oldState, newState) {
+export async function execute(oldState, newState) {
     const user = newState.member.user;
     const guild = newState.guild;
     const guildNickname = newState.member.nickname || user.displayName; // The user's nickname in the guild (fallback to username)
@@ -28,37 +20,40 @@ export function execute(oldState, newState) {
     const db = connect();
 
     // Get log channel ID from database
-    db.get("SELECT log_channel_id FROM servers WHERE guild_id = ?", [guild.id], (err, row) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
-        if (!row) return; // No log channel set for this server
+    await new Promise((resolve, reject) => {
+        db.get("SELECT log_channel_id FROM servers WHERE guild_id = ?", [guild.id], async (err, row) => {
+            if (err) {
+                console.error(err);
+                return;
+            }
+            if (!row) return; // No log channel set for this server
 
-        const logChannelId = row.log_channel_id;
-        const logChannel = guild.channels.cache.get(logChannelId);
-        if (!logChannel || logChannel.type !== ChannelType.GuildText) return;
+            const logChannelId = row.log_channel_id;
+            const logChannel = guild.channels.cache.get(logChannelId);
+            if (!logChannel || logChannel.type !== ChannelType.GuildText) return;
 
-        userProps = { id: user.id, guildId: guild.id, guildNickname: guildNickname };
-        let now = Date.now();
+            const now = Date.now();
+            userProps = {id: user.id, guildId: guild.id, guildNickname: guildNickname};
+            userProps.startTimestamps = await getStartTimestamps(db, user.id)
 
-        // Track join time
-        handleVoiceChannel(db, now, logChannel, oldState, newState, userProps);
+            // Track join time
+            handleVoiceChannel(db, now, logChannel, oldState, newState, userProps);
 
-        // Only track other states if the user was already in a channel
-        if (oldState.channelId) {
-            // Track mute time
-            handleMute(db, now, logChannel, oldState, newState, userProps);
+            // Only track other states if the user was already in a channel
+            if (oldState.channelId) {
+                // Track mute time
+                handleMute(db, now, logChannel, oldState, newState, userProps);
 
-            // Track deafen time
-            handleDeafen(db, now, logChannel, oldState, newState, userProps);
+                // Track deafen time
+                handleDeafen(db, now, logChannel, oldState, newState, userProps);
 
-            // Track screen sharing time
-            handleScreensharing(db, now, logChannel, oldState, newState, userProps);
+                // Track screen sharing time
+                handleScreensharing(db, now, logChannel, oldState, newState, userProps);
 
-            // Track camera time
-            handleCamera(db, now, logChannel, oldState, newState, userProps);
-        }
+                // Track camera time
+                handleCamera(db, now, logChannel, oldState, newState, userProps);
+            }
+        });
     });
 
     // Close database connection
@@ -74,18 +69,18 @@ function handleVoiceChannel(db, now, logChannel, oldState, newState, userProps) 
 
     // Join channel
     if (!oldState.channelId && newState.channelId) {
-        voiceJoinTimes.set(userProps.id, now);
+        setStartTimestamp(db, userProps.id, 'start_connected', now);
         incrementTotalJoins(db, userProps.guildId, userProps.id, now);
         logChannel.send(`➡️ **${userProps.guildNickname}** joined **${newState.channel.name}**`);
         console.log(`User ${userProps.guildNickname} joined ${newState.channel.name} at ${now}`);
 
         // Joins as muted or deafened
         if (newState.selfDeaf) {
-            deafTimes.set(userProps.id, now);
+            setStartTimestamp(db, userProps.id, 'start_deafened', now);
             console.log(`User ${userProps.guildNickname} joined deafened`);
         }
         else if (newState.selfMute) {
-            muteTimes.set(userProps.id, now);
+            setStartTimestamp(db, userProps.id, 'start_muted', now);
             console.log(`User ${userProps.guildNickname} joined muted`);
         }
 
@@ -95,50 +90,50 @@ function handleVoiceChannel(db, now, logChannel, oldState, newState, userProps) 
     // Leave channel
     if (oldState.channelId && !newState.channelId) {
         // Time was not tracked, send default message
-        if (!voiceJoinTimes.has(userProps.id)) {
+        if (!userProps.startTimestamps.start_connected) {
             logChannel.send(`⬅️ **${userProps.guildNickname}** left **${oldState.channel.name}**`);
             console.log(`User ${userProps.guildNickname} left ${oldState.channel.name} but no start time was tracked`);
             return;
         }
 
         // Time tracked: calculate duration and update database
-        const joinTime = voiceJoinTimes.get(userProps.id);
+        const joinTime = userProps.startTimestamps.start_connected;
         const duration = now - joinTime;
         updateUserStats(db, userProps.guildId, userProps.id, 'time_connected', duration, now);
         logChannel.send(`⬅️ **${userProps.guildNickname}** left **${oldState.channel.name}** after **${formatDuration(duration)}**`);
         console.log(`User ${userProps.guildNickname} left ${oldState.channel.name} after ${duration} ms`);
-        voiceJoinTimes.delete(userProps.id);
+        setStartTimestamp(db, userProps.id, 'start_connected', 0);
 
         // Stop mute
-        if (muteTimes.has(userProps.id)) {
-            const duration = now - muteTimes.get(userProps.id);
+        if (userProps.startTimestamps.start_muted !== 0) {
+            const duration = now - userProps.startTimestamps.start_muted;
             updateUserStats(db, userProps.guildId, userProps.id, 'time_muted', duration, now);
             console.log(`Mute stopped for user: ${userProps.guildNickname} after ${duration} ms`);
-            muteTimes.delete(userProps.id);
+            setStartTimestamp(db, userProps.id, 'start_muted', 0);
         }
 
         // Stop deafen
-        if (deafTimes.has(userProps.id)) {
-            const duration = now - deafTimes.get(userProps.id);
+        if (userProps.startTimestamps.start_deafened !== 0) {
+            const duration = now - userProps.startTimestamps.start_deafened;
             updateUserStats(db, userProps.guildId, userProps.id, 'time_deafened', duration, now);
             console.log(`Deafen stopped for user: ${userProps.guildNickname} after ${duration} ms`);
-            deafTimes.delete(userProps.id);
+            setStartTimestamp(db, userProps.id, 'start_deafened', 0);
         }
 
         // Stop screen sharing
-        if (screenShareTimes.has(userProps.id)) {
-            const duration = now - screenShareTimes.get(userProps.id);
+        if (userProps.startTimestamps.start_screen_sharing !== 0) {
+            const duration = now - userProps.startTimestamps.start_screen_sharing;
             updateUserStats(db, userProps.guildId, userProps.id, 'time_screen_sharing', duration, now);
             console.log(`Screen sharing stopped for user: ${userProps.guildNickname} after ${duration} ms`);
-            screenShareTimes.delete(userProps.id);
+            setStartTimestamp(db, userProps.id, 'start_screen_sharing', 0);
         }
 
         // Stop camera
-        if (cameraTimes.has(userProps.id)) {
-            const duration = now - cameraTimes.get(userProps.id);
+        if (userProps.startTimestamps.start_camera !== 0) {
+            const duration = now - userProps.startTimestamps.start_camera;
             updateUserStats(db, userProps.guildId, userProps.id, 'time_camera', duration, now);
             console.log(`Camera stopped for user: ${userProps.guildNickname} after ${duration} ms`);
-            cameraTimes.delete(userProps.id);
+            setStartTimestamp(db, userProps.id, 'start_camera', 0);
         }
     }
 
@@ -160,7 +155,7 @@ function handleMute(db, now, logChannel, oldState, newState, userProps) {
 
     // Start mute
     if (!oldState.selfMute && newState.selfMute) {
-        muteTimes.set(userProps.id, now);
+        setStartTimestamp(db, userProps.id, 'start_muted', now);
         logChannel.send(`🙊️ **${userProps.guildNickname}** muted their microphone`);
         console.log(`Mute for user: ${userProps.guildNickname} at ${now}`);
         return;
@@ -168,12 +163,12 @@ function handleMute(db, now, logChannel, oldState, newState, userProps) {
 
     // Stop mute
     // Time tracked: calculate duration and update database
-    if (muteTimes.has(userProps.id)) {
-        const duration = now - muteTimes.get(userProps.id);
+    if (userProps.startTimestamps.start_muted !== 0) {
+        const duration = now - userProps.startTimestamps.start_muted;
         updateUserStats(db, userProps.guildId, userProps.id, 'time_muted', duration, now);
         logChannel.send(`🎙️ **${userProps.guildNickname}** unmuted their microphone after **${formatDuration(duration)}**`);
         console.log(`Mute stopped for user: ${userProps.guildNickname} after ${duration} ms`);
-        muteTimes.delete(userProps.id);
+        setStartTimestamp(db, userProps.id, 'start_muted', 0);
         return;
     }
 
@@ -191,7 +186,7 @@ function handleDeafen(db, now, logChannel, oldState, newState, userProps) {
 
     // Start deafen
     if (!oldState.selfDeaf && newState.selfDeaf) {
-        deafTimes.set(userProps.id, now);
+        setStartTimestamp(db, userProps.id, 'start_deafened', now);
         logChannel.send(`🔇 **${userProps.guildNickname}** deafened themselves`);
         console.log(`Deafen for user: ${userProps.guildNickname} at ${now}`);
         return;
@@ -200,12 +195,12 @@ function handleDeafen(db, now, logChannel, oldState, newState, userProps) {
     // Stop deafen
 
     // Time tracked : calculate duration and update database
-    if (deafTimes.has(userProps.id)) {
-        const duration = now - deafTimes.get(userProps.id);
+    if (userProps.startTimestamps.start_deafened !== 0) {
+        const duration = now - userProps.startTimestamps.start_deafened;
         updateUserStats(db, userProps.guildId, userProps.id, 'time_deafened', duration, now);
         logChannel.send(`🔊 **${userProps.guildNickname}** undeafened themselves after **${formatDuration(duration)}**`);
         console.log(`Deafen stopped for user: ${userProps.guildNickname} after ${duration} ms`);
-        deafTimes.delete(userProps.id);
+        setStartTimestamp(db, userProps.id, 'start_deafened', 0);
         return;
     }
 
@@ -223,7 +218,7 @@ function handleScreensharing(db, now, logChannel, oldState, newState, userProps)
 
     // Start screen sharing
     if (!oldState.streaming && newState.streaming) {
-        screenShareTimes.set(userProps.id, now);
+        setStartTimestamp(db, userProps.id, 'start_screen_sharing', now);
         logChannel.send(`📺 **${userProps.guildNickname}** started screen sharing`);
         console.log(`Screen sharing started for user: ${userProps.guildNickname} at ${now}`);
         return;
@@ -232,12 +227,12 @@ function handleScreensharing(db, now, logChannel, oldState, newState, userProps)
     // Stop screen sharing
 
     // Time tracked : calculate duration and update database
-    if (screenShareTimes.has(userProps.id)) {
-        const duration = now - screenShareTimes.get(userProps.id);
+    if (userProps.startTimestamps.start_screen_sharing !== 0) {
+        const duration = now - userProps.startTimestamps.start_screen_sharing;
         updateUserStats(db, userProps.guildId, userProps.id, 'time_screen_sharing', duration, now);
         logChannel.send(`🛑 **${userProps.guildNickname}** stopped screen sharing after **${formatDuration(duration)}**`);
         console.log(`Screen sharing stopped for user: ${userProps.guildNickname} after ${duration} ms`);
-        screenShareTimes.delete(userProps.id);
+        setStartTimestamp(db, userProps.id, 'start_screen_sharing', 0);
         return;
     }
 
@@ -254,7 +249,7 @@ function handleCamera(db, now, logChannel, oldState, newState, userProps) {
 
     // Start camera
     if (!oldState.selfVideo && newState.selfVideo) {
-        cameraTimes.set(userProps.id, now);
+        setStartTimestamp(db, userProps.id, 'start_camera', now);
         logChannel.send(`📷 **${userProps.guildNickname}** turned on their camera`);
         console.log(`Camera started for user: ${userProps.guildNickname} at ${now}`);
         return;
@@ -262,12 +257,12 @@ function handleCamera(db, now, logChannel, oldState, newState, userProps) {
 
     // Stop camera
     // Time tracked: calculate duration and update database
-    if (cameraTimes.has(userProps.id)) {
-        const duration = now - cameraTimes.get(userProps.id);
+    if (userProps.startTimestamps.start_camera !== 0) {
+        const duration = now - userProps.startTimestamps.start_camera;
         updateUserStats(db, userProps.guildId, userProps.id, 'time_camera', duration, now);
         logChannel.send(`🙈 **${userProps.guildNickname}** turned off their camera after **${formatDuration(duration)}**`);
         console.log(`Camera stopped for user: ${userProps.guildNickname} after ${duration} ms`);
-        cameraTimes.delete(userProps.id);
+        setStartTimestamp(db, userProps.id, 'start_camera', 0);
         return;
     }
 

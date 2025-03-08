@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 sqlite3.verbose();
 dotenv.config();
 
-export { connect, updateUserStats, incrementTotalJoins };
+export { connect, updateUserStats, incrementTotalJoins, getStartTimestamps, setStartTimestamp };
 
 function connect() {
     return new sqlite3.Database(process.env.DB_PATH);
@@ -108,5 +108,33 @@ function updateLastActivity(db, guildId, userId, now) {
                 console.error("Error running SQL query:", err.message);
             }
         });
+    });
+}
+
+function getStartTimestamps(db, userId) {
+    return new Promise((resolve, reject) => {
+        db.get(`
+            SELECT start_connected, start_muted, start_deafened, start_screen_sharing, start_camera FROM start_timestamps WHERE user_id = ?
+        `, [userId], (err, row) => {
+            if (err) {
+                console.error("Error running SQL query:", err.message);
+                reject(err);
+            } else {
+                resolve(row);
+            }
+        });
+    });
+}
+
+function setStartTimestamp(db, userId, column, value) {
+
+    db.run(`
+        INSERT INTO start_timestamps (user_id, ${column})
+        VALUES (?, ?)
+        ON CONFLICT(user_id) DO UPDATE SET ${column} = ?
+    `, [userId, value, value], function(err) {
+        if (err) {
+            console.error("setStartTimestamp: Error running SQL query:", err.message);
+        }
     });
 }
