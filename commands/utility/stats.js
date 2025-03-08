@@ -16,7 +16,7 @@ export async function execute(interaction) {
 
     const target = interaction.options.getMember('target');
     const userId = target?.user.id ?? interaction.user.id;
-    const userName = target?.displayName ?? interaction.user.displayName;
+    const userName = target?.displayName ?? interaction.member.displayName;
 
     // Connect to the database
     const db = connect();

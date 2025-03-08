@@ -39,7 +39,7 @@ export async function execute(interaction) {
 
     const target = interaction.options.getMember('target');
     const userId = target?.user.id ?? interaction.user.id;
-    const userName = target?.displayName ?? interaction.user.displayName;
+    const userName = target?.displayName ?? interaction.member.displayName;
     const userAvatar = interaction.user.avatarURL();
 
     const stat = interaction.options.getString('stat') || 'time_connected';
@@ -62,7 +62,6 @@ export async function execute(interaction) {
 
         // Convert rows into a format that cal-heatmap can consume
         const data = formatHeatmapData(rows, stat);
-        console.log(data);
 
         if (format === 'html') {
             const html = getHtml(data, stat, userAvatar, userName, guildIcon, guildName);
