@@ -60,6 +60,8 @@ export async function execute(interaction) {
             return interaction.reply('No data found for generating the heatmap.');
         }
 
+        // TODO : get ts from start_timestamps table and calculate live stats
+
         // Convert rows into a format that cal-heatmap can consume
         const data = formatHeatmapData(rows, stat);
 

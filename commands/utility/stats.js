@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { connect } from '../../utils/sqlite.js';
+import {connect, getStartTimestamps} from '../../utils/sqlite.js';
 import { formatDuration, formatDate } from '../../utils/time.js';
 import { getPercentageString } from '../../utils/utils.js';
 
@@ -23,7 +23,7 @@ export async function execute(interaction) {
 
     db.get(`
         SELECT * FROM user_stats WHERE guild_id = ? AND user_id = ?
-    `, [guildId, userId], (err, row) => {
+    `, [guildId, userId], async (err, row) => {
         if (err) {
             console.error(err);
             return interaction.reply('An error occurred while fetching the stats.');
@@ -31,6 +31,25 @@ export async function execute(interaction) {
 
         if (!row) {
             return interaction.reply(`No stats found for user ${userName}.`);
+        }
+
+        // Add live stats to the row
+        const now = Date.now();
+        const startTimestamps = await getStartTimestamps(db, userId);
+        if (startTimestamps.start_connected !== 0) {
+            row.time_connected += now - startTimestamps.start_connected;
+        }
+        if (startTimestamps.start_muted !== 0) {
+            row.time_muted += now - startTimestamps.start_muted;
+        }
+        if (startTimestamps.start_deafened !== 0) {
+            row.time_deafened += now - startTimestamps.start_deafened;
+        }
+        if (startTimestamps.start_screen_sharing !== 0) {
+            row.time_screen_sharing += now - startTimestamps.start_screen_sharing;
+        }
+        if (startTimestamps.start_camera !== 0) {
+            row.time_camera += now - startTimestamps.start_camera;
         }
 
         const statsMessage = `

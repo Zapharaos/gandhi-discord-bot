@@ -3,6 +3,7 @@ import { connect } from '../../utils/sqlite.js';
 import { formatDuration } from '../../utils/time.js';
 import { getPercentageString } from '../../utils/utils.js';
 
+// TODO : fix error
 export const data = new SlashCommandBuilder()
     .setName('rank')
     .setDescription('Returns the ranking for a specific stat')
