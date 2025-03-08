@@ -36,20 +36,22 @@ export async function execute(interaction) {
         // Add live stats to the row
         const now = Date.now();
         const startTimestamps = await getStartTimestamps(db, userId);
-        if (startTimestamps.start_connected !== 0) {
-            row.time_connected += now - startTimestamps.start_connected;
-        }
-        if (startTimestamps.start_muted !== 0) {
-            row.time_muted += now - startTimestamps.start_muted;
-        }
-        if (startTimestamps.start_deafened !== 0) {
-            row.time_deafened += now - startTimestamps.start_deafened;
-        }
-        if (startTimestamps.start_screen_sharing !== 0) {
-            row.time_screen_sharing += now - startTimestamps.start_screen_sharing;
-        }
-        if (startTimestamps.start_camera !== 0) {
-            row.time_camera += now - startTimestamps.start_camera;
+        if (startTimestamps) {
+            if (startTimestamps.start_connected !== 0) {
+                row.time_connected += now - startTimestamps.start_connected;
+            }
+            if (startTimestamps.start_muted !== 0) {
+                row.time_muted += now - startTimestamps.start_muted;
+            }
+            if (startTimestamps.start_deafened !== 0) {
+                row.time_deafened += now - startTimestamps.start_deafened;
+            }
+            if (startTimestamps.start_screen_sharing !== 0) {
+                row.time_screen_sharing += now - startTimestamps.start_screen_sharing;
+            }
+            if (startTimestamps.start_camera !== 0) {
+                row.time_camera += now - startTimestamps.start_camera;
+            }
         }
 
         const statsMessage = `

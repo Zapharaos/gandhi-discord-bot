@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 sqlite3.verbose();
 dotenv.config();
 
-export { connect, updateUserStats, incrementTotalJoins, getStartTimestamps, setStartTimestamp };
+export { connect, updateUserStats, incrementTotalJoins, getStartTimestamps, setStartTimestamp, getLiveDurationPerDay };
 
 function connect() {
     return new sqlite3.Database(process.env.DB_PATH);
@@ -40,25 +40,11 @@ function updateUserDailyStats(db, guildId, userId, column, duration, now) {
         });
     }
 
-    const days = [];
-    let remainingDuration = duration;
-    let dayLimit = now;
-    let currentDay = new Date(now).setUTCHours(0, 0, 0, 0);
-
-    // Split the duration into days
-    while (remainingDuration > 0) {
-        // Calculate the duration for the current day
-        const dayDuration = Math.min(remainingDuration, dayLimit - currentDay);
-        days.push({ date: currentDay, duration: dayDuration });
-
-        // Update the remaining duration and the current day
-        remainingDuration -= dayDuration;
-        dayLimit = currentDay;
-        currentDay = new Date(currentDay).setUTCHours(-24, 0, 0, 0);
-    }
+    // Get duration per day
+    const days = getLiveDurationPerDay(duration, now);
 
     // Update the daily stats for each day
-    days.forEach(day => {
+    days.list.forEach(day => {
         update(db, guildId, userId, column, day.date, day.duration);
     });
 }
@@ -139,4 +125,31 @@ function setStartTimestamp(db, userId, column, value) {
             console.error("setStartTimestamp: Error running SQL query:", err.message);
         }
     });
+}
+
+
+function getLiveDurationPerDay(duration, now) {
+    const days = [];
+    const daysMap = new Map();
+    let remainingDuration = duration;
+    let dayLimit = now;
+    let currentDay = new Date(now).setUTCHours(0, 0, 0, 0);
+
+    // Split the duration into days
+    while (remainingDuration > 0) {
+        // Calculate the duration for the current day
+        const dayDuration = Math.min(remainingDuration, dayLimit - currentDay);
+        days.push({ date: currentDay, duration: dayDuration });
+        daysMap.set(currentDay, dayDuration);
+
+        // Update the remaining duration and the current day
+        remainingDuration -= dayDuration;
+        dayLimit = currentDay;
+        currentDay = new Date(currentDay).setUTCHours(-24, 0, 0, 0);
+    }
+
+    return {
+        list: days,
+        map: daysMap
+    }
 }

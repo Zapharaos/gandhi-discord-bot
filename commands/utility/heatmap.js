@@ -1,8 +1,9 @@
 import { SlashCommandBuilder } from 'discord.js';
 import puppeteer from 'puppeteer';
-import { connect } from '../../utils/sqlite.js';
+import {connect, getLiveDurationPerDay, getStartTimestamps} from '../../utils/sqlite.js';
 import { AttachmentBuilder } from 'discord.js';
 
+// TODO : guild heatmap - aggregate for all users
 export const data = new SlashCommandBuilder()
     .setName('heatmap')
     .setDescription('Generates a calendar heatmap of time spent connected per day')
@@ -60,10 +61,20 @@ export async function execute(interaction) {
             return interaction.reply('No data found for generating the heatmap.');
         }
 
-        // TODO : get ts from start_timestamps table and calculate live stats
+        // Get the start timestamps for the user
+        const startTimestamps = await getStartTimestamps(db, userId);
+        const startStat = stat.replace('time_', 'start_');
+
+        // Check if there is a start timestamp for the stat
+        let liveData = {};
+        if (startTimestamps && startTimestamps[startStat] !== 0) {
+            const now = Date.now();
+            const data = getLiveDurationPerDay(now - startTimestamps[startStat], now);
+            liveData = data.map;
+        }
 
         // Convert rows into a format that cal-heatmap can consume
-        const data = formatHeatmapData(rows, stat);
+        const data = formatHeatmapData(rows, liveData, stat);
 
         if (format === 'html') {
             const html = getHtml(data, stat, userAvatar, userName, guildIcon, guildName);
@@ -81,7 +92,7 @@ export async function execute(interaction) {
     });
 }
 
-function formatHeatmapData(rows, stat) {
+function formatHeatmapData(rows, liveData, stat) {
     // Convert rows into a format that cal-heatmap can consume
     const heatmapData = [];
 
@@ -89,6 +100,11 @@ function formatHeatmapData(rows, stat) {
     rows.forEach(row => {
         const timestamp = new Date(row.day_timestamp).toISOString().split('T')[0];  // Convert to YYYY-MM-DD format
         let value = 0;
+
+        // Check if there is live data for the current timestamp
+        if (liveData[timestamp]) {
+            row[stat] = liveData[timestamp];
+        }
 
         // Normalize the value based on the maximum value for the stat
         if (stat !== 'time_connected') {
