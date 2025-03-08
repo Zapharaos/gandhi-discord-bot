@@ -90,10 +90,9 @@ function handleVoiceChannel(db, now, logChannel, oldState, newState, userProps) 
     // Leave channel
     if (oldState.channelId && !newState.channelId) {
         // Time was not tracked, send default message
-        if (!userProps.startTimestamps.start_connected) {
+        if (!userProps.startTimestamps || userProps.startTimestamps.start_connected === 0) {
             logChannel.send(`⬅️ **${userProps.guildNickname}** left **${oldState.channel.name}**`);
             console.log(`User ${userProps.guildNickname} left ${oldState.channel.name} but no start time was tracked`);
-            return;
         } else {
             // Time tracked: calculate duration and update database
             const joinTime = userProps.startTimestamps.start_connected;
@@ -103,6 +102,9 @@ function handleVoiceChannel(db, now, logChannel, oldState, newState, userProps) 
             console.log(`User ${userProps.guildNickname} left ${oldState.channel.name} after ${duration} ms`);
             setStartTimestamp(db, userProps.id, 'start_connected', 0);
         }
+
+        // If user has no live stats, do nothing
+        if (!userProps.startTimestamps) return;
 
         // Stop mute
         if (userProps.startTimestamps.start_muted !== 0) {
@@ -163,7 +165,7 @@ function handleMute(db, now, logChannel, oldState, newState, userProps) {
 
     // Stop mute
     // Time tracked: calculate duration and update database
-    if (userProps.startTimestamps.start_muted !== 0) {
+    if (userProps.startTimestamps && userProps.startTimestamps.start_muted !== 0) {
         const duration = now - userProps.startTimestamps.start_muted;
         updateUserStats(db, userProps.guildId, userProps.id, 'time_muted', duration, now);
         logChannel.send(`🎙️ **${userProps.guildNickname}** unmuted their microphone after **${formatDuration(duration)}**`);
@@ -182,18 +184,19 @@ function handleDeafen(db, now, logChannel, oldState, newState, userProps) {
     // Same state : do nothing
     if (oldState.selfDeaf === newState.selfDeaf) return;
 
-    // If user was already mute and start deafened, stop mute counter
-    if (staysMuteAction(oldState, newState) && userProps.startTimestamps.start_muted !== 0) {
-        const duration = now - userProps.startTimestamps.start_muted;
-        updateUserStats(db, userProps.guildId, userProps.id, 'time_muted', duration, now);
-        console.log(`Mute stopped for user: ${userProps.guildNickname} after ${duration} ms`);
-        setStartTimestamp(db, userProps.id, 'start_muted', 0);
-    }
-
-    // If user was deafened and only deafened while still muted, start mute counter
-    if (staysMuteAction(oldState, newState) && userProps.startTimestamps.start_muted === 0) {
-        setStartTimestamp(db, userProps.id, 'start_muted', now);
-        console.log(`Mute for user: ${userProps.guildNickname} at ${now}`);
+    if (staysMuteAction(oldState, newState) && userProps.startTimestamps) {
+        // If user was already mute and start deafened, stop mute counter
+        if (userProps.startTimestamps.start_muted !== 0) {
+            const duration = now - userProps.startTimestamps.start_muted;
+            updateUserStats(db, userProps.guildId, userProps.id, 'time_muted', duration, now);
+            console.log(`Mute stopped for user: ${userProps.guildNickname} after ${duration} ms`);
+            setStartTimestamp(db, userProps.id, 'start_muted', 0);
+        }
+        // If user was deafened and only deafened while still muted, start mute counter
+        else {
+            setStartTimestamp(db, userProps.id, 'start_muted', now);
+            console.log(`Mute for user: ${userProps.guildNickname} at ${now}`);
+        }
     }
 
     console.log(`handleDeafen called with user: ${userProps.guildNickname}, oldState: ${oldState.selfDeaf}, newState: ${newState.selfDeaf}`);
@@ -209,7 +212,7 @@ function handleDeafen(db, now, logChannel, oldState, newState, userProps) {
     // Stop deafen
 
     // Time tracked : calculate duration and update database
-    if (userProps.startTimestamps.start_deafened !== 0) {
+    if (userProps.startTimestamps && userProps.startTimestamps.start_deafened !== 0) {
         const duration = now - userProps.startTimestamps.start_deafened;
         updateUserStats(db, userProps.guildId, userProps.id, 'time_deafened', duration, now);
         logChannel.send(`🔊 **${userProps.guildNickname}** undeafened themselves after **${formatDuration(duration)}**`);
@@ -241,7 +244,7 @@ function handleScreensharing(db, now, logChannel, oldState, newState, userProps)
     // Stop screen sharing
 
     // Time tracked : calculate duration and update database
-    if (userProps.startTimestamps.start_screen_sharing !== 0) {
+    if (userProps.startTimestamps && userProps.startTimestamps.start_screen_sharing !== 0) {
         const duration = now - userProps.startTimestamps.start_screen_sharing;
         updateUserStats(db, userProps.guildId, userProps.id, 'time_screen_sharing', duration, now);
         logChannel.send(`🛑 **${userProps.guildNickname}** stopped screen sharing after **${formatDuration(duration)}**`);
@@ -271,7 +274,7 @@ function handleCamera(db, now, logChannel, oldState, newState, userProps) {
 
     // Stop camera
     // Time tracked: calculate duration and update database
-    if (userProps.startTimestamps.start_camera !== 0) {
+    if (userProps.startTimestamps && userProps.startTimestamps.start_camera !== 0) {
         const duration = now - userProps.startTimestamps.start_camera;
         updateUserStats(db, userProps.guildId, userProps.id, 'time_camera', duration, now);
         logChannel.send(`🙈 **${userProps.guildNickname}** turned off their camera after **${formatDuration(duration)}**`);
