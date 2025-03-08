@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { connect } from '../../utils/sqlite.js';
+import {connect, getStartTimestamps} from '../../utils/sqlite.js';
 import { formatDuration } from '../../utils/time.js';
 import { getPercentageString } from '../../utils/utils.js';
 
@@ -48,6 +48,15 @@ export async function execute(interaction) {
             rows.map(async (row, index) => {
                 const guildNickname = await getGuildMemberNickname(interaction, interaction.guild, row.user_id);
 
+                // Check if there is a start timestamp for the stat
+                const startTimestamps = await getStartTimestamps(db, guildId, row.user_id);
+                const startStat = stat.replace('time_', 'start_');
+                if (startTimestamps && startTimestamps[startStat] !== 0) {
+                    const liveDuration = Date.now() - startTimestamps[startStat];
+                    row[stat] += liveDuration;
+                    console.log("Live duration for", guildNickname, ":", liveDuration);
+                }
+
                 // If the stat is a time-based stat, format the value as a duration
                 if (stat.includes('time') && stat !== 'time_connected') {
                     const value = formatDuration(row[stat]);
@@ -68,10 +77,10 @@ export async function execute(interaction) {
         );
 
         interaction.reply(`**Ranking for ${stat.replace('_', ' ')}:**\n${rankMessage.join('\n')}`);
-    });
 
-    // Close the database connection
-    db.close();
+        // Close the database connection
+        db.close();
+    });
 }
 
 async function getGuildMemberNickname(interaction, guild, id) {

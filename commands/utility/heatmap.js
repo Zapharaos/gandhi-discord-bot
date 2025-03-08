@@ -62,7 +62,7 @@ export async function execute(interaction) {
         }
 
         // Get the start timestamps for the user
-        const startTimestamps = await getStartTimestamps(db, userId);
+        const startTimestamps = await getStartTimestamps(db, guildId, userId);
         const startStat = stat.replace('time_', 'start_');
 
         // Check if there is a start timestamp for the stat
@@ -102,8 +102,8 @@ function formatHeatmapData(rows, liveData, stat) {
         let value = 0;
 
         // Check if there is live data for the current timestamp
-        if (liveData[timestamp]) {
-            row[stat] = liveData[timestamp];
+        if (liveData.get(row.day_timestamp)) {
+            row[stat] += liveData.get(row.day_timestamp);
         }
 
         // Normalize the value based on the maximum value for the stat

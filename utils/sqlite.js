@@ -99,11 +99,11 @@ function updateLastActivity(db, guildId, userId, now) {
     });
 }
 
-function getStartTimestamps(db, userId) {
+function getStartTimestamps(db, guildId, userId) {
     return new Promise((resolve, reject) => {
         db.get(`
-            SELECT start_connected, start_muted, start_deafened, start_screen_sharing, start_camera FROM start_timestamps WHERE user_id = ?
-        `, [userId], (err, row) => {
+            SELECT * FROM start_timestamps WHERE guild_id = ? AND user_id = ?
+        `, [guildId, userId], (err, row) => {
             if (err) {
                 console.error("Error running SQL query:", err.message);
                 reject(err);
@@ -114,19 +114,18 @@ function getStartTimestamps(db, userId) {
     });
 }
 
-function setStartTimestamp(db, userId, column, value) {
+function setStartTimestamp(db, guildId, userId, column, value) {
 
     db.run(`
-        INSERT INTO start_timestamps (user_id, ${column})
-        VALUES (?, ?)
-        ON CONFLICT(user_id) DO UPDATE SET ${column} = ?
-    `, [userId, value, value], function(err) {
+        INSERT INTO start_timestamps (guild_id, user_id, ${column})
+        VALUES (?, ?, ?)
+        ON CONFLICT(guild_id, user_id) DO UPDATE SET ${column} = ?
+    `, [guildId, userId, value, value], function(err) {
         if (err) {
             console.error("setStartTimestamp: Error running SQL query:", err.message);
         }
     });
 }
-
 
 function getLiveDurationPerDay(duration, now) {
     const days = [];

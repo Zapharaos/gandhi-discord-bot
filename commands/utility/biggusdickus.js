@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { connect } from '../../utils/sqlite.js';
+import {connect, getStartTimestamps} from '../../utils/sqlite.js';
 
 export const data = new SlashCommandBuilder()
     .setName('streak')
@@ -22,7 +22,7 @@ export async function execute(interaction) {
 
     db.get(`
         SELECT * FROM user_stats WHERE guild_id = ? AND user_id = ?
-    `, [guildId, userId], (err, row) => {
+    `, [guildId, userId], async (err, row) => {
         if (err) {
             console.error(err);
             return interaction.reply('An error occurred while fetching the stats.');
@@ -34,13 +34,23 @@ export async function execute(interaction) {
 
         let streak_message1 = '';
         let streak_message2 = '';
-        const streak = row.daily_streak;
+        let streak = row.daily_streak;
         function getPP(num){
             let ppsize='';
             for (let i = 0; i < num; i++){
                 ppsize += '=';
             }
             return ppsize;
+        }
+
+        // Check if the user has any live start timestamps
+        const startTimestamps = await getStartTimestamps(db, guildId, userId);
+        if (startTimestamps && startTimestamps.start_connected !== 0) {
+            const todayDate = new Date().setUTCHours(0, 0, 0, 0);
+            const lastActivityDate = new Date(row.last_activity).setUTCHours(0, 0, 0, 0);
+            // Calculate the difference in days between the last activity and today = live streak
+            const daysDifference = Math.floor((todayDate - lastActivityDate) / (1000 * 60 * 60 * 24));
+            streak += daysDifference;
         }
 
         switch (streak){

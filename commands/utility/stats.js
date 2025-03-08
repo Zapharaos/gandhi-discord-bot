@@ -35,7 +35,7 @@ export async function execute(interaction) {
 
         // Add live stats to the row
         const now = Date.now();
-        const startTimestamps = await getStartTimestamps(db, userId);
+        const startTimestamps = await getStartTimestamps(db, guildId, userId);
         if (startTimestamps) {
             if (startTimestamps.start_connected !== 0) {
                 row.time_connected += now - startTimestamps.start_connected;

@@ -5,12 +5,14 @@ export { up, down };
 function up(db) {
     db.run(`
         CREATE TABLE IF NOT EXISTS start_timestamps (
-            user_id TEXT PRIMARY KEY,
+            guild_id TEXT,
+            user_id TEXT,
             start_connected INTEGER DEFAULT 0,
             start_muted INTEGER DEFAULT 0,
             start_deafened INTEGER DEFAULT 0,
             start_screen_sharing INTEGER DEFAULT 0,
-            start_camera INTEGER DEFAULT 0
+            start_camera INTEGER DEFAULT 0,
+            PRIMARY KEY (guild_id, user_id)
         )
     `);
 }
