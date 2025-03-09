@@ -3,7 +3,6 @@ import {connect, getStartTimestamps} from '../../utils/sqlite.js';
 import { formatDuration } from '../../utils/time.js';
 import { getPercentageString } from '../../utils/utils.js';
 
-// TODO : fix error
 export const data = new SlashCommandBuilder()
     .setName('rank')
     .setDescription('Returns the ranking for a specific stat')
@@ -43,19 +42,26 @@ export async function execute(interaction) {
 
         console.log("Calculating ranks for stat:", stat);
 
-        // Get the nickname of each user and format the rank message
-        const rankMessage = await Promise.all(
+        // Add live duration to the time-based stats
+        await Promise.all(
             rows.map(async (row, index) => {
-                const guildNickname = await getGuildMemberNickname(interaction, interaction.guild, row.user_id);
-
                 // Check if there is a start timestamp for the stat
                 const startTimestamps = await getStartTimestamps(db, guildId, row.user_id);
                 const startStat = stat.replace('time_', 'start_');
                 if (startTimestamps && startTimestamps[startStat] !== 0) {
                     const liveDuration = Date.now() - startTimestamps[startStat];
                     row[stat] += liveDuration;
-                    console.log("Live duration for", guildNickname, ":", liveDuration);
                 }
+            })
+        );
+
+        // Sort the updated rows by the stat in descending order
+        rows.sort((a, b) => b[stat] - a[stat]);
+
+        // Get the nickname of each user and format the rank message
+        const rankMessage = await Promise.all(
+            rows.map(async (row, index) => {
+                const guildNickname = await getGuildMemberNickname(interaction, interaction.guild, row.user_id);
 
                 // If the stat is a time-based stat, format the value as a duration
                 if (stat.includes('time') && stat !== 'time_connected') {
