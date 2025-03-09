@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 sqlite3.verbose();
 dotenv.config();
 
-export { connect, updateUserStats, incrementTotalJoins, getStartTimestamps, setStartTimestamp, getLiveDurationPerDay };
+export { connect, updateUserStats, incrementTotalJoins, getGuildStartTimestamps, getStartTimestamps, setStartTimestamp, getLiveDurationPerDay };
 
 function connect() {
     return new sqlite3.Database(process.env.DB_PATH);
@@ -99,10 +99,25 @@ function updateLastActivity(db, guildId, userId, now) {
     });
 }
 
+function getGuildStartTimestamps(db, guildId, stat) {
+    return new Promise((resolve, reject) => {
+        db.all(`
+            SELECT start_connected, ${stat} FROM start_timestamps WHERE guild_id = ? AND start_connected IS NOT 0
+        `, [guildId], (err, row) => {
+            if (err) {
+                console.error("Error running SQL query:", err.message);
+                reject(err);
+            } else {
+                resolve(row);
+            }
+        });
+    });
+}
+
 function getStartTimestamps(db, guildId, userId) {
     return new Promise((resolve, reject) => {
         db.get(`
-            SELECT * FROM start_timestamps WHERE guild_id = ? AND user_id = ?
+            SELECT * FROM start_timestamps WHERE guild_id = ? AND user_id = ? AND start_connected IS NOT 0
         `, [guildId, userId], (err, row) => {
             if (err) {
                 console.error("Error running SQL query:", err.message);
@@ -127,10 +142,16 @@ function setStartTimestamp(db, guildId, userId, column, value) {
     });
 }
 
-function getLiveDurationPerDay(duration, now) {
+function getLiveDurationPerDay(duration, now, durationConnected = 0) {
+    // durationConnected is the duration the user was connected to a voice channel
+    // optional parameter, default value is 0, used to calculate percentages
+
+    // return data structure
     const days = [];
     const daysMap = new Map();
+
     let remainingDuration = duration;
+    let remainingDurationConnected = durationConnected;
     let dayLimit = now;
     let currentDay = new Date(now).setUTCHours(0, 0, 0, 0);
 
@@ -138,11 +159,29 @@ function getLiveDurationPerDay(duration, now) {
     while (remainingDuration > 0) {
         // Calculate the duration for the current day
         const dayDuration = Math.min(remainingDuration, dayLimit - currentDay);
-        days.push({ date: currentDay, duration: dayDuration });
-        daysMap.set(currentDay, dayDuration);
+        const dayDurationConnected = Math.min(remainingDurationConnected, dayLimit - currentDay);
+        days.push({ date: currentDay, duration: dayDuration, durationConnected: dayDurationConnected });
+        daysMap.set(currentDay, {duration: dayDuration, durationConnected: dayDurationConnected});
+        console.log('currentDay', currentDay, 'dayDuration', dayDuration, 'dayDurationConnected', dayDurationConnected);
 
         // Update the remaining duration and the current day
         remainingDuration -= dayDuration;
+        remainingDurationConnected -= dayDurationConnected;
+        dayLimit = currentDay;
+        currentDay = new Date(currentDay).setUTCHours(-24, 0, 0, 0);
+    }
+
+    // Split the connected duration into days
+    // This is done in case the user was connected to a voice channel for a longer duration than the stat duration itself
+    while (remainingDurationConnected > 0) {
+        // Calculate the duration for the current day
+        const dayDurationConnected = Math.min(remainingDurationConnected, dayLimit - currentDay);
+        days.push({ date: currentDay, duration: 0, durationConnected: dayDurationConnected });
+        daysMap.set(currentDay, {duration: 0, durationConnected: dayDurationConnected});
+        console.log('currentDay', currentDay, 'dayDuration', 0, 'dayDurationConnected', dayDurationConnected);
+
+        // Update the remaining duration and the current day
+        remainingDurationConnected -= dayDurationConnected;
         dayLimit = currentDay;
         currentDay = new Date(currentDay).setUTCHours(-24, 0, 0, 0);
     }

@@ -1,15 +1,23 @@
 import { SlashCommandBuilder } from 'discord.js';
 import puppeteer from 'puppeteer';
-import {connect, getLiveDurationPerDay, getStartTimestamps} from '../../utils/sqlite.js';
+import {
+    connect,
+    getGuildStartTimestamps,
+    getLiveDurationPerDay,
+    getStartTimestamps
+} from '../../utils/sqlite.js';
 import { AttachmentBuilder } from 'discord.js';
 
-// TODO : guild heatmap - aggregate for all users
 export const data = new SlashCommandBuilder()
     .setName('heatmap')
     .setDescription('Generates a calendar heatmap of time spent connected per day')
     .addUserOption(option =>
         option.setName('target')
             .setDescription('The user to get heatmap for')
+    )
+    .addBooleanOption(option =>
+        option.setName('target-all')
+            .setDescription('Generate heatmap for all users')
     )
     .addStringOption(option =>
         option.setName('stat')
@@ -38,58 +46,125 @@ export async function execute(interaction) {
     const guildName = interaction.guild.name;
     const guildIcon = interaction.guild.iconURL();
 
-    const target = interaction.options.getMember('target');
-    const userId = target?.user.id ?? interaction.user.id;
-    const userName = target?.displayName ?? interaction.member.displayName;
-    const userAvatar = interaction.user.avatarURL();
-
     const stat = interaction.options.getString('stat') || 'time_connected';
     const format = interaction.options.getString('format') || 'png';
 
     // Connect to the database
     const db = connect();
+    const startStat = stat.replace('time_', 'start_');
 
-    db.all(`
-        SELECT day_timestamp, time_connected, ${stat} FROM daily_stats WHERE guild_id = ? AND user_id = ?
-    `, [guildId, userId], async (err, rows) => {
-        if (err) {
-            console.error(err);
-            return interaction.reply('An error occurred while fetching the data.');
+    // Heatmap data
+    let rowsData = [];
+    let startTimestamps = [];
+    let userName = "";
+    let userAvatar = "";
+
+    // Check if the heatmap should be generated for all users
+    if (interaction.options.getBoolean('target-all')) {
+
+        // TODO : calculate heatmap legend
+
+        // Get the daily_stats heatmap data for all users
+        const rows = await new Promise((resolve, reject) => {
+            db.all(`
+                SELECT day_timestamp, SUM(time_connected) as time_connected, SUM(${stat}) as ${stat}
+                FROM daily_stats
+                WHERE guild_id = ?
+                GROUP BY day_timestamp
+    `, [guildId], (err, rows) => {
+                if (err) {
+                    console.error(err);
+                    reject('An error occurred while fetching the data.');
+                } else {
+                    resolve(rows);
+                }
+            });
+        });
+
+        if (!rows.length) {
+            return interaction.reply('No data found for generating the heatmap.');
         }
+
+        // Get the start timestamps for the active users
+        startTimestamps = await getGuildStartTimestamps(db, guildId, startStat);
+        rowsData = rows;
+    } else
+    {
+        const target = interaction.options.getMember('target');
+        const userId = target?.user.id ?? interaction.user.id;
+        userName = target?.displayName ?? interaction.member.displayName;
+        userAvatar = target?.user.avatarURL() ?? interaction.user.avatarURL();
+
+        // Get the daily_stats heatmap data for the user
+        const rows = await new Promise((resolve, reject) => {
+            db.all(`
+        SELECT day_timestamp, time_connected, ${stat} FROM daily_stats WHERE guild_id = ? AND user_id = ?
+    `, [guildId, userId], (err, rows) => {
+                if (err) {
+                    console.error(err);
+                    reject('An error occurred while fetching the data.');
+                } else {
+                    resolve(rows);
+                }
+            });
+        });
 
         if (!rows.length) {
             return interaction.reply('No data found for generating the heatmap.');
         }
 
         // Get the start timestamps for the user
-        const startTimestamps = await getStartTimestamps(db, guildId, userId);
-        const startStat = stat.replace('time_', 'start_');
+        const startTimestamp = await getStartTimestamps(db, guildId, userId);
+        startTimestamps.push(startTimestamp);
+        rowsData = rows;
+    }
 
-        // Check if there is a start timestamp for the stat
-        let liveData = {};
-        if (startTimestamps && startTimestamps[startStat] !== 0) {
-            const now = Date.now();
-            const data = getLiveDurationPerDay(now - startTimestamps[startStat], now);
-            liveData = data.map;
-        }
+    // Close the database connection
+    db.close();
 
-        // Convert rows into a format that cal-heatmap can consume
-        const data = formatHeatmapData(rows, liveData, stat);
+    console.log('rowsData', rowsData);
+    console.log('startTimestamps', startTimestamps);
 
-        if (format === 'html') {
-            const html = getHtml(data, stat, userAvatar, userName, guildIcon, guildName);
-            const attachment = new AttachmentBuilder(Buffer.from(html), { name: getFileName('html', stat) });
-            await interaction.reply({ files: [attachment] });
-        } else {
-            await interaction.deferReply();
-            const imagePath = await getPNGHeatmap(data, stat, userAvatar, userName, guildIcon, guildName);
-            const attachment = new AttachmentBuilder(imagePath);
-            await interaction.editReply({ files: [attachment] });
-        }
+    // Calculate the live data for all users
+    let liveData = new Map();
+    const now = Date.now();
+    startTimestamps.forEach(row => {
+        // Calculate the live data for the user
+        const statDuration = row[startStat] === 0 ? 0 : now - row[startStat];
+        const connectedDuration = row.start_connected === 0 ? 0 : now - row.start_connected;
+        const data = getLiveDurationPerDay(statDuration, now, connectedDuration);
 
-        // Close the database connection
-        db.close();
+        console.log('getLiveDurationPerDay data', data.map);
+
+        // Merge the user live data with the live data from the other users
+        data.map.forEach((value, key) => {
+            if (liveData.has(key)) {
+                const duration = liveData.get(key).duration + value.duration;
+                const durationConnected = liveData.get(key).durationConnected + value.durationConnected;
+                liveData.set(key, {duration: duration, durationConnected: durationConnected});
+            } else {
+                liveData.set(key, value);
+            }
+        });
     });
+
+    console.log('liveData', liveData);
+
+    // Convert rows into a format that cal-heatmap can consume
+    const data = formatHeatmapData(rowsData, liveData, stat);
+
+    console.log('data', data);
+
+    if (format === 'html') {
+        const html = getHtml(data, stat, userAvatar, userName, guildIcon, guildName);
+        const attachment = new AttachmentBuilder(Buffer.from(html), { name: getFileName('html', stat) });
+        await interaction.reply({ files: [attachment] });
+    } else {
+        await interaction.deferReply();
+        const imagePath = await getPNGHeatmap(data, stat, userAvatar, userName, guildIcon, guildName);
+        const attachment = new AttachmentBuilder(imagePath);
+        await interaction.editReply({ files: [attachment] });
+    }
 }
 
 function formatHeatmapData(rows, liveData, stat) {
@@ -101,10 +176,19 @@ function formatHeatmapData(rows, liveData, stat) {
         const timestamp = new Date(row.day_timestamp).toISOString().split('T')[0];  // Convert to YYYY-MM-DD format
         let value = 0;
 
+        console.log('row before', row);
+
         // Check if there is live data for the current timestamp
         if (liveData.get(row.day_timestamp)) {
-            row[stat] += liveData.get(row.day_timestamp);
+            // row[stat] += liveData.get(row.day_timestamp);
+            if (stat !== 'time_connected') {
+                row.time_connected += liveData.get(row.day_timestamp).durationConnected;
+            }
+            row[stat] += liveData.get(row.day_timestamp).duration;
+            liveData.delete(row.day_timestamp);
         }
+
+        console.log('row after', row);
 
         // Normalize the value based on the maximum value for the stat
         if (stat !== 'time_connected') {
@@ -112,6 +196,25 @@ function formatHeatmapData(rows, liveData, stat) {
             value = max === 0 ? 0 : row[stat] * 100 / max;  // Calculate percentage
         } else {
             value = Math.round(row[stat] / 1000 / 60);  // Convert milliseconds to minutes
+        }
+
+        console.log('value', value);
+
+        heatmapData.push({ date: timestamp, value: value });
+    });
+
+    console.log('remaining liveData', liveData);
+
+    liveData.forEach((data, key) => {
+        const timestamp = new Date(key).toISOString().split('T')[0];  // Convert to YYYY-MM-DD format
+        let value = 0;
+
+        // Normalize the value based on the maximum value for the stat
+        if (stat !== 'time_connected') {
+            const max = data.durationConnected;  // Assuming the max value is the value itself for remaining live data
+            value = max === 0 ? 0 : data.duration * 100 / max;  // Calculate percentage
+        } else {
+            value = Math.round(data.duration / 1000 / 60);  // Convert milliseconds to minutes
         }
 
         heatmapData.push({ date: timestamp, value: value });
@@ -183,6 +286,35 @@ function getHtml(data, stat, userIcon, userName, guildIcon, guildName) {
             break;
     }
 
+    let userHtml = "";
+    let guildHtml = "";
+    let isGuildHeatmap = userName === "" && userIcon=== "";
+
+    // Check if the user has an icon and name
+    if (!isGuildHeatmap) {
+        userHtml = `
+            <div class="org-container">
+                <img src="` + userIcon + `">` + userName + `
+            </div>
+            `
+    } else if (guildName !== "" && guildIcon !== "") {
+        // No user means it's a guild heatmap => replace user part with guild part
+        userHtml = `
+            <div class="org-container">
+                <img src="` + guildIcon + `">` + guildName + `
+            </div>
+            `
+    }
+
+    // Check if it's not a guild command and if the guild has an icon and name
+    if (!isGuildHeatmap && guildName !== "" && guildIcon !== "") {
+        guildHtml = `
+            <div class="org-container">
+                ` + guildName + `<img src="` + guildIcon + `">
+            </div>
+            `
+    }
+
     return `
         <!DOCTYPE html>
         <html lang="en">
@@ -245,14 +377,7 @@ function getHtml(data, stat, userIcon, userName, guildIcon, guildName) {
             </head>
             <body>
                  <div class="main">
-                    <div class="org-header">
-                        <div class="org-container">
-                            <img src="` + userIcon + `">` + userName + `
-                        </div>
-                        <div class="org-container">
-                            ` + guildName + `<img src="` + guildIcon + `">
-                        </div>
-                    </div>
+                    <div class="org-header">` + userHtml + guildHtml + `</div>
                     <div id="cal-heatmap"></div>
                     <div class="legend-header">
                         <div>` + heatmapLegend + `</div>
@@ -285,7 +410,18 @@ function getHtml(data, stat, userIcon, userName, guildIcon, guildName) {
                     return endOfMonth.isAfter(today) ? today : endOfMonth;
                 }
                 
-                function getHeatmapScale(stat) {
+                function getHeatmapScale(stat, isGuildHeatmap) {
+                    // Dynamic color scale based on the max time spent connected
+                    if (isGuildHeatmap && stat === "time_connected") {
+                        return {
+                            color: {
+                                type: 'threshold',
+                                range: ['#161b22', '#0E4429', '#006d32', '#26a641', '#39d353'],
+                                domain: [1, 25, 50, 75],
+                            }
+                        };
+                    }
+                    // Scale of 24 hours for time_connected spent daily by a user
                     if (stat === "time_connected") {
                         return {
                             color: {
@@ -295,6 +431,7 @@ function getHtml(data, stat, userIcon, userName, guildIcon, guildName) {
                             }
                         };
                     }
+                    // Scale of 100% for other stats (based on time_connected)
                     return {
                         color: {
                             type: 'threshold',
@@ -362,7 +499,26 @@ function getHtml(data, stat, userIcon, userName, guildIcon, guildName) {
                     [
                         Tooltip,
                         {
-                            text: function (date, value, dayjsDate) {
+                            text: function (date, value, dayjsDate, stat = "` + stat + `", isGuildHeatmap = ` + isGuildHeatmap + `) {
+                                if (isGuildHeatmap && stat === "time_connected") {
+                                    // TODO : value is percetange, display as time
+                                    return (
+                                        (value ? ("" + Math.floor(value / 60) + "h" + value % 60) : "No time spent") +
+                                        " on " +
+                                        dayjsDate.format("dddd, MMMM D, YYYY")
+                                    );
+                                }
+                                
+                                // Display the stat as a percentage of the time_connected stat
+                                if (stat !== "time_connected") {
+                                    // TODO : value is percentage, display as percentage and time
+                                    return (
+                                        value.toFixed(2) + "%" +
+                                        " on " +
+                                        dayjsDate.format("dddd, MMMM D, YYYY")
+                                    );
+                                }
+                                
                                 return (
                                     (value ? ("" + Math.floor(value / 60) + "h" + value % 60) : "No time spent") +
                                     " on " +
@@ -393,6 +549,9 @@ function getHtml(data, stat, userIcon, userName, guildIcon, guildName) {
                     ]
                 ];
                 
+                // TODO : not time_connected => value = % ===> need to display time as well
+                // TODO : guild connected => value = % ===> need to display time as well + calculate the percentage of max time_connected
+                
                 cal.paint(
                     {
                         data: {
@@ -403,7 +562,7 @@ function getHtml(data, stat, userIcon, userName, guildIcon, guildName) {
                         },
                         date: { start: calStart },
                         theme: "dark",
-                        scale: getHeatmapScale("` + stat + `"),
+                        scale: getHeatmapScale("` + stat + `", ` + isGuildHeatmap + `),
                         range: 13,
                         domain: {
                             type: "month",

@@ -9,6 +9,7 @@ let userProps = {
     startTimestamps: null,
 };
 
+// TODO : get user timezone and format time accordingly?
 export const name = Events.VoiceStateUpdate;
 export const once = false;
 export async function execute(oldState, newState) {
