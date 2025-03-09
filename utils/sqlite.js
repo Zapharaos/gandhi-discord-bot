@@ -162,7 +162,6 @@ function getLiveDurationPerDay(duration, now, durationConnected = 0) {
         const dayDurationConnected = Math.min(remainingDurationConnected, dayLimit - currentDay);
         days.push({ date: currentDay, duration: dayDuration, durationConnected: dayDurationConnected });
         daysMap.set(currentDay, {duration: dayDuration, durationConnected: dayDurationConnected});
-        console.log('currentDay', currentDay, 'dayDuration', dayDuration, 'dayDurationConnected', dayDurationConnected);
 
         // Update the remaining duration and the current day
         remainingDuration -= dayDuration;
@@ -178,7 +177,6 @@ function getLiveDurationPerDay(duration, now, durationConnected = 0) {
         const dayDurationConnected = Math.min(remainingDurationConnected, dayLimit - currentDay);
         days.push({ date: currentDay, duration: 0, durationConnected: dayDurationConnected });
         daysMap.set(currentDay, {duration: 0, durationConnected: dayDurationConnected});
-        console.log('currentDay', currentDay, 'dayDuration', 0, 'dayDurationConnected', dayDurationConnected);
 
         // Update the remaining duration and the current day
         remainingDurationConnected -= dayDurationConnected;

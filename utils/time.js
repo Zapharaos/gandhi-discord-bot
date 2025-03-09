@@ -1,4 +1,4 @@
-export { formatDuration, formatDate };
+export { formatDuration, formatDate, msToMinutes, durationAsPercentage, tsToYYYYMMDD };
 
 function formatDuration(ms) {
     if (ms < 1000*60) return `${(ms / 1000).toFixed(3)}s`;
@@ -29,4 +29,16 @@ function formatDate(date) {
     const seconds = String(date.getSeconds()).padStart(2, '0');  // Ensure 2 digits for seconds
     // Combine all into the desired format
     return `${day}/${month}/${year}, ${hours}h${minutes}m${seconds}s`;
+}
+
+function msToMinutes(ms) {
+    return Math.round(ms / 1000 / 60);
+}
+
+function durationAsPercentage(duration, totalDuration) {
+    return duration * 100 / totalDuration;
+}
+
+function tsToYYYYMMDD(ts) {
+    return new Date(ts).toISOString().split('T')[0];
 }

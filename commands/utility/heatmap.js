@@ -7,6 +7,17 @@ import {
     getStartTimestamps
 } from '../../utils/sqlite.js';
 import { AttachmentBuilder } from 'discord.js';
+import {durationAsPercentage, msToMinutes, tsToYYYYMMDD} from "../../utils/time.js";
+
+let htmlProps = {
+    heatmapData: [],
+    heatmapStat: "",
+    userName: "",
+    userAvatar: "",
+    guildName: "",
+    guildIcon: "",
+    isGuildFormat: false,
+}
 
 export const data = new SlashCommandBuilder()
     .setName('heatmap')
@@ -42,12 +53,21 @@ export const data = new SlashCommandBuilder()
     );
 
 export async function execute(interaction) {
-    const guildId = interaction.guild.id;
-    const guildName = interaction.guild.name;
-    const guildIcon = interaction.guild.iconURL();
 
-    const stat = interaction.options.getString('stat') || 'time_connected';
+    if (interaction.options.getBoolean('target-all') && interaction.options.getMember('target')) {
+        return interaction.reply('You can only use one of the options: target, target-all');
+    }
+
+    const guildId = interaction.guild.id;
     const format = interaction.options.getString('format') || 'png';
+    const stat = interaction.options.getString('stat') || 'time_connected';
+
+    let htmlProps = {
+        heatmapStat: stat,
+        isGuildFormat: false,
+        guildName: interaction.guild.name,
+        guildIcon: interaction.guild.iconURL(),
+    };
 
     // Connect to the database
     const db = connect();
@@ -56,13 +76,11 @@ export async function execute(interaction) {
     // Heatmap data
     let rowsData = [];
     let startTimestamps = [];
-    let userName = "";
-    let userAvatar = "";
 
     // Check if the heatmap should be generated for all users
     if (interaction.options.getBoolean('target-all')) {
 
-        // TODO : calculate heatmap legend
+        htmlProps.isGuildFormat = true;
 
         // Get the daily_stats heatmap data for all users
         const rows = await new Promise((resolve, reject) => {
@@ -88,12 +106,12 @@ export async function execute(interaction) {
         // Get the start timestamps for the active users
         startTimestamps = await getGuildStartTimestamps(db, guildId, startStat);
         rowsData = rows;
-    } else
-    {
+    }
+    else {
         const target = interaction.options.getMember('target');
         const userId = target?.user.id ?? interaction.user.id;
-        userName = target?.displayName ?? interaction.member.displayName;
-        userAvatar = target?.user.avatarURL() ?? interaction.user.avatarURL();
+        htmlProps.userName = target?.displayName ?? interaction.member.displayName;
+        htmlProps.userAvatar = target?.user.avatarURL() ?? interaction.user.avatarURL();
 
         // Get the daily_stats heatmap data for the user
         const rows = await new Promise((resolve, reject) => {
@@ -122,9 +140,6 @@ export async function execute(interaction) {
     // Close the database connection
     db.close();
 
-    console.log('rowsData', rowsData);
-    console.log('startTimestamps', startTimestamps);
-
     // Calculate the live data for all users
     let liveData = new Map();
     const now = Date.now();
@@ -133,8 +148,6 @@ export async function execute(interaction) {
         const statDuration = row[startStat] === 0 ? 0 : now - row[startStat];
         const connectedDuration = row.start_connected === 0 ? 0 : now - row.start_connected;
         const data = getLiveDurationPerDay(statDuration, now, connectedDuration);
-
-        console.log('getLiveDurationPerDay data', data.map);
 
         // Merge the user live data with the live data from the other users
         data.map.forEach((value, key) => {
@@ -148,39 +161,33 @@ export async function execute(interaction) {
         });
     });
 
-    console.log('liveData', liveData);
-
     // Convert rows into a format that cal-heatmap can consume
-    const data = formatHeatmapData(rowsData, liveData, stat);
+    htmlProps.data = formatHeatmapData(rowsData, liveData, htmlProps.heatmapStat, htmlProps.isGuildFormat);
 
-    console.log('data', data);
-
+    // Generate the heatmap
     if (format === 'html') {
-        const html = getHtml(data, stat, userAvatar, userName, guildIcon, guildName);
+        const html = getHtml(htmlProps);
         const attachment = new AttachmentBuilder(Buffer.from(html), { name: getFileName('html', stat) });
         await interaction.reply({ files: [attachment] });
-    } else {
+    }
+    else {
         await interaction.deferReply();
-        const imagePath = await getPNGHeatmap(data, stat, userAvatar, userName, guildIcon, guildName);
+        const imagePath = await getPNGHeatmap(htmlProps);
         const attachment = new AttachmentBuilder(imagePath);
         await interaction.editReply({ files: [attachment] });
     }
 }
 
-function formatHeatmapData(rows, liveData, stat) {
-    // Convert rows into a format that cal-heatmap can consume
+function formatHeatmapData(rows, liveData, stat, isGuildFormat) {
+    let max_time_connected = -1;
     const heatmapData = [];
+    const isGuilFormatAndTimeConnected = isGuildFormat && stat === 'time_connected';
 
-    // Assuming 'rows' is an array of objects with timestamp and value fields
+    // Update the rows with the live data
     rows.forEach(row => {
-        const timestamp = new Date(row.day_timestamp).toISOString().split('T')[0];  // Convert to YYYY-MM-DD format
-        let value = 0;
-
-        console.log('row before', row);
 
         // Check if there is live data for the current timestamp
         if (liveData.get(row.day_timestamp)) {
-            // row[stat] += liveData.get(row.day_timestamp);
             if (stat !== 'time_connected') {
                 row.time_connected += liveData.get(row.day_timestamp).durationConnected;
             }
@@ -188,36 +195,67 @@ function formatHeatmapData(rows, liveData, stat) {
             liveData.delete(row.day_timestamp);
         }
 
-        console.log('row after', row);
-
-        // Normalize the value based on the maximum value for the stat
-        if (stat !== 'time_connected') {
-            const max = row.time_connected;
-            value = max === 0 ? 0 : row[stat] * 100 / max;  // Calculate percentage
-        } else {
-            value = Math.round(row[stat] / 1000 / 60);  // Convert milliseconds to minutes
+        // Calculate the max time connected for the guild heatmap
+        if (isGuilFormatAndTimeConnected && row.time_connected > max_time_connected) {
+            max_time_connected = row.time_connected;
         }
-
-        console.log('value', value);
-
-        heatmapData.push({ date: timestamp, value: value });
     });
 
-    console.log('remaining liveData', liveData);
+    if (isGuilFormatAndTimeConnected) {
+        // Calculate the max time connected for the guild heatmap - unlikely to be reached
+        liveData.forEach(data => {
+            if (data.durationConnected > max_time_connected) {
+                max_time_connected = data.durationConnected;
+            }
+        });
+    }
 
-    liveData.forEach((data, key) => {
-        const timestamp = new Date(key).toISOString().split('T')[0];  // Convert to YYYY-MM-DD format
+    // Convert the rows into a format that cal-heatmap can consume
+    rows.forEach(row => {
+
         let value = 0;
+        let valueBis = 0;
 
-        // Normalize the value based on the maximum value for the stat
-        if (stat !== 'time_connected') {
-            const max = data.durationConnected;  // Assuming the max value is the value itself for remaining live data
-            value = max === 0 ? 0 : data.duration * 100 / max;  // Calculate percentage
-        } else {
-            value = Math.round(data.duration / 1000 / 60);  // Convert milliseconds to minutes
+        // Calculate the value as a percentage of the max time connected, tooltip display the value as time in minutes
+        if (isGuilFormatAndTimeConnected) {
+            value = durationAsPercentage(row[stat], max_time_connected);
+            valueBis = msToMinutes(row[stat]);
+        }
+        // Display the value as time in minutes
+        else if (stat === 'time_connected') {
+            value = msToMinutes(row[stat]);
+        }
+        // Calculate the value as a percentage of the time connected, tooltip display the value as time in minutes
+        else {
+            value = durationAsPercentage(row[stat], row.time_connected);
+            valueBis = msToMinutes(row[stat]);
         }
 
-        heatmapData.push({ date: timestamp, value: value });
+        heatmapData.push({ date: tsToYYYYMMDD(row.day_timestamp), value: value, valueBis: valueBis });
+    });
+
+    // Convert the remaining live data into a format that cal-heatmap can consume
+    liveData.forEach((data, key) => {
+
+        let value = 0;
+        let valueBis = 0;
+
+        // Calculate the value as a percentage of the max time connected, tooltip display the value as time in minutes
+        if (isGuilFormatAndTimeConnected) {
+            value = durationAsPercentage(data.duration, max_time_connected);
+            valueBis = msToMinutes(data.duration);
+        }
+        // Display the value as time in minutes
+        else if (stat === 'time_connected') {
+            value = msToMinutes(data.duration);
+        }
+        // Calculate the value as a percentage of the time connected, tooltip display the value as time in minutes
+        else {
+            value = durationAsPercentage(data.duration, data.durationConnected);
+            valueBis = msToMinutes(data.duration);
+        }
+
+        heatmapData.push({ date: tsToYYYYMMDD(key), value: value, valueBis: valueBis });
     });
 
     return heatmapData
@@ -227,9 +265,9 @@ function getFileName(extension, stat) {
     return `heatmap_${stat}_${new Date().toISOString().split('T')[0].replace(/-/g, '')}.${extension}`;
 }
 
-async function getPNGHeatmap(data, stat, userIcon, userName, guildIcon, guildName) {
+async function getPNGHeatmap(htmlProps) {
 
-    const imagePath = getFileName('png', stat);
+    const imagePath = getFileName('png', htmlProps.heatmapStat);
 
     const browser = await puppeteer.launch({
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
@@ -249,7 +287,7 @@ async function getPNGHeatmap(data, stat, userIcon, userName, guildIcon, guildNam
     await page.setViewport({ width: 800, height: 200 });
 
     // Set the content of the page
-    await page.setContent(getHtml(data, stat, userIcon, userName, guildIcon, guildName));
+    await page.setContent(getHtml(htmlProps));
 
     // Wait for the cal-heatmap element to be painted
     await page.evaluate(() => {
@@ -265,10 +303,10 @@ async function getPNGHeatmap(data, stat, userIcon, userName, guildIcon, guildNam
     return imagePath;
 }
 
-function getHtml(data, stat, userIcon, userName, guildIcon, guildName) {
+function getHtml(htmlProps) {
 
     let heatmapLegend = "";
-    switch (stat) {
+    switch (htmlProps.heatmapStat) {
         case "time_connected":
             heatmapLegend = "Time connected (hours)";
             break;
@@ -288,29 +326,28 @@ function getHtml(data, stat, userIcon, userName, guildIcon, guildName) {
 
     let userHtml = "";
     let guildHtml = "";
-    let isGuildHeatmap = userName === "" && userIcon=== "";
 
     // Check if the user has an icon and name
-    if (!isGuildHeatmap) {
+    if (!htmlProps.isGuildFormat) {
         userHtml = `
             <div class="org-container">
-                <img src="` + userIcon + `">` + userName + `
+                <img src="` + htmlProps.userAvatar + `">` + htmlProps.userName + `
             </div>
             `
-    } else if (guildName !== "" && guildIcon !== "") {
+    } else if (htmlProps.guildName !== "" && htmlProps.guildIcon !== "") {
         // No user means it's a guild heatmap => replace user part with guild part
         userHtml = `
             <div class="org-container">
-                <img src="` + guildIcon + `">` + guildName + `
+                <img src="` + htmlProps.guildIcon + `">` + htmlProps.guildName + `
             </div>
             `
     }
 
     // Check if it's not a guild command and if the guild has an icon and name
-    if (!isGuildHeatmap && guildName !== "" && guildIcon !== "") {
+    if (!htmlProps.isGuildFormat && htmlProps.guildName !== "" && htmlProps.guildIcon !== "") {
         guildHtml = `
             <div class="org-container">
-                ` + guildName + `<img src="` + guildIcon + `">
+                ` + htmlProps.guildName + `<img src="` + htmlProps.guildIcon + `">
             </div>
             `
     }
@@ -392,6 +429,7 @@ function getHtml(data, stat, userIcon, userName, guildIcon, guildName) {
             <script>
                 // Create the heatmap
                 const cal = new CalHeatmap();
+                let data = ` + JSON.stringify(htmlProps.data) + `;
         
                 // Define the date range for the heatmap
                 const today = new Date();
@@ -410,9 +448,9 @@ function getHtml(data, stat, userIcon, userName, guildIcon, guildName) {
                     return endOfMonth.isAfter(today) ? today : endOfMonth;
                 }
                 
-                function getHeatmapScale(stat, isGuildHeatmap) {
+                function getHeatmapScale(stat, isGuildFormat) {
                     // Dynamic color scale based on the max time spent connected
-                    if (isGuildHeatmap && stat === "time_connected") {
+                    if (isGuildFormat && stat === "time_connected") {
                         return {
                             color: {
                                 type: 'threshold',
@@ -499,9 +537,10 @@ function getHtml(data, stat, userIcon, userName, guildIcon, guildName) {
                     [
                         Tooltip,
                         {
-                            text: function (date, value, dayjsDate, stat = "` + stat + `", isGuildHeatmap = ` + isGuildHeatmap + `) {
-                                if (isGuildHeatmap && stat === "time_connected") {
-                                    // TODO : value is percetange, display as time
+                            text: function (date, value, dayjsDate, stat = "` + htmlProps.heatmapStat + `", isGuildHeatmap = ` + htmlProps.isGuildFormat + `) {
+                                
+                                // Display the stat as a percentage of the time_connected stat
+                                if (!isGuildHeatmap && stat === "time_connected") {
                                     return (
                                         (value ? ("" + Math.floor(value / 60) + "h" + value % 60) : "No time spent") +
                                         " on " +
@@ -509,18 +548,24 @@ function getHtml(data, stat, userIcon, userName, guildIcon, guildName) {
                                     );
                                 }
                                 
-                                // Display the stat as a percentage of the time_connected stat
-                                if (stat !== "time_connected") {
-                                    // TODO : value is percentage, display as percentage and time
+                                // Find the data point for the current date
+                                const dataPoint = data.find(d => d.date === new Date(date).toISOString().split('T')[0]);
+                                const valueBis = dataPoint ? dataPoint.valueBis : 0;
+                                
+                                // Display the stat as time in minutes
+                                if (isGuildHeatmap && stat === "time_connected") {
                                     return (
-                                        value.toFixed(2) + "%" +
+                                        (valueBis ? (Math.floor(valueBis / 60) + "h" + valueBis % 60) : "No time spent") +
                                         " on " +
                                         dayjsDate.format("dddd, MMMM D, YYYY")
                                     );
                                 }
                                 
+                                // Display the stat as a percentage of the time connected (+ time in minutes)
                                 return (
-                                    (value ? ("" + Math.floor(value / 60) + "h" + value % 60) : "No time spent") +
+                                    (value ? value.toFixed(2) : "No time spent") +
+                                    "%" +
+                                    (valueBis ? (" (" + Math.floor(valueBis / 60) + "h" + valueBis % 60 + ")") : "") +
                                     " on " +
                                     dayjsDate.format("dddd, MMMM D, YYYY")
                                 );
@@ -549,20 +594,17 @@ function getHtml(data, stat, userIcon, userName, guildIcon, guildName) {
                     ]
                 ];
                 
-                // TODO : not time_connected => value = % ===> need to display time as well
-                // TODO : guild connected => value = % ===> need to display time as well + calculate the percentage of max time_connected
-                
                 cal.paint(
                     {
                         data: {
-                            source: ` + JSON.stringify(data) + `,
+                            source: data,
                             x: 'date',
                             y: 'value',
                             defaultValue: 0,
                         },
                         date: { start: calStart },
                         theme: "dark",
-                        scale: getHeatmapScale("` + stat + `", ` + isGuildHeatmap + `),
+                        scale: getHeatmapScale("` + htmlProps.heatmapStat + `", ` + htmlProps.isGuildFormat + `),
                         range: 13,
                         domain: {
                             type: "month",
