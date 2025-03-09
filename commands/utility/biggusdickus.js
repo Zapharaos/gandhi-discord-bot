@@ -53,23 +53,18 @@ export async function execute(interaction) {
             streak += daysDifference;
         }
 
-        switch (streak){
-            default:
-                streak_message1 = 'Oh';
-                streak_message2 = 'hihi small pp 🤭';
-                break;
-            case 5 <= streak >= 3:
-                streak_message1 = 'Hey';
-                streak_message2 = 'Nice pp 🥵';
-                break;
-            case 10 <= streak > 5:
-                streak_message1 = 'Oh wow';
-                streak_message2 = '🥵 Sheesh nice pp 🍆💦';
-                break;
-            case streak > 10:
-                streak_message1 = 'Oooooh Mmmmmabouttocuuum 😫';
-                streak_message2 = '🥵 Holy shit Big big PP 🍆💦🍑';
-                break;
+        if (3 <= streak && streak < 5) {
+            streak_message1 = 'Hey';
+            streak_message2 = 'Nice pp 🥵';
+        } else if (5 < streak && streak < 10) {
+            streak_message1 = 'Oh wow';
+            streak_message2 = '🥵 Sheesh nice pp 🍆💦';
+        } else if (10 <= streak) {
+            streak_message1 = 'Oooooh Mmmmmabouttocuuum 😫';
+            streak_message2 = '🥵 Holy shit Big big PP 🍆💦🍑';
+        } else {
+            streak_message1 = 'Oh';
+            streak_message2 = 'hihi small pp 🤭';
         }
 
         const statsMessage = `
