@@ -4,6 +4,9 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 
+// TODO : to typescript
+// TODO : restructure project
+
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
