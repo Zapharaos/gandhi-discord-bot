@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from 'discord.js';
+import {AttachmentBuilder, SlashCommandBuilder} from 'discord.js';
 import {connect, getStartTimestamps} from '../../utils/sqlite.js';
 import { formatDuration } from '../../utils/time.js';
 import { getPercentageString } from '../../utils/utils.js';
@@ -28,73 +28,94 @@ export async function execute(interaction) {
     // Connect to the database
     const db = connect();
 
-    db.all(`
-        SELECT user_id, ${stat}, time_connected FROM user_stats WHERE guild_id = ? ORDER BY ${stat} DESC
-    `, [guildId], async (err, rows) => {
-        if (err) {
-            console.error(err);
-            return interaction.reply('An error occurred while fetching the ranking.');
-        }
+    await interaction.deferReply();
 
-        if (!rows.length) {
-            return interaction.reply(`No data found for the stat ${stat}.`);
-        }
+    await new Promise((resolve, reject) => {
+        db.all(`
+            SELECT user_id, ${stat}, time_connected FROM user_stats WHERE guild_id = ? ORDER BY ${stat} DESC
+        `, [guildId], async (err, rows) => {
+            if (err) {
+                console.error(err);
+                return interaction.reply('An error occurred while fetching the ranking.');
+            }
 
-        console.log("Calculating ranks for stat:", stat);
+            if (!rows.length) {
+                return interaction.reply(`No data found for the stat ${stat}.`);
+            }
 
-        // Add live duration to the time-based stats
-        await Promise.all(
-            rows.map(async (row, index) => {
-                // Check if there is a start timestamp for the stat
-                const startTimestamps = await getStartTimestamps(db, guildId, row.user_id);
-                const startStat = stat.replace('time_', 'start_');
-                if (startTimestamps && startTimestamps[startStat] !== 0) {
-                    const liveDuration = Date.now() - startTimestamps[startStat];
-                    row[stat] += liveDuration;
-                }
-            })
-        );
+            console.log("Calculating ranks for stat:", stat);
 
-        // Sort the updated rows by the stat in descending order
-        rows.sort((a, b) => b[stat] - a[stat]);
+            // Add live duration to the time-based stats
+            await Promise.all(
+                rows.map(async (row, index) => {
+                    // Check if there is a start timestamp for the stat
+                    const startTimestamps = await getStartTimestamps(db, guildId, row.user_id);
+                    const startStat = stat.replace('time_', 'start_');
+                    if (startTimestamps && startTimestamps[startStat] !== 0) {
+                        const liveDuration = Date.now() - startTimestamps[startStat];
+                        row[stat] += liveDuration;
+                    }
+                })
+            );
 
-        // Get the nickname of each user and format the rank message
-        const rankMessage = await Promise.all(
-            rows.map(async (row, index) => {
+            // Sort the updated rows by the stat in descending order
+            rows.sort((a, b) => b[stat] - a[stat]);
+
+            // Get the nickname of each user
+            for (const row of rows) {
+                const index = rows.indexOf(row);
                 const guildNickname = await getGuildMemberNickname(interaction, interaction.guild, row.user_id);
 
-                // If the stat is a time-based stat, format the value as a duration
-                if (stat.includes('time') && stat !== 'time_connected') {
-                    const value = formatDuration(row[stat]);
-                    const percentage = getPercentageString(row[stat], row.time_connected);
-                    return `\`${index + 1}. ${guildNickname}\` ${value} **(${percentage})**`;
+                // If the user is not in the guild, remove them from the ranking
+                if (!guildNickname) {
+                    console.log(`No nickname found for user ${row.user_id}`, index);
+                    // TODO : on user quit or user ban -> remove user from guild related tables
+                    continue;
                 }
 
-                // Otherwise, just format the value
-                let value = row[stat];
+                row.guildNickname = guildNickname;
+            }
 
-                // If the stat is time_connected, format the value as a duration
-                if (stat === 'time_connected') {
-                    value = formatDuration(row[stat]);
-                }
+            // Remove rows with no nickname => user not in the guild
+            rows = rows.filter(row => row.guildNickname !== undefined);
 
-                return `\`${index + 1}. ${guildNickname}\` ${value}`;
-            })
-        );
+            // Format the rank message
+            const rankMessage = await Promise.all(
+                rows.map(async (row, index) => {
 
-        interaction.reply(`**Ranking for ${stat.replace('_', ' ')}:**\n${rankMessage.join('\n')}`);
+                    // If the stat is a time-based stat, format the value as a duration
+                    if (stat.includes('time') && stat !== 'time_connected') {
+                        const value = formatDuration(row[stat]);
+                        const percentage = getPercentageString(row[stat], row.time_connected);
+                        return `\`${index + 1}. ${row.guildNickname}\` ${value} **(${percentage})**`;
+                    }
 
-        // Close the database connection
-        db.close();
+                    // Otherwise, just format the value
+                    let value = row[stat];
+
+                    // If the stat is time_connected, format the value as a duration
+                    if (stat === 'time_connected') {
+                        value = formatDuration(row[stat]);
+                    }
+
+                    return `\`${index + 1}. ${row.guildNickname}\` ${value}`;
+                })
+            );
+
+            await interaction.editReply(`**Ranking for ${stat.replace('_', ' ')}:**\n${rankMessage.join('\n')}`);
+        })
     });
+
+    // Close the database connection
+    db.close();
 }
 
 async function getGuildMemberNickname(interaction, guild, id) {
     try {
         const member = await guild.members.fetch(id);
-        return member.nickname || member.user.globalName;
+        return member.displayName || member.nickname || member.user.globalName;
     } catch (error) {
-        console.error("Error fetching member:", error);
+        console.error(`Failed to fetch member with id ${id}:`, error);
         return null;
     }
 }
