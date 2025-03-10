@@ -99,10 +99,6 @@ export async function execute(interaction) {
             });
         });
 
-        if (!rows.length) {
-            return interaction.reply('No data found for generating the heatmap.');
-        }
-
         // Get the start timestamps for the active users
         startTimestamps = await getGuildStartTimestamps(db, guildId, startStat);
         rowsData = rows;
@@ -110,8 +106,14 @@ export async function execute(interaction) {
     else {
         const target = interaction.options.getMember('target');
         const userId = target?.user.id ?? interaction.user.id;
-        htmlProps.userName = target?.displayName ?? interaction.member.displayName;
-        htmlProps.userAvatar = target?.user.avatarURL() ?? interaction.user.avatarURL();
+        if (!target) {
+            const member = await interaction.guild.members.fetch(userId);
+            htmlProps.userName = interaction.member.displayName;
+            htmlProps.userAvatar = member.displayAvatarURL();
+        } else {
+            htmlProps.userName = target.displayName;
+            htmlProps.userAvatar = target.displayAvatarURL();
+        }
 
         // Get the daily_stats heatmap data for the user
         const rows = await new Promise((resolve, reject) => {
@@ -126,10 +128,6 @@ export async function execute(interaction) {
                 }
             });
         });
-
-        if (!rows.length) {
-            return interaction.reply('No data found for generating the heatmap.');
-        }
 
         // Get the start timestamps for the user
         const startTimestamp = await getStartTimestamps(db, guildId, userId);

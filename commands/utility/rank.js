@@ -36,11 +36,11 @@ export async function execute(interaction) {
         `, [guildId], async (err, rows) => {
             if (err) {
                 console.error(err);
-                return interaction.reply('An error occurred while fetching the ranking.');
+                return interaction.editReply('An error occurred while fetching the ranking.');
             }
 
             if (!rows.length) {
-                return interaction.reply(`No data found for the stat ${stat}.`);
+                return interaction.editReply(`No data found for the stat ${stat}.`);
             }
 
             console.log("Calculating ranks for stat:", stat);
@@ -54,6 +54,10 @@ export async function execute(interaction) {
                     if (startTimestamps && startTimestamps[startStat] !== 0) {
                         const liveDuration = Date.now() - startTimestamps[startStat];
                         row[stat] += liveDuration;
+                        if (stat !== 'time_connected') {
+                            const liveDurationConnected = Date.now() - startTimestamps.start_connected;
+                            row.time_connected += liveDurationConnected;
+                        }
                     }
                 })
             );
@@ -64,7 +68,7 @@ export async function execute(interaction) {
             // Get the nickname of each user
             for (const row of rows) {
                 const index = rows.indexOf(row);
-                const guildNickname = await getGuildMemberNickname(interaction, interaction.guild, row.user_id);
+                const guildNickname = await getGuildMemberNickname(interaction.guild, row.user_id);
 
                 // If the user is not in the guild, remove them from the ranking
                 if (!guildNickname) {
@@ -110,7 +114,7 @@ export async function execute(interaction) {
     db.close();
 }
 
-async function getGuildMemberNickname(interaction, guild, id) {
+async function getGuildMemberNickname(guild, id) {
     try {
         const member = await guild.members.fetch(id);
         return member.displayName || member.nickname || member.user.globalName;
