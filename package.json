@@ -1,20 +1,35 @@
 {
   "name": "gandhi-discord-bot",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "main": "index.js",
   "scripts": {
+    "build": "tspc",
+    "migrate": "npm run build && node dist/scripts/migrate.js",
+    "deploy": "npm run build && node scripts/deploy-commands.ts",
+    "start": "npm run build && npm run migrate && npm run deploy && node dist/index.js",
+    "dev": "nodemon --ext ts --exec ts-node src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Matthieu FREITAG",
   "license": "MIT",
   "description": "Bot that tracks every user in every voice channels and logs it back",
-  "type": "module",
   "dependencies": {
     "@discordjs/voice": "^0.18.0",
+    "@types/dotenv": "^6.1.1",
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^22.13.10",
     "cal-heatmap": "^4.2.4",
     "discord.js": "^14.18.0",
     "dotenv": "^16.4.7",
     "puppeteer": "^24.3.1",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "typescript": "^5.8.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9",
+    "ts-node": "^10.9.2",
+    "ts-patch": "^3.3.0",
+    "tsconfig-paths": "^4.2.0",
+    "typescript-transform-paths": "^3.5.3"
   }
 }
