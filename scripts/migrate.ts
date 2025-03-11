@@ -1,7 +1,9 @@
 import fs from 'fs';
 import path from 'path';
-import { connect } from './utils/sqlite.js';
-import {fileURLToPath, pathToFileURL} from "url";
+
+import {pathToFileURL} from "url";
+import {Migration} from "../src/models/migration";
+import { connect } from '../src/utils/sqlite';
 
 // TODO : Rollback to specific migration
 
@@ -10,17 +12,16 @@ if (!fs.existsSync('./data')) {
     fs.mkdirSync('./data');
 }
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const migrations = path.join(__dirname, 'migrations');
+// Retrieve path to migrations folder
+const migrations = path.join(process.cwd(), 'migrations');
 
 // Connect to the database
 const db = connect();
 
 // Function to get applied migrations
-function getAppliedMigrations() {
+function getAppliedMigrations(): Promise<string[]> {
     return new Promise((resolve, reject) => {
-        db.all(`SELECT name FROM migrations`, (err, rows) => {
+        db.all(`SELECT name FROM migrations`, (err: Error | null, rows: Migration[]) => {
             if (err) reject(err);
             else resolve(rows.map(row => row.name));
         });
@@ -28,8 +29,9 @@ function getAppliedMigrations() {
 }
 
 // Function to run a migration
-function runMigration(file) {
-    return new Promise(async (resolve, reject) => {
+function runMigration(file: string) {
+    return new Promise<void>(async (resolve, reject) => {
+        // Import the migration file
         const migration = await import(pathToFileURL(path.join(migrations, file)).href);
 
         console.log(`Applying migration: ${file}`);
@@ -40,7 +42,7 @@ function runMigration(file) {
             migration.up(db);
 
             db.run(`INSERT INTO migrations (name)
-                    VALUES (?)`, [file], (err) => {
+                    VALUES (?)`, [file], (err: Error | null) => {
                 if (err) {
                     db.run("ROLLBACK");
                     return reject(err);
@@ -60,7 +62,7 @@ db.serialize(() => {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT UNIQUE
         )
-    `, async (err) => {
+    `, async (err: Error | null) => {
         if (err) {
             console.error("❌  Error creating migrations table:", err);
             db.close();
@@ -70,7 +72,7 @@ db.serialize(() => {
         // Run all pending migrations
         try {
             const appliedMigrations = await getAppliedMigrations();
-            const migrationFiles = fs.readdirSync(path.join(__dirname, 'migrations')).filter(file => file.endsWith('.js'));
+            const migrationFiles = fs.readdirSync(migrations).filter(file => file.endsWith('.js'));
             const pendingMigrations = migrationFiles.filter(file => !appliedMigrations.includes(file));
 
             if (pendingMigrations.length === 0) {
