@@ -1,22 +1,35 @@
-import { SlashCommandBuilder } from 'discord.js';
+import {ChatInputCommandInteraction, SlashCommandBuilder} from 'discord.js';
 import puppeteer from 'puppeteer';
 import {
     connect,
     getGuildStartTimestamps,
     getLiveDurationPerDay,
-    getStartTimestamps
-} from '../../utils/sqlite.js';
+    getStartTimestamps, LiveDurationMap, LiveDurationPerDay
+} from '@utils/sqlite';
 import { AttachmentBuilder } from 'discord.js';
-import {durationAsPercentage, msToMinutes, tsToYYYYMMDD} from "../../utils/time.js";
+import {durationAsPercentage, getDuration, msToMinutes, tsToYYYYMMDD} from "@utils/time";
+import {
+    getStartTsStatKey,
+    StartTimestamps
+} from "@models/start_timestamps";
+import {DailyStats, getDailyStatsStatKey} from "@models/daily_stats";
+import {stat} from "fs-extra";
+import {getInteractionUser, InteractionUser} from "@utils/interaction";
 
-let htmlProps = {
-    heatmapData: [],
-    heatmapStat: "",
-    userName: "",
-    userAvatar: "",
-    guildName: "",
-    guildIcon: "",
-    isGuildFormat: false,
+type HtmlProps = {
+    heatmapData: HeatmapData[],
+    heatmapStat: string,
+    userName: string,
+    userAvatar: string,
+    guildName?: string,
+    guildIcon?: string,
+    isGuildFormat: boolean,
+}
+
+type HeatmapData = {
+    date: string,
+    value: number,
+    valueBis: number
 }
 
 export const data = new SlashCommandBuilder()
@@ -52,30 +65,31 @@ export const data = new SlashCommandBuilder()
             )
     );
 
-export async function execute(interaction) {
+export async function execute(interaction: ChatInputCommandInteraction) {
 
     if (interaction.options.getBoolean('target-all') && interaction.options.getMember('target')) {
         return interaction.reply('You can only use one of the options: target, target-all');
     }
 
-    const guildId = interaction.guild.id;
-    const format = interaction.options.getString('format') || 'png';
-    const stat = interaction.options.getString('stat') || 'time_connected';
+    const guildId: string = interaction.guild?.id ?? '';
+    const format: string = interaction.options.getString('format') || 'png';
+    const stat: string = interaction.options.getString('stat') || 'time_connected';
+    const startStatKey = getStartTsStatKey(stat.replace('time_', 'start_'));
 
-    let htmlProps = {
+    let htmlProps: HtmlProps = {
+        heatmapData: [], userAvatar: "", userName: "",
         heatmapStat: stat,
         isGuildFormat: false,
-        guildName: interaction.guild.name,
-        guildIcon: interaction.guild.iconURL(),
+        guildName: interaction.guild?.name,
+        guildIcon: interaction.guild?.iconURL() ?? undefined
     };
 
     // Connect to the database
     const db = connect();
-    const startStat = stat.replace('time_', 'start_');
 
     // Heatmap data
-    let rowsData = [];
-    let startTimestamps = [];
+    let rowsData: DailyStats[] = [];
+    let startTimestamps: StartTimestamps[] = [];
 
     // Check if the heatmap should be generated for all users
     if (interaction.options.getBoolean('target-all')) {
@@ -83,13 +97,13 @@ export async function execute(interaction) {
         htmlProps.isGuildFormat = true;
 
         // Get the daily_stats heatmap data for all users
-        const rows = await new Promise((resolve, reject) => {
+        const rows: DailyStats[] = await new Promise((resolve, reject) => {
             db.all(`
                 SELECT day_timestamp, SUM(time_connected) as time_connected, SUM(${stat}) as ${stat}
                 FROM daily_stats
                 WHERE guild_id = ?
                 GROUP BY day_timestamp
-    `, [guildId], (err, rows) => {
+    `, [guildId], (err: Error | null, rows: DailyStats[]) => {
                 if (err) {
                     console.error(err);
                     reject('An error occurred while fetching the data.');
@@ -100,26 +114,19 @@ export async function execute(interaction) {
         });
 
         // Get the start timestamps for the active users
-        startTimestamps = await getGuildStartTimestamps(db, guildId, startStat);
+        startTimestamps = await getGuildStartTimestamps(db, guildId, startStatKey);
         rowsData = rows;
     }
     else {
-        const target = interaction.options.getMember('target');
-        const userId = target?.user.id ?? interaction.user.id;
-        if (!target) {
-            const member = await interaction.guild.members.fetch(userId);
-            htmlProps.userName = interaction.member.displayName;
-            htmlProps.userAvatar = member.displayAvatarURL();
-        } else {
-            htmlProps.userName = target.displayName;
-            htmlProps.userAvatar = target.displayAvatarURL();
-        }
+        const interactionUser: InteractionUser = getInteractionUser(interaction);
+        htmlProps.userName = interactionUser.name;
+        htmlProps.userAvatar = interactionUser.avatar;
 
         // Get the daily_stats heatmap data for the user
-        const rows = await new Promise((resolve, reject) => {
+        const rows: DailyStats[] = await new Promise((resolve, reject) => {
             db.all(`
         SELECT day_timestamp, time_connected, ${stat} FROM daily_stats WHERE guild_id = ? AND user_id = ?
-    `, [guildId, userId], (err, rows) => {
+    `, [guildId, interactionUser.id], (err: Error | null, rows: DailyStats[]) => {
                 if (err) {
                     console.error(err);
                     reject('An error occurred while fetching the data.');
@@ -130,7 +137,7 @@ export async function execute(interaction) {
         });
 
         // Get the start timestamps for the user
-        const startTimestamp = await getStartTimestamps(db, guildId, userId);
+        const startTimestamp = await getStartTimestamps(db, guildId, interactionUser.id);
         startTimestamps.push(startTimestamp);
         rowsData = rows;
     }
@@ -139,19 +146,22 @@ export async function execute(interaction) {
     db.close();
 
     // Calculate the live data for all users
-    let liveData = new Map();
+    let liveData: LiveDurationMap = new Map();
     const now = Date.now();
     startTimestamps.forEach(row => {
         // Calculate the live data for the user
-        const statDuration = row[startStat] === 0 ? 0 : now - row[startStat];
-        const connectedDuration = row.start_connected === 0 ? 0 : now - row.start_connected;
-        const data = getLiveDurationPerDay(statDuration, now, connectedDuration);
+        const statDuration = getDuration(row[startStatKey], now);
+        const connectedDuration = getDuration(row.start_connected, now);
+        const userLiveData: LiveDurationPerDay = getLiveDurationPerDay(statDuration, now, connectedDuration);
 
         // Merge the user live data with the live data from the other users
-        data.map.forEach((value, key) => {
-            if (liveData.has(key)) {
-                const duration = liveData.get(key).duration + value.duration;
-                const durationConnected = liveData.get(key).durationConnected + value.durationConnected;
+        userLiveData.map.forEach((value, key) => {
+            // Check if there is already live data for the current timestamp
+            const day = liveData.get(key);
+            if (day) {
+                // Merge the live data
+                const duration = day.duration + value.duration;
+                const durationConnected = day.durationConnected + value.durationConnected;
                 liveData.set(key, {duration: duration, durationConnected: durationConnected});
             } else {
                 liveData.set(key, value);
@@ -160,7 +170,7 @@ export async function execute(interaction) {
     });
 
     // Convert rows into a format that cal-heatmap can consume
-    htmlProps.data = formatHeatmapData(rowsData, liveData, htmlProps.heatmapStat, htmlProps.isGuildFormat);
+    htmlProps.heatmapData = formatHeatmapData(rowsData, liveData, htmlProps.heatmapStat, htmlProps.isGuildFormat);
 
     // Generate the heatmap
     if (format === 'html') {
@@ -176,20 +186,22 @@ export async function execute(interaction) {
     }
 }
 
-function formatHeatmapData(rows, liveData, stat, isGuildFormat) {
+function formatHeatmapData(rows: DailyStats[], liveData: LiveDurationMap, stat: string, isGuildFormat: boolean): HeatmapData[] {
     let max_time_connected = -1;
-    const heatmapData = [];
+    let heatmapData: HeatmapData[] = [];
     const isGuilFormatAndTimeConnected = isGuildFormat && stat === 'time_connected';
+    const dailyStatsStatKey = getDailyStatsStatKey(stat);
 
     // Update the rows with the live data
     rows.forEach(row => {
 
         // Check if there is live data for the current timestamp
-        if (liveData.get(row.day_timestamp)) {
+        const day = liveData.get(row.day_timestamp);
+        if (day) {
             if (stat !== 'time_connected') {
-                row.time_connected += liveData.get(row.day_timestamp).durationConnected;
+                row.time_connected += day.durationConnected;
             }
-            row[stat] += liveData.get(row.day_timestamp).duration;
+            row[dailyStatsStatKey] += day.duration;
             liveData.delete(row.day_timestamp);
         }
 
@@ -225,11 +237,13 @@ function formatHeatmapData(rows, liveData, stat, isGuildFormat) {
         }
         // Calculate the value as a percentage of the time connected, tooltip display the value as time in minutes
         else {
-            value = durationAsPercentage(row[stat], row.time_connected);
-            valueBis = msToMinutes(row[stat]);
+
+            value = durationAsPercentage(row[dailyStatsStatKey], row.time_connected);
+            valueBis = msToMinutes(row[dailyStatsStatKey]);
         }
 
-        heatmapData.push({ date: tsToYYYYMMDD(row.day_timestamp), value: value, valueBis: valueBis });
+        const item: HeatmapData = { date: tsToYYYYMMDD(row.day_timestamp), value: value, valueBis: valueBis };
+        heatmapData.push(item);
     });
 
     // Convert the remaining live data into a format that cal-heatmap can consume
@@ -259,11 +273,11 @@ function formatHeatmapData(rows, liveData, stat, isGuildFormat) {
     return heatmapData
 }
 
-function getFileName(extension, stat) {
+function getFileName(extension: string, stat: string): string {
     return `heatmap_${stat}_${new Date().toISOString().split('T')[0].replace(/-/g, '')}.${extension}`;
 }
 
-async function getPNGHeatmap(htmlProps) {
+async function getPNGHeatmap(htmlProps: HtmlProps): Promise<string> {
 
     const imagePath = getFileName('png', htmlProps.heatmapStat);
 
@@ -301,7 +315,7 @@ async function getPNGHeatmap(htmlProps) {
     return imagePath;
 }
 
-function getHtml(htmlProps) {
+function getHtml(htmlProps: HtmlProps): string {
 
     let heatmapLegend = "";
     switch (htmlProps.heatmapStat) {
@@ -332,7 +346,8 @@ function getHtml(htmlProps) {
                 <img src="` + htmlProps.userAvatar + `">` + htmlProps.userName + `
             </div>
             `
-    } else if (htmlProps.guildName !== "" && htmlProps.guildIcon !== "") {
+    }
+    else if (htmlProps.guildName !== "" && htmlProps.guildIcon !== "") {
         // No user means it's a guild heatmap => replace user part with guild part
         userHtml = `
             <div class="org-container">
@@ -427,7 +442,7 @@ function getHtml(htmlProps) {
             <script>
                 // Create the heatmap
                 const cal = new CalHeatmap();
-                let data = ` + JSON.stringify(htmlProps.data) + `;
+                let data = ` + JSON.stringify(htmlProps.heatmapData) + `;
         
                 // Define the date range for the heatmap
                 const today = new Date();

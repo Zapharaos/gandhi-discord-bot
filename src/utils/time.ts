@@ -1,4 +1,4 @@
-export { formatDuration, formatDate, msToMinutes, durationAsPercentage, tsToYYYYMMDD };
+export { formatDuration, formatDate, msToMinutes, durationAsPercentage, tsToYYYYMMDD, getDuration };
 
 /**
  * Formats a duration given in milliseconds into a human-readable string.
@@ -73,4 +73,15 @@ function durationAsPercentage(duration: number, totalDuration: number): number {
  */
 function tsToYYYYMMDD(ts: number): string {
     return new Date(ts).toISOString().split('T')[0];
+}
+
+/**
+ * Calculates the duration between two timestamps.
+ *
+ * @param {number} start - The start timestamp.
+ * @param {number} end - The end timestamp.
+ * @returns {number} The duration between the two timestamps.
+ */
+function getDuration(start: number, end: number): number {
+    return start === 0 ? 0 : end - start;
 }

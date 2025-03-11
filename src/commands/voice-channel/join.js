@@ -6,7 +6,7 @@ import {entersState, getVoiceConnection, joinVoiceChannel, VoiceConnectionStatus
 
 export const data = new SlashCommandBuilder()
     .setName('join')
-    .setDescription('Join the current voice channel')
+    .setDescription('Join the current voice-channel channel')
 
 export async function execute(interaction) {
 
@@ -16,7 +16,7 @@ export async function execute(interaction) {
 
     if (!connection) {
         if (!interaction.member?.voice.channel) {
-            await interaction.followUp('Join a voice channel and then try that again!');
+            await interaction.followUp('Join a voice-channel channel and then try that again!');
             return;
         }
 
@@ -45,7 +45,7 @@ export async function execute(interaction) {
     } catch (error) {
         console.warn(error);
 
-        await interaction.followUp('Failed to join voice channel within 20 seconds, please try again later!');
+        await interaction.followUp('Failed to join voice-channel channel within 20 seconds, please try again later!');
     }
 
     await interaction.followUp('Ready!');

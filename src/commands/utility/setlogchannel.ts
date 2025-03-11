@@ -1,9 +1,9 @@
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { connect } from '../../utils/sqlite.js';
+import {SlashCommandBuilder, PermissionFlagsBits, ChatInputCommandInteraction} from 'discord.js';
+import { connect } from '@utils/sqlite';
 
 export const data = new SlashCommandBuilder()
     .setName("setlogchannel")
-    .setDescription("Set the log channel for voice activity tracking")
+    .setDescription("Set the log channel for voice-channel activity tracking")
     .addChannelOption(option =>
         option.setName("channel")
             .setDescription("Select a text channel for logs")
@@ -11,10 +11,10 @@ export const data = new SlashCommandBuilder()
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator); // Only Admins can use this
 
-export async function execute(interaction) {
+export async function execute(interaction: ChatInputCommandInteraction) {
     const channel = interaction.options.getChannel("channel");
 
-    if (channel.type !== 0) { // 0 = GUILD_TEXT
+    if (channel?.type !== 0) { // 0 = GUILD_TEXT
         return interaction.reply({ content: "❌ Please select a **text channel**!", ephemeral: true });
     }
 
@@ -24,7 +24,7 @@ export async function execute(interaction) {
     // Store the Guild ID and Log Channel ID in the database
     db.run(
         "INSERT INTO servers (guild_id, log_channel_id) VALUES (?, ?) ON CONFLICT(guild_id) DO UPDATE SET log_channel_id = ?",
-        [interaction.guild.id, channel.id, channel.id],
+        [interaction.guild?.id, channel.id, channel.id],
         (err) => {
             if (err) {
                 console.error(err);

@@ -1,7 +1,12 @@
-import {AttachmentBuilder, SlashCommandBuilder} from 'discord.js';
-import {connect, getStartTimestamps} from '../../utils/sqlite.js';
-import { formatDuration } from '../../utils/time.js';
-import { getPercentageString } from '../../utils/utils.js';
+import {ChatInputCommandInteraction, Guild, SlashCommandBuilder} from 'discord.js';
+import {connect, getStartTimestamps} from '@utils/sqlite';
+import {formatDuration, getDuration} from '@utils/time';
+import { getPercentageString } from '@utils/utils';
+import {fetchGuildMemberNickname, getGuildId} from "@utils/interaction";
+import {getUserStatsStatKey, UserStats} from "@models/user_stats";
+import {getStartTsStatKey} from "@models/start_timestamps";
+
+type RankUser = UserStats & { guildNickname?: string };
 
 export const data = new SlashCommandBuilder()
     .setName('rank')
@@ -9,7 +14,6 @@ export const data = new SlashCommandBuilder()
     .addStringOption(option =>
         option.setName('stat')
             .setDescription('The stat to rank by')
-            .setRequired(true)
             .addChoices(
                 { name: 'Time Connected', value: 'time_connected' },
                 { name: 'Time Muted', value: 'time_muted' },
@@ -21,9 +25,13 @@ export const data = new SlashCommandBuilder()
             )
     );
 
-export async function execute(interaction) {
-    const stat = interaction.options.getString('stat');
-    const guildId = interaction.guild.id;
+export async function execute(interaction: ChatInputCommandInteraction) {
+    if (!interaction.guild) {
+        return interaction.reply('This command can only be used in a server.');
+    }
+
+    const stat: string = interaction.options.getString('stat') || 'time_connected';
+    const guildId = getGuildId(interaction);
 
     // Connect to the database
     const db = connect();
@@ -33,7 +41,7 @@ export async function execute(interaction) {
     await new Promise((resolve, reject) => {
         db.all(`
             SELECT user_id, ${stat}, time_connected FROM user_stats WHERE guild_id = ? ORDER BY ${stat} DESC
-        `, [guildId], async (err, rows) => {
+        `, [guildId], async (err: Error | null, rows: UserStats[]) => {
             if (err) {
                 console.error(err);
                 return interaction.editReply('An error occurred while fetching the ranking.');
@@ -45,17 +53,20 @@ export async function execute(interaction) {
 
             console.log("Calculating ranks for stat:", stat);
 
+            const userStatKey = getUserStatsStatKey(stat);
+            const startStatKey = getStartTsStatKey(stat.replace('time_', 'start_'));
+
             // Add live duration to the time-based stats
             await Promise.all(
                 rows.map(async (row, index) => {
                     // Check if there is a start timestamp for the stat
                     const startTimestamps = await getStartTimestamps(db, guildId, row.user_id);
-                    const startStat = stat.replace('time_', 'start_');
-                    if (startTimestamps && startTimestamps[startStat] !== 0) {
-                        const liveDuration = Date.now() - startTimestamps[startStat];
-                        row[stat] += liveDuration;
+                    if (startTimestamps && startTimestamps[startStatKey] !== 0) {
+                        const now = Date.now();
+                        const liveDuration = getDuration(startTimestamps[startStatKey], now);
+                        row[userStatKey] += liveDuration;
                         if (stat !== 'time_connected') {
-                            const liveDurationConnected = Date.now() - startTimestamps.start_connected;
+                            const liveDurationConnected = getDuration(startTimestamps.start_connected, now);
                             row.time_connected += liveDurationConnected;
                         }
                     }
@@ -63,12 +74,14 @@ export async function execute(interaction) {
             );
 
             // Sort the updated rows by the stat in descending order
-            rows.sort((a, b) => b[stat] - a[stat]);
+            rows.sort((a, b) => b[userStatKey] - a[userStatKey]);
+
+            const rankUsers: RankUser[] = [];
 
             // Get the nickname of each user
             for (const row of rows) {
                 const index = rows.indexOf(row);
-                const guildNickname = await getGuildMemberNickname(interaction.guild, row.user_id);
+                const guildNickname = await fetchGuildMemberNickname(interaction.guild as Guild, row.user_id);
 
                 // If the user is not in the guild, remove them from the ranking
                 if (!guildNickname) {
@@ -77,25 +90,26 @@ export async function execute(interaction) {
                     continue;
                 }
 
-                row.guildNickname = guildNickname;
+                // Filter out those without a nickname
+                rankUsers.push({
+                    ...row,
+                    guildNickname: guildNickname
+                });
             }
-
-            // Remove rows with no nickname => user not in the guild
-            rows = rows.filter(row => row.guildNickname !== undefined);
 
             // Format the rank message
             const rankMessage = await Promise.all(
-                rows.map(async (row, index) => {
+                rankUsers.map(async (row, index) => {
 
                     // If the stat is a time-based stat, format the value as a duration
                     if (stat.includes('time') && stat !== 'time_connected') {
-                        const value = formatDuration(row[stat]);
-                        const percentage = getPercentageString(row[stat], row.time_connected);
+                        const value = formatDuration(row[userStatKey]);
+                        const percentage = getPercentageString(row[userStatKey], row.time_connected);
                         return `\`${index + 1}. ${row.guildNickname}\` ${value} **(${percentage})**`;
                     }
 
                     // Otherwise, just format the value
-                    let value = row[stat];
+                    let value: number | string = row[userStatKey];
 
                     // If the stat is time_connected, format the value as a duration
                     if (stat === 'time_connected') {
@@ -112,14 +126,4 @@ export async function execute(interaction) {
 
     // Close the database connection
     db.close();
-}
-
-async function getGuildMemberNickname(guild, id) {
-    try {
-        const member = await guild.members.fetch(id);
-        return member.displayName || member.nickname || member.user.globalName;
-    } catch (error) {
-        console.error(`Failed to fetch member with id ${id}:`, error);
-        return null;
-    }
 }

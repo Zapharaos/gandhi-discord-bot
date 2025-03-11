@@ -1,7 +1,9 @@
-import { SlashCommandBuilder } from 'discord.js';
-import {connect, getStartTimestamps} from '../../utils/sqlite.js';
-import { formatDuration, formatDate } from '../../utils/time.js';
-import { getPercentageString } from '../../utils/utils.js';
+import {ChatInputCommandInteraction, SlashCommandBuilder} from 'discord.js';
+import {connect, getStartTimestamps} from '@utils/sqlite';
+import { formatDuration, formatDate } from '@utils/time';
+import { getPercentageString } from '@utils/utils';
+import {UserStats} from "@models/user_stats";
+import {getGuildId, getInteractionUser, InteractionUser} from "@utils/interaction";
 
 export const data = new SlashCommandBuilder()
     .setName('stats')
@@ -11,31 +13,28 @@ export const data = new SlashCommandBuilder()
             .setDescription('The user to get stats for')
     );
 
-export async function execute(interaction) {
-    const guildId = interaction.guild.id;
-
-    const target = interaction.options.getMember('target');
-    const userId = target?.user.id ?? interaction.user.id;
-    const userName = target?.displayName ?? interaction.member.displayName;
+export async function execute(interaction: ChatInputCommandInteraction) {
+    const guildId = getGuildId(interaction);
+    const interactionUser: InteractionUser = getInteractionUser(interaction);
 
     // Connect to the database
     const db = connect();
 
     db.get(`
         SELECT * FROM user_stats WHERE guild_id = ? AND user_id = ?
-    `, [guildId, userId], async (err, row) => {
+    `, [guildId, interactionUser.id], async (err: Error | null, row: UserStats) => {
         if (err) {
             console.error(err);
             return interaction.reply('An error occurred while fetching the stats.');
         }
 
         if (!row) {
-            return interaction.reply(`No stats found for user ${userName}.`);
+            return interaction.reply(`No stats found for user ${interactionUser.name}.`);
         }
 
         // Add live stats to the row
         const now = Date.now();
-        const startTimestamps = await getStartTimestamps(db, guildId, userId);
+        const startTimestamps = await getStartTimestamps(db, guildId, interactionUser.id);
         if (startTimestamps) {
             if (startTimestamps.start_connected !== 0) {
                 row.time_connected += now - startTimestamps.start_connected;
@@ -55,7 +54,7 @@ export async function execute(interaction) {
         }
 
         const statsMessage = `
-            **Stats for ${userName}**
+            **Stats for ${interactionUser.name}**
             \`Time Connected\` ${formatDuration(row.time_connected)}
             \`Time Muted\` ${formatDuration(row.time_muted)} **(${getPercentageString(row.time_muted, row.time_connected)})**
             \`Time Deafened\` ${formatDuration(row.time_deafened)} **(${getPercentageString(row.time_deafened, row.time_connected)})**

@@ -1,12 +1,14 @@
 import sqlite3 from "sqlite3";
 import dotenv from "dotenv";
-import {UserStats} from "../models/user_stats";
-import {StartTimestamps} from "../models/start_timestamps";
+import {UserStats} from "@models/user_stats";
+import {StartTimestamps} from "@models/start_timestamps";
+import path from "path";
 
 sqlite3.verbose();
 dotenv.config();
 
-export { Database, connect, updateUserStats, incrementTotalJoins, getGuildStartTimestamps, getStartTimestamps, setStartTimestamp, getLiveDurationPerDay };
+export { connect, updateUserStats, incrementTotalJoins, getGuildStartTimestamps, getStartTimestamps, setStartTimestamp, getLiveDurationPerDay };
+export { Database, LiveDurationPerDay, LiveDurationMapItem, LiveDurationMap, LiveDurationListItem }
 
 type Database = sqlite3.Database;
 
@@ -16,7 +18,8 @@ type Database = sqlite3.Database;
  * @returns {Database} The connected SQLite database instance.
  */
 function connect(): Database {
-    return new sqlite3.Database(process.env.DB_PATH ?? "./data/gandhi-bot.db");
+    console.log(path.join(process.cwd(), process.env.DB_PATH ?? "data/gandhi-bot.db"));
+    return new sqlite3.Database(path.join(process.cwd(), process.env.DB_PATH ?? "data/gandhi-bot.db"));
 }
 
 /**
@@ -223,9 +226,11 @@ type LiveDurationMapItem = {
     durationConnected: number;
 }
 
+type LiveDurationMap = Map<number, LiveDurationMapItem>;
+
 type LiveDurationPerDay = {
     list: LiveDurationListItem[];
-    map: Map<number, LiveDurationMapItem>;
+    map: LiveDurationMap;
 }
 
 /**

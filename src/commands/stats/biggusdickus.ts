@@ -1,41 +1,40 @@
-import { SlashCommandBuilder } from 'discord.js';
-import {connect, getStartTimestamps} from '../../utils/sqlite.js';
+import {ChatInputCommandInteraction, GuildMember, SlashCommandBuilder} from 'discord.js';
+import {connect, getStartTimestamps} from '@utils/sqlite';
+import {UserStats} from "@models/user_stats";
+import {getGuildId, getInteractionUser, InteractionUser} from "@utils/interaction";
 
 export const data = new SlashCommandBuilder()
-    .setName('streak')
+    .setName('biggusdickus')
     .setDescription('Returns the size of your big long streak')
     .addUserOption(option =>
         option.setName('target')
             .setDescription('The user to get juicy streak from')
     );
 
-export async function execute(interaction) {
+export async function execute(interaction: ChatInputCommandInteraction) {
 
-    const guildId = interaction.guildId;
-
-    const target = interaction.options.getMember('target');
-    const userId = target?.user.id ?? interaction.user.id;
-    const userName = target?.displayName ?? interaction.member.displayName;
+    const guildId = getGuildId(interaction);
+    const interactionUser: InteractionUser = getInteractionUser(interaction);
 
     // Connect to the database
     const db = connect();
 
     db.get(`
         SELECT * FROM user_stats WHERE guild_id = ? AND user_id = ?
-    `, [guildId, userId], async (err, row) => {
+    `, [guildId, interactionUser.id], async (err: Error | null, row: UserStats) => {
         if (err) {
             console.error(err);
             return interaction.reply('An error occurred while fetching the stats.');
         }
 
         if (!row) {
-            return interaction.reply(`No stats found for user ${userName}.`);
+            return interaction.reply(`No stats found for user ${interactionUser.name}.`);
         }
 
         let streak_message1 = '';
         let streak_message2 = '';
         let streak = row.daily_streak;
-        function getPP(num){
+        function getPP(num: number){
             let ppsize='';
             for (let i = 0; i < num; i++){
                 ppsize += '=';
@@ -44,7 +43,7 @@ export async function execute(interaction) {
         }
 
         // Check if the user has any live start timestamps
-        const startTimestamps = await getStartTimestamps(db, guildId, userId);
+        const startTimestamps = await getStartTimestamps(db, guildId, interactionUser.id);
         if (startTimestamps && startTimestamps.start_connected !== 0) {
             const todayDate = new Date().setUTCHours(0, 0, 0, 0);
             const lastActivityDate = new Date(row.last_activity).setUTCHours(0, 0, 0, 0);
@@ -68,7 +67,7 @@ export async function execute(interaction) {
         }
 
         const statsMessage = `
-            ${streak_message1} ${userName}
+            ${streak_message1} ${interactionUser.name}
             ${streak_message2}
             \`8${getPP(streak)}D\`
         `.replace(/^\s+/gm, ''); // Remove leading spaces from each line

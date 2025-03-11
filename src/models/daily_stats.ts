@@ -8,3 +8,15 @@ export type DailyStats = {
     time_screen_sharing: number;
     time_camera: number;
 }
+
+type DailyStatsStatKey = keyof Omit<DailyStats, 'guild_id' | 'user_id' | 'day_timestamp'>;
+
+/**
+ * Converts a string key to a DailyStatsStatKey.
+ *
+ * @param {string} key - The key to convert.
+ * @returns {DailyStatsStatKey} The converted key.
+ */
+export function getDailyStatsStatKey(key: string): DailyStatsStatKey {
+    return key as DailyStatsStatKey
+}

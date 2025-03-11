@@ -10,3 +10,15 @@ export type UserStats = {
     total_joins: number;
     last_activity: number;
 }
+
+type UserStatsStatKey = keyof Omit<UserStats, 'guild_id' | 'user_id'>;
+
+/**
+ * Converts a string key to a UserStatsStatKey.
+ *
+ * @param {string} key - The key to convert.
+ * @returns {UserStatsStatKey} The converted key.
+ */
+export function getUserStatsStatKey(key: string): UserStatsStatKey {
+    return key as UserStatsStatKey
+}
