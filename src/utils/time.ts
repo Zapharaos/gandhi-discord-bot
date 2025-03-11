@@ -1,6 +1,12 @@
 export { formatDuration, formatDate, msToMinutes, durationAsPercentage, tsToYYYYMMDD };
 
-function formatDuration(ms) {
+/**
+ * Formats a duration given in milliseconds into a human-readable string.
+ *
+ * @param {number} ms - The duration in milliseconds.
+ * @returns {string} The formatted duration string.
+ */
+function formatDuration(ms: number): string {
     if (ms < 1000*60) return `${(ms / 1000).toFixed(3)}s`;
 
     const seconds = Math.floor(ms / 1000);
@@ -19,7 +25,13 @@ function formatDuration(ms) {
     return `${minutes}m:${seconds % 60}s`;
 }
 
-function formatDate(date) {
+/**
+ * Formats a Date object into a human-readable string in the format DD/MM/YYYY, HHhMMmSSs.
+ *
+ * @param {Date} date - The date to format.
+ * @returns {string} The formatted date string.
+ */
+function formatDate(date: Date): string {
     // Get day, month, year, hours, minutes, and seconds
     const day = String(date.getDate()).padStart(2, '0');  // Ensure 2 digits for the day
     const month = String(date.getMonth() + 1).padStart(2, '0');  // Months are 0-indexed, so add 1
@@ -27,18 +39,38 @@ function formatDate(date) {
     const hours = String(date.getHours()).padStart(2, '0');  // Ensure 2 digits for hours
     const minutes = String(date.getMinutes()).padStart(2, '0');  // Ensure 2 digits for minutes
     const seconds = String(date.getSeconds()).padStart(2, '0');  // Ensure 2 digits for seconds
+
     // Combine all into the desired format
     return `${day}/${month}/${year}, ${hours}h${minutes}m${seconds}s`;
 }
 
-function msToMinutes(ms) {
+/**
+ * Converts a duration from milliseconds to minutes.
+ *
+ * @param {number} ms - The duration in milliseconds.
+ * @returns {number} The duration in minutes.
+ */
+function msToMinutes(ms: number): number {
     return Math.round(ms / 1000 / 60);
 }
 
-function durationAsPercentage(duration, totalDuration) {
+/**
+ * Calculates the percentage of a duration relative to a total duration.
+ *
+ * @param {number} duration - The duration to calculate the percentage for.
+ * @param {number} totalDuration - The total duration to compare against.
+ * @returns {number} The percentage of the duration relative to the total duration.
+ */
+function durationAsPercentage(duration: number, totalDuration: number): number {
     return duration * 100 / totalDuration;
 }
 
-function tsToYYYYMMDD(ts) {
+/**
+ * Converts a timestamp to a string in the format YYYY-MM-DD.
+ *
+ * @param {number} ts - The timestamp to convert.
+ * @returns {string} The formatted date string.
+ */
+function tsToYYYYMMDD(ts: number): string {
     return new Date(ts).toISOString().split('T')[0];
 }
