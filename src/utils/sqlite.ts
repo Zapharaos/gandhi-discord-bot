@@ -1,14 +1,22 @@
 import sqlite3 from "sqlite3";
 import dotenv from "dotenv";
-import {UserStats} from "@models/user_stats";
-import {StartTimestamps} from "@models/start_timestamps";
+import {UserStats} from "@models/database/user_stats";
+import {StartTimestamps} from "@models/database/start_timestamps";
 import path from "path";
 
 sqlite3.verbose();
 dotenv.config();
 
-export { connect, updateUserStats, incrementTotalJoins, getGuildStartTimestamps, getStartTimestamps, setStartTimestamp, getLiveDurationPerDay };
-export { Database, LiveDurationPerDay, LiveDurationMapItem, LiveDurationMap, LiveDurationListItem }
+export {
+    connect,
+    updateUserStats,
+    incrementTotalJoins,
+    getGuildStartTimestamps,
+    getStartTimestamps,
+    setStartTimestamp,
+    getLiveDurationPerDay
+};
+export {Database, LiveDurationPerDay, LiveDurationMapItem, LiveDurationMap, LiveDurationListItem}
 
 type Database = sqlite3.Database;
 
@@ -18,7 +26,6 @@ type Database = sqlite3.Database;
  * @returns {Database} The connected SQLite database instance.
  */
 function connect(): Database {
-    console.log(path.join(process.cwd(), process.env.DB_PATH ?? "data/gandhi-bot.db"));
     return new sqlite3.Database(path.join(process.cwd(), process.env.DB_PATH ?? "data/gandhi-bot.db"));
 }
 
@@ -35,9 +42,9 @@ function connect(): Database {
 function updateUserStats(db: Database, guildId: string, userId: string, stat: string, duration: number, now: number) {
     db.run(`
         INSERT INTO user_stats (guild_id, user_id, ${stat})
-        VALUES (?, ?, ?)
-            ON CONFLICT(guild_id, user_id) DO UPDATE SET ${stat} = ${stat} + ?
-    `, [guildId, userId, duration, duration], function(err: Error | null) {
+        VALUES (?, ?, ?) ON CONFLICT(guild_id, user_id) DO
+        UPDATE SET ${stat} = ${stat} + ?
+    `, [guildId, userId, duration, duration], function (err: Error | null) {
         if (err) {
             console.error("updateUserStats: Error running SQL query:", err.message);
             return;
@@ -64,9 +71,9 @@ function updateUserDailyStats(db: Database, guildId: string, userId: string, sta
     function update(db: Database, guildId: string, userId: string, stat: string, date: number, duration: number) {
         db.run(`
             INSERT INTO daily_stats (guild_id, user_id, day_timestamp, ${stat})
-            VALUES (?, ?, ?, ?)
-            ON CONFLICT(guild_id, user_id, day_timestamp) DO UPDATE SET ${stat} = ${stat} + ?
-        `, [guildId, userId, date, duration, duration], function(err: Error | null) {
+            VALUES (?, ?, ?, ?) ON CONFLICT(guild_id, user_id, day_timestamp) DO
+            UPDATE SET ${stat} = ${stat} + ?
+        `, [guildId, userId, date, duration, duration], function (err: Error | null) {
             if (err) {
                 console.error("updateUserDailyStats: Error running SQL query:", err.message);
             }
@@ -93,9 +100,9 @@ function updateUserDailyStats(db: Database, guildId: string, userId: string, sta
 function incrementTotalJoins(db: Database, guildId: string, userId: string, now: number) {
     db.run(`
         INSERT INTO user_stats (guild_id, user_id, total_joins)
-        VALUES (?, ?, 1)
-        ON CONFLICT(guild_id, user_id) DO UPDATE SET total_joins = total_joins + 1
-    `, [guildId, userId], function(err: Error | null) {
+        VALUES (?, ?, 1) ON CONFLICT(guild_id, user_id) DO
+        UPDATE SET total_joins = total_joins + 1
+    `, [guildId, userId], function (err: Error | null) {
         if (err) {
             console.error("incrementTotalJoins: Error running SQL query:", err.message);
             return;
@@ -114,7 +121,10 @@ function incrementTotalJoins(db: Database, guildId: string, userId: string, now:
  */
 function updateLastActivity(db: Database, guildId: string, userId: string, now: number) {
     db.get(`
-        SELECT last_activity, daily_streak FROM user_stats WHERE guild_id = ? AND user_id = ?
+        SELECT last_activity, daily_streak
+        FROM user_stats
+        WHERE guild_id = ?
+          AND user_id = ?
     `, [guildId, userId], (err: Error | null, row: UserStats) => {
         if (err) {
             console.error("updateLastActivity: Select: Error running SQL query:", err.message);
@@ -138,9 +148,9 @@ function updateLastActivity(db: Database, guildId: string, userId: string, now: 
 
         db.run(`
             INSERT INTO user_stats (guild_id, user_id, daily_streak, last_activity)
-            VALUES (?, ?, ?, ?)
-            ON CONFLICT(guild_id, user_id) DO UPDATE SET daily_streak = ?, last_activity = ?
-        `, [guildId, userId, newStreak, now, newStreak, now], function(err: Error | null) {
+            VALUES (?, ?, ?, ?) ON CONFLICT(guild_id, user_id) DO
+            UPDATE SET daily_streak = ?, last_activity = ?
+        `, [guildId, userId, newStreak, now, newStreak, now], function (err: Error | null) {
             if (err) {
                 console.error("updateLastActivity: INSERT: Error running SQL query:", err.message);
             }
@@ -159,7 +169,10 @@ function updateLastActivity(db: Database, guildId: string, userId: string, now: 
 function getGuildStartTimestamps(db: Database, guildId: string, stat: string): Promise<StartTimestamps[]> {
     return new Promise((resolve, reject) => {
         db.all(`
-            SELECT start_connected, ${stat} FROM start_timestamps WHERE guild_id = ? AND start_connected IS NOT 0
+            SELECT start_connected, ${stat}
+            FROM start_timestamps
+            WHERE guild_id = ?
+              AND start_connected IS NOT 0
         `, [guildId], (err: Error | null, rows: StartTimestamps[]) => {
             if (err) {
                 console.error("getGuildStartTimestamps: Error running SQL query:", err.message);
@@ -182,7 +195,11 @@ function getGuildStartTimestamps(db: Database, guildId: string, stat: string): P
 function getStartTimestamps(db: Database, guildId: string, userId: string): Promise<StartTimestamps> {
     return new Promise((resolve, reject) => {
         db.get(`
-            SELECT * FROM start_timestamps WHERE guild_id = ? AND user_id = ? AND start_connected IS NOT 0
+            SELECT *
+            FROM start_timestamps
+            WHERE guild_id = ?
+              AND user_id = ?
+              AND start_connected IS NOT 0
         `, [guildId, userId], (err: Error | null, row: StartTimestamps) => {
             if (err) {
                 console.error("getStartTimestamps: Error running SQL query:", err.message);
@@ -206,9 +223,9 @@ function getStartTimestamps(db: Database, guildId: string, userId: string): Prom
 function setStartTimestamp(db: Database, guildId: string, userId: string, column: string, value: number) {
     db.run(`
         INSERT INTO start_timestamps (guild_id, user_id, ${column})
-        VALUES (?, ?, ?)
-        ON CONFLICT(guild_id, user_id) DO UPDATE SET ${column} = ?
-    `, [guildId, userId, value, value], function(err: Error | null) {
+        VALUES (?, ?, ?) ON CONFLICT(guild_id, user_id) DO
+        UPDATE SET ${column} = ?
+    `, [guildId, userId, value, value], function (err: Error | null) {
         if (err) {
             console.error("setStartTimestamp: Error running SQL query:", err.message);
         }
@@ -259,7 +276,7 @@ function getLiveDurationPerDay(duration: number, now: number, durationConnected:
         // Calculate the duration for the current day
         const dayDuration = Math.min(remainingDuration, dayLimit - currentDay);
         const dayDurationConnected = Math.min(remainingDurationConnected, dayLimit - currentDay);
-        days.push({ date: currentDay, duration: dayDuration, durationConnected: dayDurationConnected });
+        days.push({date: currentDay, duration: dayDuration, durationConnected: dayDurationConnected});
         daysMap.set(currentDay, {duration: dayDuration, durationConnected: dayDurationConnected});
 
         // Update the remaining duration and the current day
@@ -274,7 +291,7 @@ function getLiveDurationPerDay(duration: number, now: number, durationConnected:
     while (remainingDurationConnected > 0) {
         // Calculate the duration for the current day
         const dayDurationConnected = Math.min(remainingDurationConnected, dayLimit - currentDay);
-        days.push({ date: currentDay, duration: 0, durationConnected: dayDurationConnected });
+        days.push({date: currentDay, duration: 0, durationConnected: dayDurationConnected});
         daysMap.set(currentDay, {duration: 0, durationConnected: dayDurationConnected});
 
         // Update the remaining duration and the current day

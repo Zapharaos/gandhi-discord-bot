@@ -1,9 +1,14 @@
-import {ChatInputCommandInteraction, SlashCommandBuilder} from 'discord.js';
+import {ChatInputCommandInteraction, PermissionsString,} from 'discord.js';
+import {Command, CommandDeferType} from "@commands/commands";
+import {EventData} from "@models/event-data";
+import {InteractionUtils} from "@utils/interaction";
 
-export const data = new SlashCommandBuilder()
-    .setName('ping')
-    .setDescription('Replies with Pong!');
+export class PingCommand implements Command {
+    public names = ['ping'];
+    public deferType = CommandDeferType.HIDDEN;
+    public requireClientPerms: PermissionsString[] = [];
 
-export async function execute(interaction: ChatInputCommandInteraction) {
-        await interaction.reply('Pong!');
+    public async execute(intr: ChatInputCommandInteraction, data: EventData): Promise<void> {
+        await InteractionUtils.send(intr, 'Pong!');
+    };
 }
