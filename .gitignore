@@ -1,4 +1,5 @@
 .idea
+.eslintcache
 node_modules
 .env
 .env.local

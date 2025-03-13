@@ -1,10 +1,11 @@
+/*
 import {ChatInputCommandInteraction, Guild, SlashCommandBuilder} from 'discord.js';
 import {connect, getStartTimestamps} from '@utils/sqlite';
 import {formatDuration, getDuration} from '@utils/time';
 import { getPercentageString } from '@utils/utils';
 import {fetchGuildMemberNickname, getGuildId} from "@utils/interaction";
-import {getUserStatsStatKey, UserStats} from "@models/user_stats";
-import {getStartTsStatKey} from "@models/start_timestamps";
+import {getUserStatsStatKey, UserStats} from "@models/database/user_stats";
+import {getStartTsStatKey} from "@models/database/start_timestamps";
 
 type RankUser = UserStats & { guildNickname?: string };
 
@@ -126,4 +127,4 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     // Close the database connection
     db.close();
-}
+}*/

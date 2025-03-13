@@ -14,15 +14,16 @@ import Logs from '../lang/logs.json';
 
 dotenv.config();
 
-// TODO : linting
-// TODO : format
-// TODO : upgrade logs
-// TODO : log files
+// TODO : apply migrations
 // TODO : docker
-// TODO : update commands
+
 // TODO : tests
 
-// TODO : apply migrations
+// TODO : log files
+// TODO : upgrade logs
+
+// TODO : update commands
+// TODO : update events
 
 async function start(): Promise<void> {
 
@@ -31,8 +32,8 @@ async function start(): Promise<void> {
     // Deploy commands
     try {
         const rest = new REST({version: '10'}).setToken(process.env.DISCORD_TOKEN ?? "");
-        let commandRegistrationService = new CommandRegistrationService(rest);
-        let localCmds = [
+        const commandRegistrationService = new CommandRegistrationService(rest);
+        const localCmds = [
             ...Object.values(CommandMetadata).sort((a, b) => (a.name > b.name ? 1 : -1)),
         ];
         await commandRegistrationService.process(localCmds, process.argv);
@@ -43,7 +44,7 @@ async function start(): Promise<void> {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Services
-    let eventDataService = new EventDataService();
+    const eventDataService = new EventDataService();
 
     // Client
     const client = new Client({
@@ -54,12 +55,12 @@ async function start(): Promise<void> {
     });
 
     // Commands
-    let commands: Command[] = [
+    const commands: Command[] = [
         new PingCommand(),
     ];
 
     // Event handlers
-    let commandHandler = new CommandHandler(commands, eventDataService);
+    const commandHandler = new CommandHandler(commands, eventDataService);
 
     // Bot
     const bot = new Bot(
@@ -74,33 +75,3 @@ async function start(): Promise<void> {
 start().catch(error => {
     Logger.error(Logs.error.unspecified, error);
 });
-
-/*
-client.once(Events.ClientReady, () => console.log(`Ready! Logged in as ${client.user?.tag}`));
-
-const foldersPath = path.join(process.cwd(), 'dist/src/events');
-const commandFolders = fs.readdirSync(foldersPath);
-
-(async () => {
-    // Loop over each folder in the events directory
-    for (const folder of commandFolders) {
-        // Grab all the event files from the events directory
-        const eventsPath = path.join(foldersPath, folder);
-        const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
-
-        // Loop over each event file in the events directory
-        for (const file of eventFiles) {
-            // Grab all the event files from the events directory
-            const filePath = path.join(eventsPath, file);
-            console.log(`Loading event: ${filePath}`);
-            const event = await import(pathToFileURL(filePath).href);
-            if (event.once) {
-                client.once(event.name, (...args) => event.execute(...args));
-            } else {
-                client.on(event.name, (...args) => event.execute(...args));
-            }
-        }
-    }
-
-    await client.login(process.env.DISCORD_TOKEN);
-})();*/

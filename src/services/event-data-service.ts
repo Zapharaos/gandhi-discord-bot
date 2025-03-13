@@ -20,13 +20,13 @@ export class EventDataService {
         // TODO: Retrieve any data you want to pass along in events
 
         // Event language
-        let lang =
+        const lang =
             options.guild?.preferredLocale
                 ? options.guild.preferredLocale
                 : Locale.EnglishUS;
 
         // Guild language
-        let langGuild =
+        const langGuild =
             options.guild?.preferredLocale
                 ? options.guild.preferredLocale
                 : Locale.EnglishUS;

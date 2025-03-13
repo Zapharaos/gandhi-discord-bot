@@ -32,7 +32,7 @@ export class CommandHandler implements EventHandler {
             return;
         }
 
-        let commandParts =
+        const commandParts =
             intr instanceof ChatInputCommandInteraction || intr instanceof AutocompleteInteraction
                 ? [
                     intr.commandName,
@@ -40,11 +40,11 @@ export class CommandHandler implements EventHandler {
                     intr.options.getSubcommand(false) ?? '',
                 ].filter(Boolean)
                 : [intr.commandName];
-        let commandName = commandParts.join(' ');
+        const commandName = commandParts.join(' ');
 
         // Try to find the command the user wants
 
-        let command = CommandUtils.findCommand(this.commands, commandParts);
+        const command = CommandUtils.findCommand(this.commands, commandParts);
         if (!command) {
             Logger.error(
                 Logs.error.commandNotFound
@@ -65,8 +65,8 @@ export class CommandHandler implements EventHandler {
             }
 
             try {
-                let option = intr.options.getFocused(true);
-                let choices = await command.autocomplete(intr, option);
+                const option = intr.options.getFocused(true);
+                const choices = await command.autocomplete(intr, option);
                 await InteractionUtils.respond(
                     intr,
                     choices?.slice(0, DiscordLimits.CHOICES_PER_AUTOCOMPLETE)
@@ -117,7 +117,7 @@ export class CommandHandler implements EventHandler {
         }
 
         // Get data from database
-        let data = await this.eventDataService.create({
+        const data = await this.eventDataService.create({
             user: intr.user,
             channel: intr.channel ?? undefined,
             guild: intr.guild ?? undefined,
@@ -154,6 +154,7 @@ export class CommandHandler implements EventHandler {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private async sendError(intr: CommandInteraction, data: EventData): Promise<void> {
         try {
             await InteractionUtils.send(

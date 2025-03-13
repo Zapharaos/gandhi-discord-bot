@@ -8,6 +8,7 @@ export class PingCommand implements Command {
     public deferType = CommandDeferType.HIDDEN;
     public requireClientPerms: PermissionsString[] = [];
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async execute(intr: ChatInputCommandInteraction, data: EventData): Promise<void> {
         await InteractionUtils.send(intr, 'Pong!');
     };

@@ -32,7 +32,7 @@ export async function execute(oldState: VoiceState, newState: VoiceState) {
     const db = connect();
 
     // Get log channel ID from database
-    await new Promise((resolve, reject) => {
+    await new Promise(() => {
         db.get("SELECT log_channel_id FROM servers WHERE guild_id = ?", [guild.id], async (err: Error | null, row: Server) => {
             if (err) {
                 console.error(err);
@@ -45,7 +45,7 @@ export async function execute(oldState: VoiceState, newState: VoiceState) {
             if (!logChannel || logChannel.type !== ChannelType.GuildText) return;
 
             const now = Date.now();
-            let userProps: UserProps = {id: user.id, guildId: guild.id, guildNickname: guildNickname};
+            const userProps: UserProps = {id: user.id, guildId: guild.id, guildNickname: guildNickname};
             userProps.startTimestamps = await getStartTimestamps(db, guild.id, user.id)
 
             // Track join time

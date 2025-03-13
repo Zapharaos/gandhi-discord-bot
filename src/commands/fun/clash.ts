@@ -1,9 +1,5 @@
 import {
-    BaseInteraction,
-    CacheType, ChatInputCommandInteraction, CollectedInteraction,
-    CommandInteraction, CommandInteractionOption,
-    Interaction,
-    InteractionCollector,
+    ChatInputCommandInteraction,
     SlashCommandBuilder
 } from 'discord.js';
 
@@ -32,7 +28,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     // Get the punchlines for the game
-    let gamePunchlines = punchlines[game];
+    const gamePunchlines = punchlines[game];
 
     const clash = gamePunchlines[Math.floor(Math.random() * gamePunchlines.length)];
 

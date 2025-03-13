@@ -1,6 +1,7 @@
+/*
 import {ChatInputCommandInteraction, GuildMember, SlashCommandBuilder} from 'discord.js';
 import {connect, getStartTimestamps} from '@utils/sqlite';
-import {UserStats} from "@models/user_stats";
+import {UserStats} from "@models/database/user_stats";
 import {getGuildId, getInteractionUser, InteractionUser} from "@utils/interaction";
 
 export const data = new SlashCommandBuilder()
@@ -77,4 +78,4 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     // Close the database connection
     db.close();
-}
+}*/

@@ -26,7 +26,7 @@ let logger = pino(
 export class Logger {
     private static shardId: number;
 
-    public static info(message: string, obj?: any): void {
+    public static info(message: string, obj?: unknown): void {
         if (obj) {
             logger.info(obj, message);
         } else {
@@ -34,7 +34,7 @@ export class Logger {
         }
     }
 
-    public static warn(message: string, obj?: any): void {
+    public static warn(message: string, obj?: unknown): void {
         if (obj) {
             logger.warn(obj, message);
         } else {
@@ -42,7 +42,7 @@ export class Logger {
         }
     }
 
-    public static async error(message: string, obj?: any): Promise<void> {
+    public static async error(message: string, obj?: unknown): Promise<void> {
         // Log just a message if no error object
         if (!obj) {
             logger.error(message);

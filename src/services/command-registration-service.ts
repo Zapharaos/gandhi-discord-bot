@@ -18,11 +18,11 @@ export class CommandRegistrationService {
         localCmds: RESTPostAPIApplicationCommandsJSONBody[],
         args: string[]
     ): Promise<void> {
-        let remoteCmds = (await this.rest.get(
+        const remoteCmds = (await this.rest.get(
             Routes.applicationCommands(process.env.APP_ID ?? '')
         )) as RESTGetAPIApplicationCommandsResult;
 
-        let remoteCmdsOnly = remoteCmds.filter(
+        const remoteCmdsOnly = remoteCmds.filter(
             remoteCmd => !localCmds.some(localCmd => localCmd.name === remoteCmd.name)
         );
 
@@ -33,10 +33,10 @@ export class CommandRegistrationService {
         }
 
         // Process normally with args
-        let localCmdsOnRemote = localCmds.filter(localCmd =>
+        const localCmdsOnRemote = localCmds.filter(localCmd =>
             remoteCmds.some(remoteCmd => remoteCmd.name === localCmd.name)
         );
-        let localCmdsOnly = localCmds.filter(
+        const localCmdsOnly = localCmds.filter(
             localCmd => !remoteCmds.some(remoteCmd => remoteCmd.name === localCmd.name)
         );
 
@@ -50,13 +50,13 @@ export class CommandRegistrationService {
                 return;
             }
             case 'rename': {
-                let oldName = args[4];
-                let newName = args[5];
+                const oldName = args[4];
+                const newName = args[5];
                 await this.rename(oldName, newName, remoteCmds);
                 return;
             }
             case 'delete': {
-                let name = args[4];
+                const name = args[4];
                 await this.delete(name, remoteCmds);
                 return;
             }
@@ -95,7 +95,7 @@ export class CommandRegistrationService {
                     this.formatCommandList(localCmdsOnly)
                 )
             );
-            for (let localCmd of localCmdsOnly) {
+            for (const localCmd of localCmdsOnly) {
                 await this.rest.post(Routes.applicationCommands(process.env.APP_ID ?? ''), {
                     body: localCmd,
                 });
@@ -110,7 +110,7 @@ export class CommandRegistrationService {
                     this.formatCommandList(localCmdsOnRemote)
                 )
             );
-            for (let localCmd of localCmdsOnRemote) {
+            for (const localCmd of localCmdsOnRemote) {
                 await this.rest.post(Routes.applicationCommands(process.env.APP_ID ?? ''), {
                     body: localCmd,
                 });
@@ -125,7 +125,7 @@ export class CommandRegistrationService {
             return;
         }
 
-        let remoteCmd = remoteCmds.find(remoteCmd => remoteCmd.name == oldName);
+        const remoteCmd = remoteCmds.find(remoteCmd => remoteCmd.name == oldName);
         if (!remoteCmd) {
             Logger.error(
                 Logs.error.commandActionNotFound.replaceAll('{COMMAND_NAME}', oldName)
@@ -138,7 +138,7 @@ export class CommandRegistrationService {
                 .replaceAll('{OLD_COMMAND_NAME}', remoteCmd.name)
                 .replaceAll('{NEW_COMMAND_NAME}', newName)
         );
-        let body: RESTPatchAPIApplicationCommandJSONBody = {
+        const body: RESTPatchAPIApplicationCommandJSONBody = {
             name: newName,
         };
         await this.rest.patch(Routes.applicationCommand(process.env.APP_ID ?? '', remoteCmd.id), {
@@ -153,7 +153,7 @@ export class CommandRegistrationService {
             return;
         }
 
-        let remoteCmd = remoteCmds.find(remoteCmd => remoteCmd.name == name);
+        const remoteCmd = remoteCmds.find(remoteCmd => remoteCmd.name == name);
         if (!remoteCmd) {
             Logger.error(
                 Logs.error.commandActionNotFound.replaceAll('{COMMAND_NAME}', name)

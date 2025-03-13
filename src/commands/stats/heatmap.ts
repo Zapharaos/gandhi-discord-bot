@@ -1,3 +1,4 @@
+/*
 import {ChatInputCommandInteraction, SlashCommandBuilder} from 'discord.js';
 import puppeteer from 'puppeteer';
 import {
@@ -11,8 +12,8 @@ import {durationAsPercentage, getDuration, msToMinutes, tsToYYYYMMDD} from "@uti
 import {
     getStartTsStatKey,
     StartTimestamps
-} from "@models/start_timestamps";
-import {DailyStats, getDailyStatsStatKey} from "@models/daily_stats";
+} from "@models/database/start_timestamps";
+import {DailyStats, getDailyStatsStatKey} from "@models/database/daily_stats";
 import {stat} from "fs-extra";
 import {getInteractionUser, InteractionUser} from "@utils/interaction";
 
@@ -634,4 +635,4 @@ function getHtml(htmlProps: HtmlProps): string {
             </script>
         </html>
     `
-}
+}*/
