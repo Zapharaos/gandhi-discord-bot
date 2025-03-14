@@ -1,30 +1,47 @@
 import {DiscordAPIError} from 'discord.js';
 import {Response} from 'node-fetch';
 import pino from 'pino';
-import * as process from "node:process";
+import dotenv from "dotenv";
 
-let logger = pino(
-    {
-        formatters: {
-            level: label => {
-                return {level: label};
-            },
-        },
+dotenv.config();
+
+// Detect environment
+const isProduction = process.env.NODE_ENV === "production";
+
+const transportProd = pino.transport({
+    target: 'pino/file',
+    options: {
+        destination: "./var/log/gandhi-prod_" + Date.now() + ".log",
+        mkdir: true
+    }
+});
+
+const transportDev = pino.transport({
+    target: "pino-pretty",
+    options: {
+        colorize: true,
+        ignore: "pid,hostname",
+        translateTime: "SYS:yyyy-mm-dd HH:MM:ss.l o",
     },
-    process.env.LOGGING_PRETTY === 'true'
-        ? pino.transport({
-            target: 'pino-pretty',
-            options: {
-                colorize: true,
-                ignore: 'pid,hostname',
-                translateTime: 'yyyy-mm-dd HH:MM:ss.l',
-            },
-        })
-        : undefined
-);
+});
+
+let logger = pino({
+    level: isProduction ? "info" : "debug", // More verbose in dev, minimal in prod
+    formatters: {
+        level: (label) => ({ level: label }),
+    },
+}, isProduction ? transportProd : transportDev);
 
 export class Logger {
     private static shardId: number;
+
+    public static debug(message: string, obj?: unknown): void {
+        if (obj) {
+            logger.debug(obj, message);
+        } else {
+            logger.debug(message);
+        }
+    }
 
     public static info(message: string, obj?: unknown): void {
         if (obj) {

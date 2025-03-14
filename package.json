@@ -6,7 +6,7 @@
     "lint": "eslint . --cache --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint . --fix --cache --ext .js,.jsx,.ts,.tsx",
     "build": "tspc --project tsconfig.json",
-    "start": "npm run build && node --enable-source-maps dist/index.js",
+    "start": "npm run build && node --enable-source-maps dist/src/index.js",
     "old:build": "tspc",
     "old:migrate": "node dist/scripts/migrate.js",
     "old:deploy": "node dist/scripts/deploy-commands.js",
@@ -27,6 +27,7 @@
     "dotenv": "^16.4.7",
     "node-fetch": "^3.3.2",
     "pino": "^9.6.0",
+    "pino-pretty": "^13.0.0",
     "puppeteer": "^24.3.1",
     "sqlite3": "^5.1.7",
     "typescript": "^5.8.2"

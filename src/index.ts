@@ -19,9 +19,6 @@ dotenv.config();
 
 // TODO : tests
 
-// TODO : log files
-// TODO : upgrade logs
-
 // TODO : update commands
 // TODO : update events
 
