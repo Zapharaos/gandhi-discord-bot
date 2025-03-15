@@ -52,9 +52,8 @@ docker compose up -d
 
 To run the bot without Docker, use the following command:
 ```bash
-node deploy-commands.js # Deploy the commands to discord
-node migrate.js # Apply database migrations
-node index.js # Run the bot
+npm run build # If you only want to build the project
+npm run start # If you want to build and run the project
 ```
 
 ## License

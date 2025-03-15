@@ -8,11 +8,12 @@ WORKDIR /app
 
 # Install app dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 # Copy the rest of the application code
 COPY . .
 
+RUN npm run build
+
 # Command to run the start script
-RUN chmod +x start.sh
-CMD ["./start.sh"]
+CMD ["node", "--enable-source-maps", "/app/dist/src/index.js"]
