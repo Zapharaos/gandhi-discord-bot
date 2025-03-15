@@ -1,38 +1,31 @@
 import {
     ChatInputCommandInteraction,
-    SlashCommandBuilder
+    PermissionsString,
 } from 'discord.js';
+import {Command, CommandDeferType} from "@commands/commands";
+import {InteractionUtils} from "@utils/interaction";
 
-export const data = new SlashCommandBuilder()
-    .setName('clash')
-    .setDescription('Throws a diss at a user')
-    .addUserOption(option =>
-        option.setName('target')
-            .setDescription('The user to diss')
-            .setRequired(true)
-    )
-    .addStringOption(option =>
-        option.setName('game')
-            .setDescription('The game for which to generate a diss (CS or LoL)')
-            .addChoices({ name: 'LoL', value: 'lol' }, { name: 'CSGO', value: 'csgo' })
-            .setRequired(false)
-    );
+export class ClashCommand implements Command {
+    public names = ['clash'];
+    public deferType = CommandDeferType.NONE;
+    requireClientPerms: PermissionsString[];
 
-export async function execute(interaction: ChatInputCommandInteraction) {
-    const user = interaction.options.getMember('target');
-    let game = interaction.options.getString('game');
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public async execute(intr: ChatInputCommandInteraction): Promise<void> {
+        const user = intr.options.getMember('target');
+        let game = intr.options.getString('game');
 
-    // Pick a random game if bad game is provided
-    if (!game || !punchlines[game]) {
-        game = Object.keys(punchlines)[Math.floor(Math.random() * Object.keys(punchlines).length)];
+        // Pick a random game if bad game is provided
+        if (!game || !punchlines[game]) {
+            game = Object.keys(punchlines)[Math.floor(Math.random() * Object.keys(punchlines).length)];
+        }
+
+        // Get the punchlines for the game
+        const gamePunchlines = punchlines[game];
+        const clash = gamePunchlines[Math.floor(Math.random() * gamePunchlines.length)];
+
+        await InteractionUtils.send(intr, `${user} ${clash}`);
     }
-
-    // Get the punchlines for the game
-    const gamePunchlines = punchlines[game];
-
-    const clash = gamePunchlines[Math.floor(Math.random() * gamePunchlines.length)];
-
-    await interaction.reply(`${user} ${clash}`);
 }
 
 const punchlines: { [key: string]: string[] } = {

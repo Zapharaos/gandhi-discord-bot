@@ -38,4 +38,28 @@ export const CommandMetadata: {
             },
         ],
     },
+    Clash: {
+        type: ApplicationCommandType.ChatInput,
+        name: 'clash',
+        description: 'Throws a diss at a user',
+        dm_permission: true,
+        options: [
+            {
+                type: 6,
+                name: 'target',
+                description: 'The user to diss',
+                required: true,
+            },
+            {
+                type: 3,
+                name: 'game',
+                description: 'The game for which to generate a diss (CS or LoL)',
+                choices: [
+                    { name: 'LoL', value: 'lol' },
+                    { name: 'CSGO', value: 'csgo' },
+                ],
+                required: false,
+            },
+        ],
+    }
 };

@@ -13,6 +13,7 @@ export class SetLogChannelCommand implements Command {
         const channel = intr.options.getChannel("channel");
         if (channel?.type !== 0) { // 0 = GUILD_TEXT
             await InteractionUtils.send(intr, "❌ Please select a **text channel**!");
+            return;
         }
 
         const serverController = new ServerController();

@@ -13,6 +13,7 @@ import {EventDataService} from "@services/event-data-service";
 import Logs from '../lang/logs.json';
 import {DatabaseMigrationService} from "@services/database-migration-service";
 import {SetLogChannelCommand} from "@commands/utility/setlogchannel";
+import {ClashCommand} from "@commands/fun/clash";
 
 dotenv.config();
 
@@ -66,6 +67,7 @@ async function start(): Promise<void> {
     const commands: Command[] = [
         new PingCommand(),
         new SetLogChannelCommand(),
+        new ClashCommand(),
     ];
 
     // Event handlers
