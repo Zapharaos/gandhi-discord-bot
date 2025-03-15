@@ -20,4 +20,22 @@ export const CommandMetadata: {
         ]).toString(),
         options: [],
     },
+    SET_LOG_CHANNEL: {
+        type: ApplicationCommandType.ChatInput,
+        name: 'setlogchannel',
+        description: 'Set the log channel for voice-channel activity tracking',
+        dm_permission: false,
+        default_member_permissions: PermissionsBitField.resolve([
+            PermissionFlagsBits.Administrator,
+            PermissionFlagsBits.ManageChannels,
+        ]).toString(),
+        options: [
+            {
+                type: 7,
+                name: 'channel',
+                description: 'Select a text channel for logs',
+                required: true,
+            },
+        ],
+    },
 };

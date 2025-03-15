@@ -24,8 +24,8 @@ export class DatabaseMigrationService {
     private async migrateSqlite(): Promise<void> {
         Logger.info(Logs.info.sqliteMigrate);
 
-        const sqliteService = new SQLiteService();
-        await sqliteService.connect(process.env.DB_PATH ?? "data/gandhi-bot.db");
+        const sqliteService = SQLiteService.getInstance();
+        await sqliteService.connect(true);
 
         // Get local migrations and applied migrations
         const localMigrations = this.getLocalMigrations(this.migrationsPath, this.fileExtension);

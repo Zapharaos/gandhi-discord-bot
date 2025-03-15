@@ -20,6 +20,7 @@
     "paths": {
       "@commands/*": ["src/commands/*"],
       "@constants/*": ["src/constants/*"],
+      "@controllers/*": ["src/controllers/*"],
       "@events/*": ["src/events/*"],
       "@utils/*": ["src/utils/*"],
       "@models/*": ["src/models/*"],

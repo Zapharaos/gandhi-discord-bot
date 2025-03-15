@@ -5,17 +5,37 @@ import sqlite3, {Database} from "sqlite3";
 import {LocalMigration} from "@models/database/migration";
 import Logs from "../../lang/logs.json";
 
+const defaultDbFilePath = process.env.DB_PATH ?? "data/gandhi-bot.db";
+
 export class SQLiteService {
+
+    private static instance: SQLiteService;
     private db: Database | null = null;
 
-    async connect(dbFilePath: string): Promise<void> {
-        Logger.info(Logs.info.sqliteConnect.replaceAll('{DATABASE}', dbFilePath));
+    private constructor() {}
+
+    public static getInstance(): SQLiteService {
+        if (!SQLiteService.instance) {
+            SQLiteService.instance = new SQLiteService();
+        }
+        return SQLiteService.instance;
+    }
+
+    async getDatabase(): Promise<Database | null> {
+        if (!this.db) {
+            await this.connect();
+        }
+        return this.db;
+    }
+
+    async connect(log: boolean = false, dbFilePath: string = defaultDbFilePath): Promise<void> {
+        if (log) Logger.info(Logs.info.sqliteConnect.replaceAll('{DATABASE}', dbFilePath));
 
         // Create db folder if not exists
         const dataPath = './data';
         if (!fs.existsSync(dataPath)) {
             fs.mkdirSync(dataPath);
-            Logger.info(Logs.info.directoryCreate.replaceAll('{DIRECTORY}', dataPath));
+            if (log) Logger.info(Logs.info.directoryCreate.replaceAll('{DIRECTORY}', dataPath));
         }
 
         // Connect to the database
@@ -26,7 +46,7 @@ export class SQLiteService {
                     reject(err);
                     return;
                 }
-                Logger.info(Logs.info.sqliteConnected);
+                if (log) Logger.info(Logs.info.sqliteConnected);
 
                 // Ensure the migrations table exists
                 this.db.run(`
@@ -36,7 +56,6 @@ export class SQLiteService {
                     )
                 `, (err) => {
                     if (err) {
-                        Logger.error('table', err);
                         reject(err);
                     }
                     resolve();
@@ -49,6 +68,7 @@ export class SQLiteService {
         if (this.db) {
             Logger.info(Logs.info.sqliteDisconnect);
             this.db.close();
+            this.db = null;
         }
     }
 
@@ -100,7 +120,6 @@ export class SQLiteService {
             });
         });
     }
-
 
     serialize(callback: () => void): void {
         if (!this.db) {

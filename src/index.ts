@@ -12,13 +12,9 @@ import {CommandRegistrationService} from "@services/command-registration-service
 import {EventDataService} from "@services/event-data-service";
 import Logs from '../lang/logs.json';
 import {DatabaseMigrationService} from "@services/database-migration-service";
+import {SetLogChannelCommand} from "@commands/utility/setlogchannel";
 
 dotenv.config();
-
-// TODO : apply migrations
-// TODO : docker
-
-// TODO : tests
 
 // TODO : update commands
 // TODO : update events
@@ -27,6 +23,7 @@ async function start(): Promise<void> {
 
     Logger.info(Logs.info.appStarted);
 
+    // TODO : bot restart removes and redeploys commands -> need to ctrl R discord
     // Deploy commands
     try {
         const rest = new REST({version: '10'}).setToken(process.env.DISCORD_TOKEN ?? "");
@@ -67,6 +64,7 @@ async function start(): Promise<void> {
     // Commands
     const commands: Command[] = [
         new PingCommand(),
+        new SetLogChannelCommand(),
     ];
 
     // Event handlers
