@@ -8,6 +8,11 @@
     "lint": "eslint . --cache --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint . --fix --cache --ext .js,.jsx,.ts,.tsx",
     "build": "tspc --project tsconfig.json",
+    "commands:view": "npm run build && node --enable-source-maps dist/src/index.js commands view",
+    "commands:register": "npm run build && node --enable-source-maps dist/src/index.js commands register",
+    "commands:rename": "npm run build && node --enable-source-maps dist/src/index.js commands rename",
+    "commands:delete": "npm run build && node --enable-source-maps dist/src/index.js commands delete",
+    "commands:clear": "npm run build && node --enable-source-maps dist/src/index.js commands clear",
     "start": "npm run build && node --enable-source-maps dist/src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

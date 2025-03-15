@@ -22,23 +22,21 @@ export class CommandRegistrationService {
             Routes.applicationCommands(process.env.APP_ID ?? '')
         )) as RESTGetAPIApplicationCommandsResult;
 
-        const remoteCmdsOnly = remoteCmds.filter(
-            remoteCmd => !localCmds.some(localCmd => localCmd.name === remoteCmd.name)
-        );
-
-        // Force deploy if no args
-        if (args.length < 3) {
-            await this.clear(remoteCmdsOnly);
-            await this.register(localCmds, []);
-        }
-
-        // Process normally with args
-        const localCmdsOnRemote = localCmds.filter(localCmd =>
-            remoteCmds.some(remoteCmd => remoteCmd.name === localCmd.name)
+        const localCmdsOnRemote = localCmds.filter(
+            localCmd => remoteCmds.some(remoteCmd => remoteCmd.name === localCmd.name)
         );
         const localCmdsOnly = localCmds.filter(
             localCmd => !remoteCmds.some(remoteCmd => remoteCmd.name === localCmd.name)
         );
+        const remoteCmdsOnly = remoteCmds.filter(
+            remoteCmd => !localCmds.some(localCmd => localCmd.name === remoteCmd.name)
+        );
+
+        // Default update deploy if no args
+        if (process.argv[2] !== 'commands') {
+            await this.register(localCmdsOnly, localCmdsOnRemote);
+            return;
+        }
 
         switch (args[3]) {
             case 'view': {

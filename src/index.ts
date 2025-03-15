@@ -23,7 +23,6 @@ async function start(): Promise<void> {
 
     Logger.info(Logs.info.appStarted);
 
-    // TODO : bot restart removes and redeploys commands -> need to ctrl R discord
     // Deploy commands
     try {
         const rest = new REST({version: '10'}).setToken(process.env.DISCORD_TOKEN ?? "");
@@ -32,6 +31,8 @@ async function start(): Promise<void> {
             ...Object.values(CommandMetadata).sort((a, b) => (a.name > b.name ? 1 : -1)),
         ];
         await commandRegistrationService.process(localCmds, process.argv);
+        // Skip the rest of the script if we're just deploying commands
+        if(process.argv[2] === 'commands') return;
     } catch (error) {
         Logger.error(Logs.error.commandAction, error);
     }
