@@ -1,9 +1,9 @@
 // migrations/003_create_daily_stats.js
 
-export { up, down };
+export const name = '003_create_daily_stats'
 
-function up(db) {
-    db.run(`
+export const up = [
+    `
         CREATE TABLE IF NOT EXISTS daily_stats (
             guild_id TEXT,
             user_id TEXT,
@@ -15,9 +15,9 @@ function up(db) {
             time_camera INTEGER DEFAULT 0,
             PRIMARY KEY (guild_id, user_id, day_timestamp)
         )
-    `);
-}
+    `
+];
 
-function down(db) {
-    db.run("DROP TABLE IF EXISTS daily_stats");
-}
+export const down = [
+    "DROP TABLE IF EXISTS daily_stats"
+];

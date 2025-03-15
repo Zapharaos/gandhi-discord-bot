@@ -1,9 +1,9 @@
 // migrations/004_create_start_timestamps.js
 
-export { up, down };
+export const name = '004_create_start_timestamps';
 
-function up(db) {
-    db.run(`
+export const up = [
+    `
         CREATE TABLE IF NOT EXISTS start_timestamps (
             guild_id TEXT,
             user_id TEXT,
@@ -14,9 +14,9 @@ function up(db) {
             start_camera INTEGER DEFAULT 0,
             PRIMARY KEY (guild_id, user_id)
         )
-    `);
-}
+    `
+];
 
-function down(db) {
-    db.run("DROP TABLE IF EXISTS start_timestamps");
-}
+export const down = [
+    'DROP TABLE IF EXISTS start_timestamps'
+];

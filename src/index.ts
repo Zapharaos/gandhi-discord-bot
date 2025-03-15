@@ -11,6 +11,7 @@ import {CommandMetadata} from "@commands/metadata";
 import {CommandRegistrationService} from "@services/command-registration-service";
 import {EventDataService} from "@services/event-data-service";
 import Logs from '../lang/logs.json';
+import {DatabaseMigrationService} from "@services/database-migration-service";
 
 dotenv.config();
 
@@ -37,6 +38,18 @@ async function start(): Promise<void> {
     } catch (error) {
         Logger.error(Logs.error.commandAction, error);
     }
+
+    // Apply migrations
+    try {
+        const databaseMigrationService = new DatabaseMigrationService();
+        await databaseMigrationService.process();
+    } catch (error) {
+        Logger.error(Logs.error.databaseMigration, error);
+        return process.exit(1);
+    }
+
+    Logger.info(Logs.info.databaseMigration);
+
     // Wait for any final logs to be written.
     await new Promise(resolve => setTimeout(resolve, 1000));
 

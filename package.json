@@ -1,7 +1,9 @@
 {
   "name": "gandhi-discord-bot",
   "version": "1.1.0",
-  "main": "src/index.ts",
+  "author": "Matthieu FREITAG",
+  "license": "MIT",
+  "description": "Bot that tracks every user in every voice channels and logs it back",
   "scripts": {
     "lint": "eslint . --cache --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint . --fix --cache --ext .js,.jsx,.ts,.tsx",
@@ -14,9 +16,6 @@
     "old:dev": "npm run build && nodemon --ext ts --exec ts-node src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Matthieu FREITAG",
-  "license": "MIT",
-  "description": "Bot that tracks every user in every voice channels and logs it back",
   "dependencies": {
     "@discordjs/voice": "^0.18.0",
     "@types/dotenv": "^6.1.1",
