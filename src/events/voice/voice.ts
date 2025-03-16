@@ -1,3 +1,4 @@
+/*
 import {Events, ChannelType, VoiceState, Snowflake, GuildBasedChannel, TextChannel} from 'discord.js';
 import { formatDuration } from '@utils/time';
 import {
@@ -353,4 +354,4 @@ function hasDeafenAction(oldState: VoiceState, newState: VoiceState) {
 
 function staysMuteAction(oldState: VoiceState, newState: VoiceState) {
     return oldState.selfMute === newState.selfMute && newState.selfMute === true;
-}
+}*/

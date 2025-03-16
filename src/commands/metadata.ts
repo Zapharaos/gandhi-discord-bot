@@ -38,7 +38,7 @@ export const CommandMetadata: {
             },
         ],
     },
-    Clash: {
+    CLASH: {
         type: ApplicationCommandType.ChatInput,
         name: 'clash',
         description: 'Throws a diss at a user',
@@ -58,6 +58,20 @@ export const CommandMetadata: {
                     { name: 'LoL', value: 'lol' },
                     { name: 'CSGO', value: 'csgo' },
                 ],
+                required: false,
+            },
+        ],
+    },
+    BIGGUSDICKUS: {
+        type: ApplicationCommandType.ChatInput,
+        name: 'biggusdickus',
+        description: 'Returns the size of your big long streak',
+        dm_permission: true,
+        options: [
+            {
+                type: 6,
+                name: 'target',
+                description: 'The user to get juicy streak from',
                 required: false,
             },
         ],

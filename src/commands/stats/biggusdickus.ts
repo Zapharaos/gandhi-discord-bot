@@ -1,81 +1,78 @@
-/*
-import {ChatInputCommandInteraction, GuildMember, SlashCommandBuilder} from 'discord.js';
-import {connect, getStartTimestamps} from '@utils/sqlite';
-import {UserStats} from "@models/database/user_stats";
-import {getGuildId, getInteractionUser, InteractionUser} from "@utils/interaction";
+import {ChatInputCommandInteraction, PermissionsString} from 'discord.js';
+import {InteractionUser, InteractionUtils} from "@utils/interaction";
+import {Command, CommandDeferType} from "@commands/commands";
+import {UserStatsController} from "@controllers/user-stats";
+import {StartTimestampsController} from "@controllers/start-timestamps";
+import {TimeUtils} from "@utils/time";
+import {StartTimestampUtils} from "@utils/start-timestamp";
 
-export const data = new SlashCommandBuilder()
-    .setName('biggusdickus')
-    .setDescription('Returns the size of your big long streak')
-    .addUserOption(option =>
-        option.setName('target')
-            .setDescription('The user to get juicy streak from')
-    );
+export class BiggusdickusCommand implements Command {
+    public names = ['biggusdickus'];
+    public deferType = CommandDeferType.NONE;
+    public requireClientPerms: PermissionsString[];
 
-export async function execute(interaction: ChatInputCommandInteraction) {
+    public async execute(intr: ChatInputCommandInteraction): Promise<void> {
+        const guildId = InteractionUtils.getGuildId(intr);
+        const interactionUser: InteractionUser = InteractionUtils.getInteractionUser(intr);
+        const intrUserRaw = InteractionUtils.getInteractionUserRaw(intr);
 
-    const guildId = getGuildId(interaction);
-    const interactionUser: InteractionUser = getInteractionUser(interaction);
+        // Get the user stats
+        const userStatsController = new UserStatsController();
+        const userStats = await userStatsController.getUserInGuild(guildId, interactionUser.id);
 
-    // Connect to the database
-    const db = connect();
-
-    db.get(`
-        SELECT * FROM user_stats WHERE guild_id = ? AND user_id = ?
-    `, [guildId, interactionUser.id], async (err: Error | null, row: UserStats) => {
-        if (err) {
-            console.error(err);
-            return interaction.reply('An error occurred while fetching the stats.');
+        if(!userStats){
+            await InteractionUtils.send(intr, `${intrUserRaw} has no stats yet!`);
+            return;
         }
 
-        if (!row) {
-            return interaction.reply(`No stats found for user ${interactionUser.name}.`);
-        }
+        // Get the user live stats
+        const startTimestampsController = new StartTimestampsController();
+        const startTimestamps = await startTimestampsController.getStartTimestamps(guildId, interactionUser.id);
 
-        let streak_message1 = '';
-        let streak_message2 = '';
-        let streak = row.daily_streak;
-        function getPP(num: number){
-            let ppsize='';
-            for (let i = 0; i < num; i++){
-                ppsize += '=';
-            }
-            return ppsize;
-        }
+        let streak = userStats.daily_streak;
 
         // Check if the user has any live start timestamps
-        const startTimestamps = await getStartTimestamps(db, guildId, interactionUser.id);
-        if (startTimestamps && startTimestamps.start_connected !== 0) {
-            const todayDate = new Date().setUTCHours(0, 0, 0, 0);
-            const lastActivityDate = new Date(row.last_activity).setUTCHours(0, 0, 0, 0);
+        if (StartTimestampUtils.isActive(startTimestamps)) {
+            const todayDate = TimeUtils.tsRoundDownToDay();
+            // Compare with last activity date -> every user action updates the last activity date and the daily streak
+            const lastActivityDate = TimeUtils.tsRoundDownToDay(userStats.last_activity);
             // Calculate the difference in days between the last activity and today = live streak
-            const daysDifference = Math.floor((todayDate - lastActivityDate) / (1000 * 60 * 60 * 24));
-            streak += daysDifference;
+            const daysDifference = TimeUtils.msToDays(TimeUtils.getDuration(lastActivityDate, todayDate));
+            if (daysDifference > 0) {
+                streak += daysDifference;
+            }
         }
 
-        if (3 <= streak && streak < 5) {
-            streak_message1 = 'Hey';
-            streak_message2 = 'Nice pp 🥵';
+        // Build the reply
+        const reply = this.formatReply(streak, intrUserRaw);
+        await InteractionUtils.send(intr, reply);
+    }
+
+    private getPP(num: number){
+        let ppsize='';
+        for (let i = 0; i < num; i++){
+            ppsize += '=';
+        }
+        return ppsize;
+    }
+
+    private getStreakMessages(streak: number): string[] {
+        if (streak < 5) {
+            return ['Hey', 'Nice pp 🥵'];
         } else if (5 < streak && streak < 10) {
-            streak_message1 = 'Oh wow';
-            streak_message2 = '🥵 Sheesh nice pp 🍆💦';
-        } else if (10 <= streak) {
-            streak_message1 = 'Oooooh Mmmmmabouttocuuum 😫';
-            streak_message2 = '🥵 Holy shit Big big PP 🍆💦🍑';
-        } else {
-            streak_message1 = 'Oh';
-            streak_message2 = 'hihi small pp 🤭';
+            return ['Oh wow', '🥵 Sheesh nice pp 🍆💦'];
         }
+        return ['Oooooh Mmmmmabouttocuuum 😫', '🥵 Holy shit Big big PP 🍆💦🍑'];
+    }
 
-        const statsMessage = `
-            ${streak_message1} ${interactionUser.name}
-            ${streak_message2}
-            \`8${getPP(streak)}D\`
+    private formatReply(streak: number, user: unknown): string {
+        const pp = this.getPP(streak);
+        const messages = this.getStreakMessages(streak);
+
+        return `
+            ${messages[0]} ${user}
+            ${messages[1]}
+            \`8${pp}D\`
         `.replace(/^\s+/gm, ''); // Remove leading spaces from each line
-
-        interaction.reply(statsMessage);
-    });
-
-    // Close the database connection
-    db.close();
-}*/
+    }
+}

@@ -14,11 +14,13 @@ import Logs from '../lang/logs.json';
 import {DatabaseMigrationService} from "@services/database-migration-service";
 import {SetLogChannelCommand} from "@commands/utility/setlogchannel";
 import {ClashCommand} from "@commands/fun/clash";
+import {BiggusdickusCommand} from "@commands/stats/biggusdickus";
 
 dotenv.config();
 
 // TODO : update commands
 // TODO : update events
+// TODO : review logs : info or debug
 
 async function start(): Promise<void> {
 
@@ -68,6 +70,7 @@ async function start(): Promise<void> {
         new PingCommand(),
         new SetLogChannelCommand(),
         new ClashCommand(),
+        new BiggusdickusCommand(),
     ];
 
     // Event handlers

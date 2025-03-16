@@ -11,7 +11,13 @@ import {
     Message,
     MessageComponentInteraction,
     ModalSubmitInteraction,
-    WebhookMessageEditOptions, ChatInputCommandInteraction, GuildMember, Guild, MessageFlags,
+    WebhookMessageEditOptions,
+    ChatInputCommandInteraction,
+    GuildMember,
+    Guild,
+    MessageFlags,
+    CommandInteractionOption,
+    CacheType,
 } from 'discord.js';
 
 const IGNORED_ERRORS = [
@@ -184,8 +190,16 @@ export class InteractionUtils {
         return interaction.guildId;
     }
 
-    public static getTargetMember(interaction: ChatInputCommandInteraction): GuildMember | null {
-        const target = interaction.options.getMember('target');
+    private static getTargetRaw(interaction: ChatInputCommandInteraction): NonNullable<CommandInteractionOption<CacheType>["member"]> {
+        return interaction.options.getMember('target');
+    }
+
+    public static getInteractionUserRaw(interaction: ChatInputCommandInteraction): GuildMember | NonNullable<CommandInteractionOption<CacheType>["member"]>{
+        return this.getTargetRaw(interaction) ?? interaction.member;
+    }
+
+    private static getTargetMember(interaction: ChatInputCommandInteraction): GuildMember | null {
+        const target = this.getTargetRaw(interaction);
         return (target as GuildMember) ?? null;
     }
 

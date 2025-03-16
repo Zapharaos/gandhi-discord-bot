@@ -8,7 +8,7 @@ import {InteractionUtils} from "@utils/interaction";
 export class ClashCommand implements Command {
     public names = ['clash'];
     public deferType = CommandDeferType.NONE;
-    requireClientPerms: PermissionsString[];
+    public requireClientPerms: PermissionsString[];
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async execute(intr: ChatInputCommandInteraction): Promise<void> {

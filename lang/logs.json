@@ -32,7 +32,9 @@
     "sqliteMigrate": "Migrating SQLite database.",
     "sqliteMigration": "Applied migration {MIGRATION_NAME} to SQLite database.",
     "directoryCreate": "Creating directory '{DIRECTORY}'.",
-    "queryServerLogChannel": "Successfully updated server {GUILD_ID} with log channel {CHANNEL_ID}."
+    "queryServerLogChannel": "Successfully updated server {GUILD_ID} with log channel {CHANNEL_ID}.",
+    "queryUserStatsInGuild": "Successfully queried user {USER_ID} stats in guild {GUILD_ID}.",
+    "queryUserStartTsInGuild": "Successfully queried user {USER_ID} start timestamp in guild {GUILD_ID}."
   },
   "warn": {
     "managerNoShards": "No shards to spawn."
@@ -67,6 +69,8 @@
     "databaseMigration": "Failed to handle databases migrations.",
     "sqliteConnect": "An error occurred while connecting to the SQLite database.",
     "sqliteMigration": "An error occurred while applying migration {MIGRATION_NAME} to the SQLite database.",
-    "queryServerLogChannel": "An error occurred while setting the server {GUILD_ID} with log channel {CHANNEL_ID}."
+    "queryServerLogChannel": "An error occurred while setting the server {GUILD_ID} with log channel {CHANNEL_ID}.",
+    "queryUserStatsInGuild": "An error occurred while querying user {USER_ID} stats in guild {GUILD_ID}.",
+    "queryUserStartTsInGuild": "An error occurred while querying user {USER_ID} start timestamp in guild {GUILD_ID}."
   }
 }
