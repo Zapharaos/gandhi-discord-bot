@@ -4,7 +4,6 @@ import {Command, CommandDeferType} from "@commands/commands";
 import {UserStatsController} from "@controllers/user-stats";
 import {StartTimestampsController} from "@controllers/start-timestamps";
 import {TimeUtils} from "@utils/time";
-import {StartTimestampUtils} from "@utils/start-timestamp";
 import {Logger} from "@services/logger";
 
 export class BiggusdickusCommand implements Command {
@@ -29,12 +28,12 @@ export class BiggusdickusCommand implements Command {
 
         // Get the user live stats
         const startTimestampsController = new StartTimestampsController();
-        const startTimestamps = await startTimestampsController.getStartTimestamps(guildId, interactionUser.id);
+        const startTimestamps = await startTimestampsController.getUserByGuild(guildId, interactionUser.id);
 
         let streak = userStats.daily_streak;
 
         // Check if the user has any live start timestamps
-        if (StartTimestampUtils.isActive(startTimestamps)) {
+        if (startTimestamps.isActive()) {
             const todayDate = TimeUtils.tsRoundDownToDay();
             // Compare with last activity date -> every user action updates the last activity date and the daily streak
             const lastActivityDate = TimeUtils.tsRoundDownToDay(userStats.last_activity);

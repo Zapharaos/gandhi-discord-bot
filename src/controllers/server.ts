@@ -10,7 +10,7 @@ export class ServerController {
     }
 
     async setLogChannel(guildID: string, channelId: string): Promise<boolean> {
-        let db = await this.sqliteService.getDatabase();
+        const db = await this.sqliteService.getDatabase();
 
         return new Promise<boolean>((resolve, reject) => {
             const query = `INSERT INTO servers (guild_id, log_channel_id)

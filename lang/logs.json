@@ -67,13 +67,17 @@
     "sqliteConnect": "An error occurred while connecting to the SQLite database.",
     "sqliteMigration": "An error occurred while applying migration {MIGRATION_NAME} to the SQLite database.",
     "queryServerLogChannel": "An error occurred while setting the server {GUILD_ID} with log channel {CHANNEL_ID}.",
-    "queryUserStatsInGuild": "An error occurred while querying user {USER_ID} stats in guild {GUILD_ID}.",
-    "queryUserStartTsInGuild": "An error occurred while querying user {USER_ID} start timestamp in guild {GUILD_ID}."
+    "queryStatsUserInGuild": "An error occurred while querying user {USER_ID} stats in guild {GUILD_ID}.",
+    "queryStatsUserInGuildByStat": "An error occurred while querying users {STAT_KEY} in guild {GUILD_ID}.",
+    "queryStartTsUserInGuild": "An error occurred while querying user {USER_ID} start timestamp in guild {GUILD_ID}.",
+    "queryStartTsUserInGuildByStat": "An error occurred while querying users start timestamp in guild {GUILD_ID}."
   },
   "debug": {
     "sqliteConnected": "Already connected to SQLite database.",
     "queryServerLogChannel": "Successfully updated server {GUILD_ID} with log channel {CHANNEL_ID}.",
-    "queryUserStartTsInGuild": "Successfully queried user {USER_ID} start timestamp in guild {GUILD_ID}.",
-    "queryUserStatsInGuild": "Successfully queried user {USER_ID} stats in guild {GUILD_ID}."
+    "queryStatsUserInGuild": "Successfully queried user {USER_ID} stats in guild {GUILD_ID}.",
+    "queryStatsUserInGuildByStat": "Successfully queried users {STAT_KEY} in guild {GUILD_ID}.",
+    "queryStartTsUserInGuild": "Successfully queried user {USER_ID} start timestamp in guild {GUILD_ID}.",
+    "queryStartTsUserInGuildByStat": "Successfully queried users start timestamp in guild {GUILD_ID}."
   }
 }

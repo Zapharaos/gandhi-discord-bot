@@ -43,8 +43,9 @@ export class InteractionUtils {
         hidden: boolean = false
     ): Promise<InteractionResponse | void> {
         try {
+
             return await intr.deferReply({
-                flags: hidden ? MessageFlags.Ephemeral : null,
+                flags: hidden ? MessageFlags.Ephemeral : undefined,
             });
         } catch (error) {
             if (

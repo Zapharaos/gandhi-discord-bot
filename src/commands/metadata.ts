@@ -71,8 +71,31 @@ export const CommandMetadata: {
             {
                 type: 6,
                 name: 'target',
-                description: 'The user to get juicy streak from',
+                description: 'The user to get juicy streak from (default: yourself)',
                 required: false,
+            },
+        ],
+    },
+    RANK: {
+        type: ApplicationCommandType.ChatInput,
+        name: 'rank',
+        description: 'Returns the server ranking for a specific stat',
+        dm_permission: true,
+        options: [
+            {
+                type: 3,
+                name: 'stat',
+                description: 'The stat to rank by (default: Time Connected)',
+                required: false,
+                choices: [
+                    { name: 'Time Connected', value: 'time_connected' },
+                    { name: 'Time Muted', value: 'time_muted' },
+                    { name: 'Time Deafened', value: 'time_deafened' },
+                    { name: 'Time Screen Sharing', value: 'time_screen_sharing' },
+                    { name: 'Time Camera', value: 'time_camera' },
+                    { name: 'Daily Streak', value: 'daily_streak' },
+                    { name: 'Total Joins', value: 'total_joins' },
+                ],
             },
         ],
     }

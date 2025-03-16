@@ -1,7 +1,6 @@
 import sqlite3 from "sqlite3";
 import dotenv from "dotenv";
 import {UserStats} from "@models/database/user_stats";
-import {StartTimestamps} from "@models/database/start_timestamps";
 import path from "path";
 
 sqlite3.verbose();
@@ -11,8 +10,6 @@ export {
     connect,
     updateUserStats,
     incrementTotalJoins,
-    getGuildStartTimestamps,
-    getStartTimestamps,
     setStartTimestamp,
     getLiveDurationPerDay
 };
@@ -153,59 +150,6 @@ function updateLastActivity(db: Database, guildId: string, userId: string, now: 
         `, [guildId, userId, newStreak, now, newStreak, now], function (err: Error | null) {
             if (err) {
                 console.error("updateLastActivity: INSERT: Error running SQL query:", err.message);
-            }
-        });
-    });
-}
-
-/**
- * Retrieves the start timestamps for a guild from the database.
- *
- * @param {Database} db - The SQLite database instance.
- * @param {string} guildId - The ID of the guild.
- * @param {string} stat - The statistic to retrieve.
- * @returns {Promise<StartTimestamps[]>} A promise that resolves to the start timestamps.
- */
-function getGuildStartTimestamps(db: Database, guildId: string, stat: string): Promise<StartTimestamps[]> {
-    return new Promise((resolve, reject) => {
-        db.all(`
-            SELECT start_connected, ${stat}
-            FROM start_timestamps
-            WHERE guild_id = ?
-              AND start_connected IS NOT 0
-        `, [guildId], (err: Error | null, rows: StartTimestamps[]) => {
-            if (err) {
-                console.error("getGuildStartTimestamps: Error running SQL query:", err.message);
-                reject(err);
-            } else {
-                resolve(rows);
-            }
-        });
-    });
-}
-
-/**
- * Retrieves the start timestamps for a user in a guild from the database.
- *
- * @param {Database} db - The SQLite database instance.
- * @param {string} guildId - The ID of the guild.
- * @param {string} userId - The ID of the user.
- * @returns {Promise<StartTimestamps>} A promise that resolves to the start timestamps.
- */
-function getStartTimestamps(db: Database, guildId: string, userId: string): Promise<StartTimestamps> {
-    return new Promise((resolve, reject) => {
-        db.get(`
-            SELECT *
-            FROM start_timestamps
-            WHERE guild_id = ?
-              AND user_id = ?
-              AND start_connected IS NOT 0
-        `, [guildId, userId], (err: Error | null, row: StartTimestamps) => {
-            if (err) {
-                console.error("getStartTimestamps: Error running SQL query:", err.message);
-                reject(err);
-            } else {
-                resolve(row);
             }
         });
     });

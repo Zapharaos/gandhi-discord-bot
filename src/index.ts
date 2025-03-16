@@ -15,11 +15,15 @@ import {DatabaseMigrationService} from "@services/database-migration-service";
 import {SetLogChannelCommand} from "@commands/utility/setlogchannel";
 import {ClashCommand} from "@commands/fun/clash";
 import {BiggusdickusCommand} from "@commands/stats/biggusdickus";
+import {RankCommand} from "@commands/stats/rank";
 
 dotenv.config();
 
 // TODO : update commands
 // TODO : update events
+
+// TODO : v2.1.0 -> sql queries
+// TODO : v2.2.0 -> max stats + stats with rank associated + display time with double digits
 
 async function start(): Promise<void> {
 
@@ -70,6 +74,7 @@ async function start(): Promise<void> {
         new SetLogChannelCommand(),
         new ClashCommand(),
         new BiggusdickusCommand(),
+        new RankCommand(),
     ];
 
     // Event handlers

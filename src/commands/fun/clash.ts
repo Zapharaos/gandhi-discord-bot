@@ -11,7 +11,6 @@ export class ClashCommand implements Command {
     public deferType = CommandDeferType.NONE;
     public requireClientPerms: PermissionsString[];
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async execute(intr: ChatInputCommandInteraction): Promise<void> {
         const user = intr.options.getMember('target');
         let game = intr.options.getString('game');
