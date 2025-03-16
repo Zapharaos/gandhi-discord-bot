@@ -5,6 +5,7 @@ import {UserStatsController} from "@controllers/user-stats";
 import {StartTimestampsController} from "@controllers/start-timestamps";
 import {TimeUtils} from "@utils/time";
 import {StartTimestampUtils} from "@utils/start-timestamp";
+import {Logger} from "@services/logger";
 
 export class BiggusdickusCommand implements Command {
     public names = ['biggusdickus'];
@@ -14,6 +15,7 @@ export class BiggusdickusCommand implements Command {
     public async execute(intr: ChatInputCommandInteraction): Promise<void> {
         const guildId = InteractionUtils.getGuildId(intr);
         const interactionUser: InteractionUser = InteractionUtils.getInteractionUser(intr);
+        // intrUserRaw is the user mention in the reply
         const intrUserRaw = InteractionUtils.getInteractionUserRaw(intr);
 
         // Get the user stats
@@ -40,8 +42,11 @@ export class BiggusdickusCommand implements Command {
             const daysDifference = TimeUtils.msToDays(TimeUtils.getDuration(lastActivityDate, todayDate));
             if (daysDifference > 0) {
                 streak += daysDifference;
+                Logger.debug(`Biggusdickus - User ${interactionUser.id} has a live streak of ${daysDifference}`);
             }
         }
+
+        Logger.debug(`Biggusdickus - User ${interactionUser.id} has a global streak of ${streak}`);
 
         // Build the reply
         const reply = this.formatReply(streak, intrUserRaw);

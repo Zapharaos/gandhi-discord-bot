@@ -28,7 +28,7 @@ export class ServerController {
                     reject(err);
                     return;
                 }
-                Logger.info(Logs.info.queryServerLogChannel
+                Logger.debug(Logs.debug.queryServerLogChannel
                     .replaceAll('{GUILD_ID}', guildID)
                     .replaceAll('{CHANNEL_ID}', channelId)
                 );

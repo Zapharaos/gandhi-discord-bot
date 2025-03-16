@@ -29,7 +29,7 @@ export class UserStatsController {
                     reject(err);
                     return;
                 }
-                Logger.info(Logs.info.queryUserStatsInGuild
+                Logger.debug(Logs.debug.queryUserStatsInGuild
                     .replaceAll('{GUILD_ID}', guildID)
                     .replaceAll('{USER_ID}', userID)
                 );

@@ -20,7 +20,6 @@ dotenv.config();
 
 // TODO : update commands
 // TODO : update events
-// TODO : review logs : info or debug
 
 async function start(): Promise<void> {
 

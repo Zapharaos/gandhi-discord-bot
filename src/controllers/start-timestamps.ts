@@ -22,14 +22,14 @@ export class StartTimestampsController {
             db.get(query, [guildID, userID], (err: Error | null, row: any) => {
                 if (err) {
                     Logger.error(
-                        Logs.info.queryUserStartTsInGuild
+                        Logs.error.queryUserStartTsInGuild
                             .replaceAll('{GUILD_ID}', guildID)
                             .replaceAll('{USER_ID}', userID)
                         , err);
                     reject(err);
                     return;
                 }
-                Logger.info(Logs.info.queryUserStartTsInGuild
+                Logger.debug(Logs.debug.queryUserStartTsInGuild
                     .replaceAll('{GUILD_ID}', guildID)
                     .replaceAll('{USER_ID}', userID)
                 );

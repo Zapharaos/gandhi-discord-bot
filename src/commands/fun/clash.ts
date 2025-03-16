@@ -4,6 +4,7 @@ import {
 } from 'discord.js';
 import {Command, CommandDeferType} from "@commands/commands";
 import {InteractionUtils} from "@utils/interaction";
+import {Logger} from "@services/logger";
 
 export class ClashCommand implements Command {
     public names = ['clash'];
@@ -18,6 +19,7 @@ export class ClashCommand implements Command {
         // Pick a random game if bad game is provided
         if (!game || !punchlines[game]) {
             game = Object.keys(punchlines)[Math.floor(Math.random() * Object.keys(punchlines).length)];
+            Logger.debug(`Clash - Input game is invalid, providing random : ${game}`);
         }
 
         // Get the punchlines for the game

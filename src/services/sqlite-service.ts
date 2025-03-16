@@ -24,6 +24,7 @@ export class SQLiteService {
     async getDatabase(): Promise<Database | null> {
         if (!this.db) {
             await this.connect();
+            Logger.debug(Logs.debug.sqliteConnected);
         }
         return this.db;
     }
