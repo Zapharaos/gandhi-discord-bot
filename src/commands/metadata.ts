@@ -98,5 +98,19 @@ export const CommandMetadata: {
                 ],
             },
         ],
-    }
+    },
+    STATS: {
+        type: ApplicationCommandType.ChatInput,
+        name: 'stats',
+        description: 'Returns the stats for a specific user',
+        dm_permission: true,
+        options: [
+            {
+                type: 6,
+                name: 'target',
+                description: 'The user to get stats for (default: yourself)',
+                required: false,
+            },
+        ],
+    },
 };

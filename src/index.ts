@@ -16,6 +16,7 @@ import {SetLogChannelCommand} from "@commands/utility/setlogchannel";
 import {ClashCommand} from "@commands/fun/clash";
 import {BiggusdickusCommand} from "@commands/stats/biggusdickus";
 import {RankCommand} from "@commands/stats/rank";
+import {StatsCommand} from "@commands/stats/stats";
 
 dotenv.config();
 
@@ -75,6 +76,7 @@ async function start(): Promise<void> {
         new ClashCommand(),
         new BiggusdickusCommand(),
         new RankCommand(),
+        new StatsCommand(),
     ];
 
     // Event handlers

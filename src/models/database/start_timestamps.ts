@@ -53,4 +53,25 @@ export class StartTimestamps {
             userStats.time_connected += liveDurationConnected;
         }
     }
+
+    public combineAllWithUserStats(userStats: UserStats, now: number): void {
+        // User is not active yet -> no live stats to use
+        if (!this.isActive()) return;
+
+        if (this.start_connected !== 0) {
+            userStats.time_connected += TimeUtils.getDuration(this.start_connected, now);
+        }
+        if (this.start_muted !== 0) {
+            userStats.time_muted += TimeUtils.getDuration(this.start_muted, now);
+        }
+        if (this.start_deafened !== 0) {
+            userStats.time_deafened += TimeUtils.getDuration(this.start_deafened, now);
+        }
+        if (this.start_screen_sharing !== 0) {
+            userStats.time_screen_sharing += TimeUtils.getDuration(this.start_screen_sharing, now);
+        }
+        if (this.start_camera !== 0) {
+            userStats.time_camera += TimeUtils.getDuration(this.start_camera, now);
+        }
+    }
 }

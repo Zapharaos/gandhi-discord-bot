@@ -20,7 +20,6 @@ export class BiggusdickusCommand implements Command {
         // Get the user stats
         const userStatsController = new UserStatsController();
         const userStats = await userStatsController.getUserInGuild(guildId, interactionUser.id);
-
         if(!userStats){
             await InteractionUtils.send(intr, `${intrUserRaw} has no stats yet!`);
             return;
@@ -33,7 +32,7 @@ export class BiggusdickusCommand implements Command {
         let streak = userStats.daily_streak;
 
         // Check if the user has any live start timestamps
-        if (startTimestamps.isActive()) {
+        if (startTimestamps?.isActive()) {
             const todayDate = TimeUtils.tsRoundDownToDay();
             // Compare with last activity date -> every user action updates the last activity date and the daily streak
             const lastActivityDate = TimeUtils.tsRoundDownToDay(userStats.last_activity);

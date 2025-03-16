@@ -1,74 +1,80 @@
-/*
-import {ChatInputCommandInteraction, SlashCommandBuilder} from 'discord.js';
-import {connect, getStartTimestamps} from '@utils/sqlite';
-import { formatDuration, formatDate } from '@utils/time';
-import { getPercentageString } from '@utils/utils';
+import {Command, CommandDeferType} from "@commands/commands";
+import {ChatInputCommandInteraction, PermissionsString} from "discord.js";
+import {InteractionUser, InteractionUtils} from "@utils/interaction";
+import {UserStatsController} from "@controllers/user-stats";
+import {StartTimestampsController} from "@controllers/start-timestamps";
+import {TimeUtils} from "@utils/time";
 import {UserStats} from "@models/database/user_stats";
-import {getGuildId, getInteractionUser, InteractionUser} from "@utils/interaction";
+import {NumberUtils} from "@utils/number";
 
-export const data = new SlashCommandBuilder()
-    .setName('stats')
-    .setDescription('Returns the stats for a specific user')
-    .addUserOption(option =>
-        option.setName('target')
-            .setDescription('The user to get stats for')
-    );
+export class StatsCommand implements Command {
+    public names = ['stats'];
+    public deferType = CommandDeferType.PUBLIC;
+    public requireClientPerms: PermissionsString[] = [];
 
-export async function execute(interaction: ChatInputCommandInteraction) {
-    const guildId = getGuildId(interaction);
-    const interactionUser: InteractionUser = getInteractionUser(interaction);
-
-    // Connect to the database
-    const db = connect();
-
-    db.get(`
-        SELECT * FROM user_stats WHERE guild_id = ? AND user_id = ?
-    `, [guildId, interactionUser.id], async (err: Error | null, row: UserStats) => {
-        if (err) {
-            console.error(err);
-            return interaction.reply('An error occurred while fetching the stats.');
+    public async execute(intr: ChatInputCommandInteraction): Promise<void> {
+        const guildId = InteractionUtils.getGuildId(intr);
+        if (!guildId) {
+            await InteractionUtils.editReply(intr, 'This command can only be used in a server.');
+            return;
         }
 
-        if (!row) {
-            return interaction.reply(`No stats found for user ${interactionUser.name}.`);
+        const interactionUser: InteractionUser = InteractionUtils.getInteractionUser(intr);
+
+        // Get the user stats
+        const userStatsController = new UserStatsController();
+        const userStats = await userStatsController.getUserInGuild(guildId, interactionUser.id);
+        if(!userStats){
+            await InteractionUtils.editReply(intr, `${interactionUser.id} has no stats yet!`);
+            return;
         }
 
-        // Add live stats to the row
-        const now = Date.now();
-        const startTimestamps = await getStartTimestamps(db, guildId, interactionUser.id);
-        if (startTimestamps) {
-            if (startTimestamps.start_connected !== 0) {
-                row.time_connected += now - startTimestamps.start_connected;
-            }
-            if (startTimestamps.start_muted !== 0) {
-                row.time_muted += now - startTimestamps.start_muted;
-            }
-            if (startTimestamps.start_deafened !== 0) {
-                row.time_deafened += now - startTimestamps.start_deafened;
-            }
-            if (startTimestamps.start_screen_sharing !== 0) {
-                row.time_screen_sharing += now - startTimestamps.start_screen_sharing;
-            }
-            if (startTimestamps.start_camera !== 0) {
-                row.time_camera += now - startTimestamps.start_camera;
-            }
-        }
+        // Get the user live stats
+        const startTimestampsController = new StartTimestampsController();
+        const startTimestamps = await startTimestampsController.getUserByGuild(guildId, interactionUser.id);
 
-        const statsMessage = `
-            **Stats for ${interactionUser.name}**
-            \`Time Connected\` ${formatDuration(row.time_connected)}
-            \`Time Muted\` ${formatDuration(row.time_muted)} **(${getPercentageString(row.time_muted, row.time_connected)})**
-            \`Time Deafened\` ${formatDuration(row.time_deafened)} **(${getPercentageString(row.time_deafened, row.time_connected)})**
-            \`Time Screen Sharing\` ${formatDuration(row.time_screen_sharing)} **(${getPercentageString(row.time_screen_sharing, row.time_connected)})**
-            \`Time Camera\` ${formatDuration(row.time_camera)} **(${getPercentageString(row.time_camera, row.time_connected)})**
-            \`Last Activity\` ${formatDate(new Date(row.last_activity))}
-            \`Daily Streak\` ${row.daily_streak}
-            \`Total Joins\` ${row.total_joins}
+        // Combine the live stats with the user stats
+        startTimestamps?.combineAllWithUserStats(userStats, Date.now());
+
+        // Build the reply
+        const reply = this.formatReply(userStats, InteractionUtils.getInteractionUserRaw(intr));
+        await InteractionUtils.editReply(intr, reply);
+    }
+
+    private formatReply(userStats: UserStats, user: unknown): string {
+
+        // Time connected
+        const timeConnected = TimeUtils.formatDuration(userStats.time_connected);
+
+        // Time muted
+        const timeMuted = TimeUtils.formatDuration(userStats.time_muted);
+        const timeMutedPercentage = NumberUtils.getPercentageString(userStats.time_muted, userStats.time_connected);
+
+        // Time deafened
+        const timeDeafened = TimeUtils.formatDuration(userStats.time_deafened);
+        const timeDeafenedPercentage = NumberUtils.getPercentageString(userStats.time_deafened, userStats.time_connected);
+
+        // Time screen sharing
+        const timeScreenSharing = TimeUtils.formatDuration(userStats.time_screen_sharing);
+        const timeScreenSharingPercentage = NumberUtils.getPercentageString(userStats.time_screen_sharing, userStats.time_connected);
+
+        // Time camera
+        const timeCamera = TimeUtils.formatDuration(userStats.time_camera);
+        const timeCameraPercentage = NumberUtils.getPercentageString(userStats.time_camera, userStats.time_connected);
+
+        // Last activity
+        const lastActivity = TimeUtils.formatDate(new Date(userStats.last_activity));
+
+        return `
+            **Stats for ${user}**
+            \`Time Connected\` ${timeConnected}
+            \`Time Muted\` ${timeMuted} **(${timeMutedPercentage})**
+            \`Time Deafened\` ${timeDeafened} **(${timeDeafenedPercentage})**
+            \`Time Screen Sharing\` ${timeScreenSharing} **(${timeScreenSharingPercentage})**
+            \`Time Camera\` ${timeCamera} **(${timeCameraPercentage})**
+            \`Last Activity\` ${lastActivity}
+            \`Daily Streak\` ${userStats.daily_streak}
+            \`Total Joins\` ${userStats.total_joins}
         `.replace(/^\s+/gm, ''); // Remove leading spaces from each line
-
-        interaction.reply(statsMessage);
-    });
-
-    // Close the database connection
-    db.close();
-}*/
+    }
+}
