@@ -114,7 +114,7 @@ export class DailyStats {
         return dailyStats;
     }
 
-    static mergeDailyStatsMap(main: DailyStatsMap, secondary: DailyStatsMap): DailyStatsMap {
+    static mergeDailyStatsMaps(main: DailyStatsMap, secondary: DailyStatsMap): DailyStatsMap {
         const merged = new Map(main);
         secondary.forEach((value, key) => {
             const existing = merged.get(key);

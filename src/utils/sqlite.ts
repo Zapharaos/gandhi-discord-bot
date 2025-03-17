@@ -65,12 +65,12 @@ function updateUserDailyStats(db: Database, guildId: string, userId: string, sta
     }
 
     // Get duration per day
-    const days = getLiveDurationPerDay(duration, now);
+    /*const days = getLiveDurationPerDay(duration, now);
 
     // Update the daily stats for each day
     days.list.forEach(day => {
         update(db, guildId, userId, stat, day.date, day.duration);
-    });
+    });*/
 }
 
 /**

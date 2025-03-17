@@ -74,20 +74,42 @@ export class HeatmapCommand implements Command {
             startTimestamps = startTimestamp ? [startTimestamp] : [];
         }
 
+        console.log('dailyStats', dailyStats);
+        console.log('startTimestamps', startTimestamps);
+
         // Calculate the live daily stats for all users
         let dailyStatsLive: DailyStatsMap = new Map();
         const now = Date.now();
         startTimestamps.forEach(row => {
             // Retrieve user live daily stats as a map
             const local = DailyStats.fromStartTimestamps(row, startStatKey, now);
+            console.log('local', local);
 
             // Merge user live daily stats with global live daily stats
-            dailyStatsLive = DailyStats.mergeDailyStatsMap(dailyStatsLive, local);
+            dailyStatsLive = DailyStats.mergeDailyStatsMaps(dailyStatsLive, local);
+            console.log('dailyStatsLive', dailyStatsLive);
         });
 
+        // Convert the daily stats into a map for easier access
+        let dailyStatsMap: DailyStatsMap = new Map(dailyStats.map(item => [item.day_timestamp, item]));
+        dailyStatsMap = DailyStats.mergeDailyStatsMaps(dailyStatsMap, dailyStatsLive);
+        console.log('dailyStatsMap', dailyStatsMap);
+
+        // Calculate the max time connected for the guild heatmap
+        let max_time_connected = -1;
+        if (heatmap.getIsTargetAll() && heatmap.getStat() === 'time_connected') {
+            dailyStatsMap.forEach(data => {
+                if (data.time_connected > max_time_connected) {
+                    max_time_connected = data.time_connected;
+                }
+            });
+        }
+        console.log('max_time_connected', max_time_connected);
+
         // Convert rows into a format that cal-heatmap can consume
-        const data = this.formatHeatmapData(heatmap, dailyStats, dailyStatsLive);
+        const data = this.formatHeatmapData(heatmap, dailyStatsMap, max_time_connected);
         heatmap.setData(data);
+        console.log('data', data);
 
         // Generate the heatmap
         if (format === 'html') {
@@ -102,88 +124,33 @@ export class HeatmapCommand implements Command {
         }
     }
 
-    public formatHeatmapData(heatmap: Heatmap, dailyStats: DailyStats[], dailyStatsLive: DailyStatsMap): HeatmapData[] {
-        let max_time_connected = -1;
-        const isGuilFormatAndTimeConnected = heatmap.getIsTargetAll() && heatmap.getStat() === 'time_connected';
+    public formatHeatmapData(heatmap: Heatmap, dailyStatsMap: DailyStatsMap, max_time_connected: number): HeatmapData[] {
         const dailyStatsStatKey = DailyStats.getStatKey(heatmap.getStat());
-
-        // Update the rows with the live data
-        dailyStats.forEach(item => {
-
-            // Check if there is live data for the current timestamp
-            const day = liveData.get(item.day_timestamp);
-            if (day) {
-                if (heatmap.getStat() !== 'time_connected') {
-                    item.time_connected += day.durationConnected;
-                }
-                item[dailyStatsStatKey] += day.duration;
-                liveData.delete(item.day_timestamp);
-            }
-
-            // Calculate the max time connected for the guild heatmap
-            if (isGuilFormatAndTimeConnected && item.time_connected > max_time_connected) {
-                max_time_connected = item.time_connected;
-            }
-        });
-
-        if (isGuilFormatAndTimeConnected) {
-            // Calculate the max time connected for the guild heatmap - unlikely to be reached
-            liveData.forEach(data => {
-                if (data.durationConnected > max_time_connected) {
-                    max_time_connected = data.durationConnected;
-                }
-            });
-        }
 
         // Convert the rows into a format that cal-heatmap can consume
         let data: HeatmapData[] = [];
-        rows.forEach(row => {
+        dailyStatsMap.forEach(dailyStats => {
 
             let value = 0;
             let valueBis = 0;
 
             // Calculate the value as a percentage of the max time connected, tooltip display the value as time in minutes
-            if (isGuilFormatAndTimeConnected) {
-                value = TimeUtils.durationAsPercentage(row[heatmap.getStat()], max_time_connected);
-                valueBis = TimeUtils.msToMinutes(row[heatmap.getStat()]);
+            if (heatmap.getIsTargetAll() && heatmap.getStat() === 'time_connected') {
+                value = TimeUtils.durationAsPercentage(dailyStats[heatmap.getStat()], max_time_connected);
+                valueBis = TimeUtils.msToMinutes(dailyStats[heatmap.getStat()]);
             }
             // Display the value as time in minutes
             else if (heatmap.getStat() === 'time_connected') {
-                value = TimeUtils.msToMinutes(row[heatmap.getStat()]);
+                value = TimeUtils.msToMinutes(dailyStats[heatmap.getStat()]);
             }
             // Calculate the value as a percentage of the time connected, tooltip display the value as time in minutes
             else {
-
-                value = TimeUtils.durationAsPercentage(row[dailyStatsStatKey], row.time_connected);
-                valueBis = TimeUtils.msToMinutes(row[dailyStatsStatKey]);
+                value = TimeUtils.durationAsPercentage(dailyStats[dailyStatsStatKey], dailyStats.time_connected);
+                valueBis = TimeUtils.msToMinutes(dailyStats[dailyStatsStatKey]);
             }
 
-            const item: HeatmapData = { date: TimeUtils.tsToYYYYMMDD(row.day_timestamp), value: value, valueBis: valueBis };
+            const item: HeatmapData = { date: TimeUtils.tsToYYYYMMDD(dailyStats.day_timestamp), value: value, valueBis: valueBis };
             data.push(item);
-        });
-
-        // Convert the remaining live data into a format that cal-heatmap can consume
-        liveData.forEach((data, key) => {
-
-            let value = 0;
-            let valueBis = 0;
-
-            // Calculate the value as a percentage of the max time connected, tooltip display the value as time in minutes
-            if (isGuilFormatAndTimeConnected) {
-                value = TimeUtils.durationAsPercentage(data.duration, max_time_connected);
-                valueBis = TimeUtils.msToMinutes(data.duration);
-            }
-            // Display the value as time in minutes
-            else if (heatmap.getStat() === 'time_connected') {
-                value = TimeUtils.msToMinutes(data.duration);
-            }
-            // Calculate the value as a percentage of the time connected, tooltip display the value as time in minutes
-            else {
-                value = TimeUtils.durationAsPercentage(data.duration, data.durationConnected);
-                valueBis = TimeUtils.msToMinutes(data.duration);
-            }
-
-            data.push({ date: TimeUtils.tsToYYYYMMDD(key), value: value, valueBis: valueBis });
         });
 
         return data
