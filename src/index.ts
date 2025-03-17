@@ -17,6 +17,7 @@ import {ClashCommand} from "@commands/fun/clash";
 import {BiggusdickusCommand} from "@commands/stats/biggusdickus";
 import {RankCommand} from "@commands/stats/rank";
 import {StatsCommand} from "@commands/stats/stats";
+import {HeatmapCommand} from "@commands/stats/heatmap";
 
 dotenv.config();
 
@@ -77,6 +78,7 @@ async function start(): Promise<void> {
         new BiggusdickusCommand(),
         new RankCommand(),
         new StatsCommand(),
+        new HeatmapCommand(),
     ];
 
     // Event handlers

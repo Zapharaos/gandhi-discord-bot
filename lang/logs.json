@@ -70,7 +70,9 @@
     "queryStatsUserInGuild": "An error occurred while querying user {USER_ID} stats in guild {GUILD_ID}.",
     "queryStatsUserInGuildByStat": "An error occurred while querying users {STAT_KEY} in guild {GUILD_ID}.",
     "queryStartTsUserInGuild": "An error occurred while querying user {USER_ID} start timestamp in guild {GUILD_ID}.",
-    "queryStartTsUserInGuildByStat": "An error occurred while querying users start timestamp in guild {GUILD_ID}."
+    "queryStartTsUserInGuildByStat": "An error occurred while querying users start timestamp in guild {GUILD_ID}.",
+    "queryDailyStatsTotalUsersInGuildByStat": "An error occurred while querying total users daily stats in guild {GUILD_ID} by stat {STAT_KEY}.",
+    "queryDailyStatsUserInGuildByStat": "An error occurred while querying user {USER_ID} daily stats in guild {GUILD_ID} by stat {STAT_KEY}."
   },
   "debug": {
     "sqliteConnected": "Already connected to SQLite database.",
@@ -78,6 +80,8 @@
     "queryStatsUserInGuild": "Successfully queried user {USER_ID} stats in guild {GUILD_ID}.",
     "queryStatsUserInGuildByStat": "Successfully queried users {STAT_KEY} in guild {GUILD_ID}.",
     "queryStartTsUserInGuild": "Successfully queried user {USER_ID} start timestamp in guild {GUILD_ID}.",
-    "queryStartTsUserInGuildByStat": "Successfully queried users start timestamp in guild {GUILD_ID}."
+    "queryStartTsUserInGuildByStat": "Successfully queried users start timestamp in guild {GUILD_ID}.",
+    "queryDailyStatsTotalUsersInGuildByStat": "Successfully queried total users daily stats in guild {GUILD_ID} by stat {STAT_KEY}.",
+    "queryDailyStatsUserInGuildByStat": "Successfully queried user {USER_ID} daily stats in guild {GUILD_ID} by stat {STAT_KEY}."
   }
 }

@@ -1,30 +1,17 @@
 import sqlite3 from "sqlite3";
 import dotenv from "dotenv";
 import {UserStats} from "@models/database/user_stats";
-import path from "path";
 
 sqlite3.verbose();
 dotenv.config();
 
 export {
-    connect,
     updateUserStats,
     incrementTotalJoins,
     setStartTimestamp,
-    getLiveDurationPerDay
 };
-export {Database, LiveDurationPerDay, LiveDurationMapItem, LiveDurationMap, LiveDurationListItem}
 
 type Database = sqlite3.Database;
-
-/**
- * Connects to the SQLite database.
- *
- * @returns {Database} The connected SQLite database instance.
- */
-function connect(): Database {
-    return new sqlite3.Database(path.join(process.cwd(), process.env.DB_PATH ?? "data/gandhi-bot.db"));
-}
 
 /**
  * Updates user statistics in the database.
@@ -174,78 +161,4 @@ function setStartTimestamp(db: Database, guildId: string, userId: string, column
             console.error("setStartTimestamp: Error running SQL query:", err.message);
         }
     });
-}
-
-type LiveDurationListItem = {
-    date: number;
-    duration: number;
-    durationConnected: number;
-}
-
-type LiveDurationMapItem = {
-    duration: number;
-    durationConnected: number;
-}
-
-type LiveDurationMap = Map<number, LiveDurationMapItem>;
-
-type LiveDurationPerDay = {
-    list: LiveDurationListItem[];
-    map: LiveDurationMap;
-}
-
-/**
- * Splits a duration into days and calculates the duration for each day.
- *
- * @param {number} duration - The total duration.
- * @param {number} now - The current timestamp.
- * @param {number} [durationConnected=0] - The duration the user was connected to a voice channel.
- * @returns {LiveDurationPerDay} An object containing a list and a map of the duration per day.
- */
-function getLiveDurationPerDay(duration: number, now: number, durationConnected: number = 0): LiveDurationPerDay {
-    // durationConnected is the duration the user was connected to a voice-channel channel
-    // optional parameter, default value is 0, used to calculate percentages
-
-    // return data structure
-    const days: LiveDurationListItem[] = [];
-    const daysMap: Map<number, LiveDurationMapItem> = new Map();
-
-    let remainingDuration = duration;
-    let remainingDurationConnected = durationConnected;
-    let dayLimit = now;
-    let currentDay = new Date(now).setUTCHours(0, 0, 0, 0);
-
-    // Split the duration into days
-    while (remainingDuration > 0) {
-        // Calculate the duration for the current day
-        const dayDuration = Math.min(remainingDuration, dayLimit - currentDay);
-        const dayDurationConnected = Math.min(remainingDurationConnected, dayLimit - currentDay);
-        days.push({date: currentDay, duration: dayDuration, durationConnected: dayDurationConnected});
-        daysMap.set(currentDay, {duration: dayDuration, durationConnected: dayDurationConnected});
-
-        // Update the remaining duration and the current day
-        remainingDuration -= dayDuration;
-        remainingDurationConnected -= dayDurationConnected;
-        dayLimit = currentDay;
-        currentDay = new Date(currentDay).setUTCHours(-24, 0, 0, 0);
-    }
-
-    // Split the connected duration into days
-    // This is done in case the user was connected to a voice-channel channel for a longer duration than the stat duration itself
-    while (remainingDurationConnected > 0) {
-        // Calculate the duration for the current day
-        const dayDurationConnected = Math.min(remainingDurationConnected, dayLimit - currentDay);
-        days.push({date: currentDay, duration: 0, durationConnected: dayDurationConnected});
-        daysMap.set(currentDay, {duration: 0, durationConnected: dayDurationConnected});
-
-        // Update the remaining duration and the current day
-        remainingDurationConnected -= dayDurationConnected;
-        dayLimit = currentDay;
-        currentDay = new Date(currentDay).setUTCHours(-24, 0, 0, 0);
-    }
-
-    return {
-        list: days,
-        map: daysMap
-    }
 }
