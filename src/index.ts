@@ -18,11 +18,15 @@ import {BiggusdickusCommand} from "@commands/stats/biggusdickus";
 import {RankCommand} from "@commands/stats/rank";
 import {StatsCommand} from "@commands/stats/stats";
 import {HeatmapCommand} from "@commands/stats/heatmap";
+import {VoiceHandler} from "@events/voice-handler";
+import {Voice} from "./voice/voice";
+import {MovementsVoice} from "./voice/movements";
+import {MuteVoice} from "./voice/mute";
+import {DeafenVoice} from "./voice/deafen";
+import {ScreenSharingVoice} from "./voice/screen-sharing";
+import {CameraVoice} from "./voice/camera";
 
 dotenv.config();
-
-// TODO : update commands
-// TODO : update events
 
 // TODO : v2.1.0 -> sql queries
 // TODO : v2.2.0 -> max stats + stats with rank associated + display time with double digits
@@ -84,11 +88,24 @@ async function start(): Promise<void> {
     // Event handlers
     const commandHandler = new CommandHandler(commands, eventDataService);
 
+    // Voice events
+    const voices: Voice[] = [
+        new MovementsVoice(),
+        new MuteVoice(),
+        new DeafenVoice(),
+        new ScreenSharingVoice(),
+        new CameraVoice(),
+    ];
+
+    // Voice handlers
+    const voiceHandler = new VoiceHandler(voices, eventDataService);
+
     // Bot
     const bot = new Bot(
         process.env.DISCORD_TOKEN ?? "",
         client,
         commandHandler,
+        voiceHandler
     );
 
     await bot.start();

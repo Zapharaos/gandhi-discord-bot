@@ -3,7 +3,7 @@ import {
     Client,
     CommandInteraction,
     Events,
-    Interaction,
+    Interaction, VoiceState,
 } from 'discord.js';
 
 import {
@@ -12,6 +12,7 @@ import {
 import {Logger} from "@services/logger";
 
 import Logs from '../../lang/logs.json';
+import {VoiceHandler} from "@events/voice-handler";
 
 export class Bot {
     private ready = false;
@@ -20,6 +21,7 @@ export class Bot {
         private token: string,
         private client: Client,
         private commandHandler: CommandHandler,
+        private voiceHandler: VoiceHandler,
     ) {
     }
 
@@ -31,6 +33,7 @@ export class Bot {
     private registerListeners(): void {
         this.client.on(Events.ClientReady, () => this.onReady());
         this.client.on(Events.InteractionCreate, (intr: Interaction) => this.onInteraction(intr));
+        this.client.on(Events.VoiceStateUpdate, (oldState: VoiceState, newState: VoiceState) => this.onVoiceState(oldState, newState));
     }
 
     private async login(token: string): Promise<void> {
@@ -59,6 +62,16 @@ export class Bot {
             } catch (error) {
                 Logger.error(Logs.error.command, error);
             }
+        }
+    }
+
+    private async onVoiceState(oldState: VoiceState, newState: VoiceState): Promise<void> {
+        if (!this.ready) return;
+
+        try {
+            await this.voiceHandler.process(oldState, newState);
+        } catch (error) {
+            Logger.error(Logs.error.voice, error);
         }
     }
 }

@@ -54,6 +54,7 @@
     "message": "An error occurred while processing a message.",
     "reaction": "An error occurred while processing a reaction.",
     "command": "An error occurred while processing a command interaction.",
+    "voice": "An error occurred while processing a voice interaction.",
     "button": "An error occurred while processing a button interaction.",
     "commandNotFound": "[{INTERACTION_ID}] A command with the name '{COMMAND_NAME}' could not be found.",
     "autocompleteNotFound": "[{INTERACTION_ID}] An autocomplete method for the '{COMMAND_NAME}' command could not be found.",
