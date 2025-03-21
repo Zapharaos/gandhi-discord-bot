@@ -7,13 +7,13 @@ import {Logger} from "@services/logger";
 export class ScreenSharingVoice implements Voice {
 
     public async execute(oldState: VoiceState, newState: VoiceState, data: EventData): Promise<void> {
-        if (VoiceStateUtils.isStreaming(oldState, newState)) {
+        if (VoiceStateUtils.startStreaming(oldState, newState)) {
             Logger.debug('User is streaming');
             // TODO : start timer
             return
         }
 
-        if (VoiceStateUtils.isNotStreaming(oldState, newState)) {
+        if (VoiceStateUtils.stopStreaming(oldState, newState)) {
             Logger.debug('User is not streaming');
             // TODO : stop timer
             // TODO : update stats

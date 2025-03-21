@@ -7,20 +7,13 @@ import {Logger} from "@services/logger";
 export class DeafenVoice implements Voice {
 
     public async execute(oldState: VoiceState, newState: VoiceState, data: EventData): Promise<void> {
-        if (VoiceStateUtils.staysMuted(oldState, newState)) {
-            Logger.debug('Deafen event while already muted');
-            // TODO : start timer
-            // TODO : update stats
-            return;
-        }
-
-        if (VoiceStateUtils.isDeafened(oldState, newState)) {
+        if (VoiceStateUtils.startDeafen(oldState, newState)) {
             Logger.debug('User is deafened');
             // TODO : start timer
             return
         }
 
-        if (VoiceStateUtils.isUndeafened(oldState, newState)) {
+        if (VoiceStateUtils.stopDeafen(oldState, newState)) {
             Logger.debug('User is undeafened');
             // TODO : stop timer
             // TODO : update stats

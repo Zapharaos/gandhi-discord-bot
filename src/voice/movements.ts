@@ -22,11 +22,11 @@ export class MovementsVoice implements Voice {
             // TODO : update stats
 
             // Joins as muted or deafened
-            if (VoiceStateUtils.isMuted(oldState, newState)) {
+            if (VoiceStateUtils.startMute(oldState, newState)) {
                 Logger.debug('User is joining muted');
                 // TODO : Start mute timer for user
             }
-            else if (VoiceStateUtils.isDeafened(oldState, newState)) {
+            else if (VoiceStateUtils.startDeafen(oldState, newState)) {
                 Logger.debug('User is joining deafened');
                 // TODO : Start deafen timer for user
             }

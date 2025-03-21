@@ -15,23 +15,23 @@ export class VoiceStateUtils {
         return oldState.channelId && !newState.channelId;
     }
 
-    static isMuted(oldState: VoiceState, newState: VoiceState) {
+    static staysMuted(oldState: VoiceState, newState: VoiceState) {
+        return oldState.selfMute && newState.selfMute && newState.selfMute;
+    }
+
+    static startMute(oldState: VoiceState, newState: VoiceState) {
         return !oldState.selfMute && newState.selfMute;
     }
 
-    static isUnmuted(oldState: VoiceState, newState: VoiceState) {
+    static stopMute(oldState: VoiceState, newState: VoiceState) {
         return oldState.selfMute && !newState.selfMute;
     }
 
-    static staysMuted(oldState: VoiceState, newState: VoiceState) {
-        return oldState.selfMute && newState.selfMute && newState.serverMute;
-    }
-
-    static isDeafened(oldState: VoiceState, newState: VoiceState) {
+    static startDeafen(oldState: VoiceState, newState: VoiceState) {
         return !oldState.selfDeaf && newState.selfDeaf;
     }
 
-    static isUndeafened(oldState: VoiceState, newState: VoiceState) {
+    static stopDeafen(oldState: VoiceState, newState: VoiceState) {
         return oldState.selfDeaf && !newState.selfDeaf;
     }
 
@@ -39,19 +39,19 @@ export class VoiceStateUtils {
         return oldState.selfDeaf !== newState.selfDeaf;
     }
 
-    static isStreaming(oldState: VoiceState, newState: VoiceState) {
+    static startStreaming(oldState: VoiceState, newState: VoiceState) {
         return !oldState.streaming && newState.streaming;
     }
 
-    static isNotStreaming(oldState: VoiceState, newState: VoiceState) {
+    static stopStreaming(oldState: VoiceState, newState: VoiceState) {
         return oldState.streaming && !newState.streaming;
     }
 
-    static isCamera(oldState: VoiceState, newState: VoiceState) {
+    static startCamera(oldState: VoiceState, newState: VoiceState) {
         return !oldState.selfVideo && newState.selfVideo;
     }
 
-    static isNotCamera(oldState: VoiceState, newState: VoiceState) {
+    static stopCamera(oldState: VoiceState, newState: VoiceState) {
         return oldState.selfVideo && !newState.selfVideo;
     }
 }
