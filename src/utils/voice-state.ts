@@ -1,6 +1,5 @@
 import {VoiceState} from "discord.js";
 
-// TODO : handler server events : mute or deafen
 export class VoiceStateUtils {
 
     static isJoiningChannel(oldState: VoiceState, newState: VoiceState) {
@@ -16,27 +15,39 @@ export class VoiceStateUtils {
     }
 
     static staysMuted(oldState: VoiceState, newState: VoiceState) {
-        return oldState.selfMute && newState.selfMute && newState.selfMute;
+        const prev = oldState.selfMute || oldState.serverMute;
+        const next = newState.selfMute || newState.serverMute;
+        return prev && next;
     }
 
     static startMute(oldState: VoiceState, newState: VoiceState) {
-        return !oldState.selfMute && newState.selfMute;
+        const prev = oldState.selfMute || oldState.serverMute;
+        const next = newState.selfMute || newState.serverMute;
+        return !prev && next;
     }
 
     static stopMute(oldState: VoiceState, newState: VoiceState) {
-        return oldState.selfMute && !newState.selfMute;
+        const prev = oldState.selfMute || oldState.serverMute;
+        const next = newState.selfMute || newState.serverMute;
+        return prev && !next;
     }
 
     static startDeafen(oldState: VoiceState, newState: VoiceState) {
-        return !oldState.selfDeaf && newState.selfDeaf;
+        const prev = oldState.selfDeaf || oldState.serverDeaf;
+        const next = newState.selfDeaf || newState.serverDeaf;
+        return !prev && next;
     }
 
     static stopDeafen(oldState: VoiceState, newState: VoiceState) {
-        return oldState.selfDeaf && !newState.selfDeaf;
+        const prev = oldState.selfDeaf || oldState.serverDeaf;
+        const next = newState.selfDeaf || newState.serverDeaf;
+        return prev && !next;
     }
 
     static isDeafenEvent(oldState: VoiceState, newState: VoiceState) {
-        return oldState.selfDeaf !== newState.selfDeaf;
+        const prev = oldState.selfDeaf || oldState.serverDeaf;
+        const next = newState.selfDeaf || newState.serverDeaf;
+        return prev !== next;
     }
 
     static startStreaming(oldState: VoiceState, newState: VoiceState) {
