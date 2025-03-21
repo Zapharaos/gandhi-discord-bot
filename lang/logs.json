@@ -67,6 +67,7 @@
     "databaseMigration": "Failed to handle databases migrations.",
     "sqliteConnect": "An error occurred while connecting to the SQLite database.",
     "sqliteMigration": "An error occurred while applying migration {MIGRATION_NAME} to the SQLite database.",
+    "queryServerGet": "An error occurred while querying server {GUILD_ID}.",
     "queryServerLogChannel": "An error occurred while setting the server {GUILD_ID} with log channel {CHANNEL_ID}.",
     "queryStatsUserInGuild": "An error occurred while querying user {USER_ID} stats in guild {GUILD_ID}.",
     "queryStatsUserInGuildByStat": "An error occurred while querying users {STAT_KEY} in guild {GUILD_ID}.",
@@ -77,6 +78,7 @@
   },
   "debug": {
     "sqliteConnected": "Already connected to SQLite database.",
+    "queryServerGet": "Successfully queried server {GUILD_ID}.",
     "queryServerLogChannel": "Successfully updated server {GUILD_ID} with log channel {CHANNEL_ID}.",
     "queryStatsUserInGuild": "Successfully queried user {USER_ID} stats in guild {GUILD_ID}.",
     "queryStatsUserInGuildByStat": "Successfully queried users {STAT_KEY} in guild {GUILD_ID}.",

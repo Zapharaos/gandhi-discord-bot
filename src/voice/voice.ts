@@ -1,9 +1,6 @@
-import {
-    VoiceState,
-} from 'discord.js';
-
 import {EventData} from '@models/event-data';
+import {VoiceProps} from "@models/voice-props";
 
 export interface Voice {
-    execute(oldState: VoiceState, newState: VoiceState, data: EventData): Promise<void>;
+    execute(props: VoiceProps, data: EventData): Promise<void>;
 }
