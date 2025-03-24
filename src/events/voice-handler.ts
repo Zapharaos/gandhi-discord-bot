@@ -40,8 +40,7 @@ export class VoiceHandler implements EventHandler {
 
         // Retrieve the user start timestamps
         const startTimestampController = new StartTimestampsController();
-        const row = await startTimestampController.getUserByGuild(guild.id, user.id);
-        const startTimestamps = row ? row : {} as StartTimestamps;
+        const startTimestamps = await startTimestampController.getUserByGuild(guild.id, user.id);
 
         const props = new VoiceProps(oldState, newState, guild.id, user.id, userName, startTimestamps, logChannel);
 
@@ -56,8 +55,8 @@ export class VoiceHandler implements EventHandler {
                         .replaceAll('{EVENT_NAME}', voice.name)
                         .replaceAll('{USER_TAG}', user.tag)
                         .replaceAll('{USER_ID}', user.id)
-                        .replaceAll('{CHANNEL_NAME}', oldState.channel?.name)
-                        .replaceAll('{CHANNEL_ID}', oldState.channel?.id)
+                        .replaceAll('{CHANNEL_NAME}', oldState.channel?.name ?? 'N/A')
+                        .replaceAll('{CHANNEL_ID}', oldState.channel?.id ?? 'N/A')
                         .replaceAll('{GUILD_NAME}', guild?.name)
                         .replaceAll('{GUILD_ID}', guild?.id),
                     error

@@ -12,6 +12,10 @@ export class UserStatsController {
 
     async getUserInGuild(guildID: string, userID: string): Promise<UserStats | null> {
         const db = await this.sqliteService.getDatabase();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return null;
+        }
 
         return new Promise<UserStats | null>((resolve, reject) => {
             const query = `SELECT *
@@ -40,6 +44,10 @@ export class UserStatsController {
 
     async getUsersInGuildByStat(guildID: string, stat: string): Promise<UserStats[]> {
         const db = await this.sqliteService.getDatabase();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return [];
+        }
 
         return new Promise<UserStats[]>((resolve, reject) => {
             const query = `SELECT *
@@ -67,6 +75,10 @@ export class UserStatsController {
 
     async updateUserStats(guildID: string, userID: string, stat: string, value: number): Promise<void> {
         const db = await this.sqliteService.getDatabase();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return;
+        }
 
         return new Promise<void>((resolve, reject) => {
             const query = `INSERT INTO user_stats (guild_id, user_id, ${stat})
@@ -98,6 +110,10 @@ export class UserStatsController {
 
     async updateLastActivityAndStreak(guildID: string, userID: string, timestamp: number): Promise<void> {
         const db = await this.sqliteService.getDatabase();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return;
+        }
 
         return new Promise<void>((resolve, reject) => {
             const query = `
@@ -164,6 +180,10 @@ export class UserStatsController {
 
     async incrementTotalJoins(guildID: string, userID: string): Promise<void> {
         const db = await this.sqliteService.getDatabase();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return;
+        }
 
         return new Promise<void>((resolve, reject) => {
             const query = `INSERT INTO user_stats (guild_id, user_id, total_joins)

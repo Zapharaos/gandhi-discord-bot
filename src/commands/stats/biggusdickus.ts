@@ -5,14 +5,21 @@ import {UserStatsController} from "@controllers/user-stats";
 import {StartTimestampsController} from "@controllers/start-timestamps";
 import {TimeUtils} from "@utils/time";
 import {Logger} from "@services/logger";
+import Logs from "../../../lang/logs.json";
 
 export class BiggusdickusCommand implements Command {
     public names = ['biggusdickus'];
     public deferType = CommandDeferType.NONE;
-    public requireClientPerms: PermissionsString[];
+    public requireClientPerms: PermissionsString[] = [];
 
     public async execute(intr: ChatInputCommandInteraction): Promise<void> {
         const guildId = InteractionUtils.getGuildId(intr);
+        if (!guildId) {
+            await Logger.error(Logs.error.intrMissingGuildID);
+            await InteractionUtils.send(intr, 'This command can only be used in a server.');
+            return;
+        }
+
         const interactionUser: InteractionUser = InteractionUtils.getInteractionUser(intr);
         // intrUserRaw is the user mention in the reply
         const intrUserRaw = InteractionUtils.getInteractionUserRaw(intr);

@@ -30,15 +30,15 @@ export class DailyStats {
     public time_screen_sharing: number;
     public time_camera: number;
 
-    constructor(data: DailyStats) {
-        this.guild_id = data.guild_id;
-        this.user_id = data.user_id;
-        this.day_timestamp = data.day_timestamp;
-        this.time_connected = data.time_connected;
-        this.time_muted = data.time_muted;
-        this.time_deafened = data.time_deafened;
-        this.time_screen_sharing = data.time_screen_sharing;
-        this.time_camera = data.time_camera;
+    constructor(data: Partial<DailyStats> = {}) {
+        this.guild_id = data.guild_id || '';
+        this.user_id = data.user_id || '';
+        this.day_timestamp = data.day_timestamp || 0;
+        this.time_connected = data.time_connected || 0;
+        this.time_muted = data.time_muted || 0;
+        this.time_deafened = data.time_deafened || 0;
+        this.time_screen_sharing = data.time_screen_sharing || 0;
+        this.time_camera = data.time_camera || 0;
     }
 
     static getColNameFromStartTs(name: string): string | null {
@@ -62,11 +62,14 @@ export class DailyStats {
         return key as StatKey;
     }
 
-    static fromStartTimestamps(startTs: StartTimestamps, startStatKey: StartStatKey, now: number): DailyStatsMap {
+    static fromStartTimestamps(startTs: StartTimestamps, startStatKey: StartStatKey | null, now: number): DailyStatsMap {
         const dailyStats: DailyStatsMap = new Map();
 
         // If the user is not active, return an empty map
         if (!startTs.isActive()) return dailyStats;
+
+        // If the stat key is null, return an empty map
+        if (!startStatKey) return dailyStats;
 
         const stat: string | null = this.getColNameFromStartTs(startStatKey);
         const statKey: StatKey | null = stat ? this.getStatKey(stat) : null;

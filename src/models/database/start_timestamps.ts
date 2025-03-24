@@ -25,14 +25,14 @@ export class StartTimestamps {
     public start_screen_sharing: number;
     public start_camera: number;
 
-    constructor(data: StartTimestamps) {
-        this.guild_id = data.guild_id;
-        this.user_id = data.user_id;
-        this.start_connected = data.start_connected;
-        this.start_muted = data.start_muted;
-        this.start_deafened = data.start_deafened;
-        this.start_screen_sharing = data.start_screen_sharing;
-        this.start_camera = data.start_camera;
+    constructor(data: Partial<StartTimestamps> = {}) {
+        this.guild_id = data.guild_id || '';
+        this.user_id = data.user_id || '';
+        this.start_connected = data.start_connected || 0;
+        this.start_muted = data.start_muted || 0;
+        this.start_deafened = data.start_deafened || 0;
+        this.start_screen_sharing = data.start_screen_sharing || 0;
+        this.start_camera = data.start_camera || 0;
     }
 
     static getColNameFromUserStat(name: string): string | null {

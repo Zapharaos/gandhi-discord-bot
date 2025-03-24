@@ -17,6 +17,21 @@ export class DeafenVoice implements Voice {
 
         const now = Date.now();
 
+        // Check if the user is joining a channel
+        if (VoiceStateUtils.isJoiningChannel(props.oldState, props.newState)) {
+
+            // While deafened
+            if (VoiceStateUtils.isDeafen(props.newState)) {
+                Logger.debug('User is joining a channel while deafened');
+
+                // Start deaf timestamp for user
+                const startTsController = new StartTimestampsController();
+                await startTsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartDeafened, now);
+            }
+
+            return;
+        }
+
         // User is deafened
         if (VoiceStateUtils.startDeafen(props.oldState, props.newState)) {
             // Send message to log channel

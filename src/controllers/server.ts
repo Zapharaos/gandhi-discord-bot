@@ -12,6 +12,10 @@ export class ServerController {
 
     async setLogChannel(guildID: string, channelId: string): Promise<boolean> {
         const db = await this.sqliteService.getDatabase();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return false;
+        }
 
         return new Promise<boolean>((resolve, reject) => {
             const query = `INSERT INTO servers (guild_id, log_channel_id)
@@ -40,6 +44,10 @@ export class ServerController {
 
     async getServer(guildID: string): Promise<Server> {
         const db = await this.sqliteService.getDatabase();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return {} as Server;
+        }
 
         return new Promise<Server>((resolve, reject) => {
             const query = `SELECT *

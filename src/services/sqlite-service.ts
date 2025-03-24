@@ -41,16 +41,23 @@ export class SQLiteService {
 
         // Connect to the database
         return new Promise((resolve, reject) => {
-            this.db = new sqlite3.Database(path.join(process.cwd(), dbFilePath), (err) => {
+            const db = new sqlite3.Database(path.join(process.cwd(), dbFilePath), (err) => {
                 if (err) {
                     Logger.error(Logs.error.sqliteConnect, err);
                     reject(err);
                     return;
                 }
+
+                if (!db) {
+                    reject(new Error('Database connection is not established.'))
+                    return;
+                }
+
+                this.db = db;
                 if (log) Logger.info(Logs.info.sqliteConnected);
 
                 // Ensure the migrations table exists
-                this.db.run(`
+                db.run(`
                     CREATE TABLE IF NOT EXISTS migrations (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         name TEXT UNIQUE
@@ -74,12 +81,13 @@ export class SQLiteService {
     }
 
     async getAppliedMigrations(): Promise<string[]> {
-        if (!this.db) {
+        const db = this.db;
+        if (!db) {
             throw new Error('Database connection is not established.');
         }
 
         return new Promise((resolve, reject) => {
-            this.db.all(`SELECT name FROM migrations`, (err: Error | null, rows: {name: string}[]) => {
+            db.all(`SELECT name FROM migrations`, (err: Error | null, rows: {name: string}[]) => {
                 if (err) reject(err);
                 else resolve(rows.map(row => row.name));
             });
@@ -87,18 +95,19 @@ export class SQLiteService {
     }
 
     applyMigration(migration: LocalMigration): Promise<void> {
-        if (!this.db) {
+        const db = this.db;
+        if (!db) {
             throw new Error('Database connection is not established.');
         }
 
         return new Promise((resolve, reject) => {
-            this.db.serialize(() => {
-                this.db.run("BEGIN TRANSACTION");
+            db.serialize(() => {
+                db.run("BEGIN TRANSACTION");
 
                 migration.up.forEach(query => {
-                    this.db.run(query, (err: Error | null) => {
+                    db.run(query, (err: Error | null) => {
                         if (err) {
-                            this.db.run("ROLLBACK");
+                            db.run("ROLLBACK");
                             Logger.error(Logs.error.sqliteMigration.replaceAll('{MIGRATION_NAME}', migration.name));
                             reject(err);
                             return;
@@ -106,15 +115,15 @@ export class SQLiteService {
                     });
                 });
 
-                this.db.run(`INSERT INTO migrations (name) VALUES (?)`, [migration.name], (err: Error | null) => {
+                db.run(`INSERT INTO migrations (name) VALUES (?)`, [migration.name], (err: Error | null) => {
                     if (err) {
-                        this.db.run("ROLLBACK");
+                        db.run("ROLLBACK");
                         Logger.error(Logs.error.sqliteMigration.replaceAll('{MIGRATION_NAME}', migration.name));
                         reject(err);
                         return;
                     }
 
-                    this.db.run("COMMIT");
+                    db.run("COMMIT");
                     Logger.info(Logs.info.sqliteMigration.replaceAll('{MIGRATION_NAME}', migration.name));
                     resolve();
                 });

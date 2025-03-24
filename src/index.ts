@@ -28,7 +28,7 @@ import {CameraVoice} from "./voice/camera";
 
 dotenv.config();
 
-// TODO : v2.2.0 -> stats with rank associated
+// TODO : fix heatmap
 
 async function start(): Promise<void> {
 

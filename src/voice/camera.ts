@@ -17,6 +17,21 @@ export class CameraVoice implements Voice {
 
         const now = Date.now();
 
+        // Check if the user is joining a channel
+        if (VoiceStateUtils.isJoiningChannel(props.oldState, props.newState)) {
+
+            // With camera on
+            if (VoiceStateUtils.isCameraOn(props.newState)) {
+                Logger.debug('User is joining a channel with their camera on');
+
+                // Start camera timestamp for user
+                const startTsController = new StartTimestampsController();
+                await startTsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartCamera, now);
+            }
+
+            return;
+        }
+
         // User is camera
         if (VoiceStateUtils.startCamera(props.oldState, props.newState)) {
             // Send message to log channel

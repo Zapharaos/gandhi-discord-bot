@@ -100,7 +100,7 @@ export class MovementsVoice implements Voice {
                 Logger.debug(`Camera stopped for user: ${props.userName} after ${duration} ms`);
 
                 // Update user stats and stop camera timestamp for user
-                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeScreenSharing, StartTsFields.StartScreenSharing, duration, now);
+                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeCamera, StartTsFields.StartCamera, duration, now);
             }
         }
     }

@@ -9,6 +9,8 @@ import {StartTimestampsController} from "@controllers/start-timestamps";
 import {DailyStats, DailyStatsMap} from "@models/database/daily_stats";
 import puppeteer from "puppeteer";
 import {UserStatsFields} from "@models/database/user_stats";
+import {Logger} from "@services/logger";
+import Logs from "../../../lang/logs.json";
 
 export class HeatmapCommand implements Command {
     public names = ['heatmap'];
@@ -17,7 +19,7 @@ export class HeatmapCommand implements Command {
 
     public async execute(intr: ChatInputCommandInteraction): Promise<void> {
         // Can target either all guild users or a specific user
-        const targetAll = intr.options.getBoolean('target-all');
+        const targetAll = intr.options.getBoolean('target-all') ?? false;
         const target = intr.options.getMember('target');
         if (targetAll && target) {
             await InteractionUtils.editReply(intr, 'You can only use one of the options: target, target-all');
@@ -25,8 +27,9 @@ export class HeatmapCommand implements Command {
         }
 
         // Get the guild id
-        const guildId: string = InteractionUtils.getGuildId(intr);
+        const guildId = InteractionUtils.getGuildId(intr);
         if (!guildId) {
+            await Logger.error(Logs.error.intrMissingGuildID);
             await InteractionUtils.editReply(intr, 'This command can only be used in a server.');
             return;
         }
@@ -123,18 +126,18 @@ export class HeatmapCommand implements Command {
         // Convert the rows into a format that cal-heatmap can consume
         const data: HeatmapData[] = [];
         dailyStatsMap.forEach(dailyStats => {
-
+            const duration = dailyStats[dailyStatsStatKey];
             let value = 0;
             let valueBis = 0;
 
             // Calculate the value as a percentage of the max time connected, tooltip display the value as time in minutes
             if (heatmap.getIsTargetAll() && heatmap.getStat() === UserStatsFields.TimeConnected) {
-                value = TimeUtils.durationAsPercentage(dailyStats[heatmap.getStat()], max_time_connected);
-                valueBis = TimeUtils.msToMinutes(dailyStats[heatmap.getStat()]);
+                value = TimeUtils.durationAsPercentage(duration, max_time_connected);
+                valueBis = TimeUtils.msToMinutes(duration);
             }
             // Display the value as time in minutes
             else if (heatmap.getStat() === UserStatsFields.TimeConnected) {
-                value = TimeUtils.msToMinutes(dailyStats[heatmap.getStat()]);
+                value = TimeUtils.msToMinutes(duration);
             }
             // Calculate the value as a percentage of the time connected, tooltip display the value as time in minutes
             else {

@@ -36,7 +36,7 @@ export class StatsCommand implements Command {
         const startTimestamps = await startTimestampsController.getUserByGuild(guildId, interactionUser.id);
 
         // Combine the live stats with the user stats
-        const stats = startTimestamps.combineAllWithUserStats(userStats, Date.now());
+        const stats = startTimestamps?.combineAllWithUserStats(userStats, Date.now()) ?? {} as UserStats;
 
         // Build the reply
         const reply = this.formatReply(stats, InteractionUtils.getInteractionUserRaw(intr));

@@ -12,6 +12,10 @@ export class StartTimestampsController {
 
     async getUserByGuild(guildID: string, userID: string): Promise<StartTimestamps> {
         const db = await this.sqliteService.getDatabase();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return {} as StartTimestamps;
+        }
 
         return new Promise<StartTimestamps>((resolve, reject) => {
             const query = `SELECT *
@@ -34,7 +38,7 @@ export class StartTimestampsController {
                     .replaceAll('{GUILD_ID}', guildID)
                     .replaceAll('{USER_ID}', userID)
                 );
-                resolve(new StartTimestamps(row ?? {} as StartTimestamps));
+                resolve(new StartTimestamps(row));
             });
         });
     }
@@ -46,6 +50,10 @@ export class StartTimestampsController {
         }
 
         const db = await this.sqliteService.getDatabase();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return [];
+        }
 
         return new Promise<StartTimestamps[]>((resolve, reject) => {
             const query = `SELECT user_id, start_connected, ${stat}
@@ -72,6 +80,10 @@ export class StartTimestampsController {
 
     async setStartTimestamp(guildID: string, userID: string, stat: string, timestamp: number): Promise<void> {
         const db = await this.sqliteService.getDatabase();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return;
+        }
 
         return new Promise<void>((resolve, reject) => {
             const query = `INSERT INTO start_timestamps (guild_id, user_id, ${stat})

@@ -12,6 +12,10 @@ export class DailyStatsController {
 
     async getTotalForUsersInGuildByStat(guildID: string, stat: string): Promise<DailyStats[]> {
         const db = await this.sqliteService.getDatabase();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return [];
+        }
 
         return new Promise<DailyStats[]>((resolve, reject) => {
             const query = ` SELECT day_timestamp, SUM(time_connected) as time_connected, SUM(${stat}) as ${stat}
@@ -40,6 +44,10 @@ export class DailyStatsController {
 
     async getUserInGuildByStat(guildID: string, userID: string, stat: string): Promise<DailyStats[]> {
         const db = await this.sqliteService.getDatabase();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return [];
+        }
 
         return new Promise<DailyStats[]>((resolve, reject) => {
             const query = ` SELECT day_timestamp, time_connected, ${stat}
@@ -71,9 +79,17 @@ export class DailyStatsController {
 
     async updateUserDailyStats(guildID: string, userID: string, stat: string, duration: number, now: number): Promise<void> {
         const db = await this.sqliteService.getDatabase();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return;
+        }
 
         // Generic function to call to update the daily stats
         async function update(date: number, duration: number): Promise<void> {
+            if (!db) {
+                return;
+            }
+
             return new Promise<void>((resolve, reject) => {
                 db.run(`
                     INSERT INTO daily_stats (guild_id, user_id, day_timestamp, ${stat})
