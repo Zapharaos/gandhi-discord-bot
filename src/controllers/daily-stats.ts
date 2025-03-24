@@ -19,7 +19,7 @@ export class DailyStatsController {
                             WHERE guild_id = ?
                             GROUP BY day_timestamp`;
 
-            db.get(query, [guildID], (err: Error | null, rows: DailyStats[]) => {
+            db.all(query, [guildID], (err: Error | null, rows: DailyStats[]) => {
                 if (err) {
                     Logger.error(
                         Logs.error.queryDailyStatsTotalUsersInGuildByStat
@@ -48,7 +48,7 @@ export class DailyStatsController {
                             AND user_id = ?
                             GROUP BY day_timestamp`;
 
-            db.get(query, [guildID, userID], (err: Error | null, rows: DailyStats[]) => {
+            db.all(query, [guildID, userID], (err: Error | null, rows: DailyStats[]) => {
                 if (err) {
                     Logger.error(
                         Logs.error.queryDailyStatsUserInGuildByStat
@@ -110,8 +110,8 @@ export class DailyStatsController {
 
             // Create day object and add it to the list
             days.push({
-                date: dayDuration,
-                duration: "",
+                date: dayMin,
+                duration: dayDuration,
             });
 
             // Update the processed day limits

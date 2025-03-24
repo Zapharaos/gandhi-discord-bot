@@ -4,6 +4,11 @@ export type HeatmapData = {
     valueBis: number
 }
 
+type HmlHeader = {
+    user: string,
+    guild: string
+}
+
 export class Heatmap {
     private data: HeatmapData[];
     private stat: string;
@@ -78,8 +83,7 @@ export class Heatmap {
         let heatmapLegend = this.getLegend();
 
         // Html header icons and names
-        let userHtml = "", guildHtml = "";
-        this.buildHeader(userHtml, guildHtml);
+        const header: HmlHeader = this.buildHeader();
 
         return `
         <!DOCTYPE html>
@@ -143,7 +147,7 @@ export class Heatmap {
             </head>
             <body>
                  <div class="main">
-                    <div class="org-header">` + userHtml + guildHtml + `</div>
+                    <div class="org-header">` + header.user + header.guild + `</div>
                     <div id="cal-heatmap"></div>
                     <div class="legend-header">
                         <div>` + heatmapLegend + `</div>
@@ -369,10 +373,12 @@ export class Heatmap {
         }
     }
 
-    private buildHeader(userHtml: string, guildHtml: string): void {
+    private buildHeader(): HmlHeader {
+        const header = {user: "", guild: ""};
+
         // Check if the user has an icon and name
         if (!this.isTargetAll) {
-            userHtml = `
+            header.user = `
             <div class="org-container">
                 <img src="` + this.userAvatar + `">` + this.userName + `
             </div>
@@ -380,7 +386,7 @@ export class Heatmap {
         }
         else if (this.guildName !== "" && this.guildIcon !== "") {
             // No user means it's a guild heatmap => replace user part with guild part
-            userHtml = `
+            header.user = `
             <div class="org-container">
                 <img src="` + this.guildIcon + `">` + this.guildName + `
             </div>
@@ -389,11 +395,13 @@ export class Heatmap {
 
         // Check if it's not a guild command and if the guild has an icon and name
         if (!this.isTargetAll && this.guildName !== "" && this.guildIcon !== "") {
-            guildHtml = `
+            header.guild = `
             <div class="org-container">
                 ` + this.guildName + `<img src="` + this.guildIcon + `">
             </div>
             `
         }
+
+        return header;
     }
 }

@@ -28,9 +28,6 @@ import {CameraVoice} from "./voice/camera";
 
 dotenv.config();
 
-// TODO : fix daily stats date format in table
-// TODO : check heatmap
-
 // TODO : v2.1.0 -> sql queries
 // TODO : v2.2.0 -> live streak & last activity + max stats + stats with rank associated + display time with double digits
 

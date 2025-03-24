@@ -8,7 +8,6 @@ export type StatKey =
     UserStatsFields.TotalJoins |
     UserStatsFields.LastActivity;
 
-// TODO : apply everywhere
 export enum UserStatsFields {
     TimeConnected = 'time_connected',
     TimeMuted = 'time_muted',

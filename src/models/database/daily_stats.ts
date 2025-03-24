@@ -62,11 +62,17 @@ export class DailyStats {
         return key as StatKey;
     }
 
-    // TODO : StartStatKey is nullable
     static fromStartTimestamps(startTs: StartTimestamps, startStatKey: StartStatKey, now: number): DailyStatsMap {
         const dailyStats: DailyStatsMap = new Map();
-        const stat = this.getColNameFromStartTs(startStatKey);
-        const statKey = this.getStatKey(stat);
+
+        // If the user is not active, return an empty map
+        if (!startTs.isActive()) return dailyStats;
+
+        const stat: string | null = this.getColNameFromStartTs(startStatKey);
+        const statKey: StatKey | null = stat ? this.getStatKey(stat) : null;
+
+        // If the stat key is null, return an empty map
+        if (!statKey) return dailyStats;
 
         // Duration to split (durationConnected is only used if statKey is not related to time_connected)
         const statDuration = TimeUtils.getDuration(startTs[startStatKey], now);

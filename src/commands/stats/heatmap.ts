@@ -76,26 +76,19 @@ export class HeatmapCommand implements Command {
             startTimestamps = startTimestamp ? [startTimestamp] : [];
         }
 
-        console.log('dailyStats', dailyStats);
-        console.log('startTimestamps', startTimestamps);
-
         // Calculate the live daily stats for all users
         let dailyStatsLive: DailyStatsMap = new Map();
         const now = Date.now();
         startTimestamps.forEach(row => {
             // Retrieve user live daily stats as a map
             const local = DailyStats.fromStartTimestamps(row, startStatKey, now);
-            console.log('local', local);
-
             // Merge user live daily stats with global live daily stats
             dailyStatsLive = DailyStats.mergeDailyStatsMaps(dailyStatsLive, local);
-            console.log('dailyStatsLive', dailyStatsLive);
         });
 
         // Convert the daily stats into a map for easier access
         let dailyStatsMap: DailyStatsMap = new Map(dailyStats.map(item => [item.day_timestamp, item]));
         dailyStatsMap = DailyStats.mergeDailyStatsMaps(dailyStatsMap, dailyStatsLive);
-        console.log('dailyStatsMap', dailyStatsMap);
 
         // Calculate the max time connected for the guild heatmap
         let max_time_connected = -1;
@@ -106,12 +99,10 @@ export class HeatmapCommand implements Command {
                 }
             });
         }
-        console.log('max_time_connected', max_time_connected);
 
         // Convert rows into a format that cal-heatmap can consume
         const data = this.formatHeatmapData(heatmap, dailyStatsMap, max_time_connected);
         heatmap.setData(data);
-        console.log('data', data);
 
         // Generate the heatmap
         if (format === 'html') {
