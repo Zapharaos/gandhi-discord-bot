@@ -19,7 +19,7 @@ export class UserStatsController {
                            WHERE guild_id = ?
                              AND user_id = ?`;
 
-            db.get(query, [guildID, userID], (err: Error | null, row: UserStats) => {
+            db.get(query, [guildID, userID], (err: Error | null, row: UserStats | null) => {
                 if (err) {
                     Logger.error(
                         Logs.error.queryStatsUserInGuild
@@ -33,7 +33,7 @@ export class UserStatsController {
                     .replaceAll('{GUILD_ID}', guildID)
                     .replaceAll('{USER_ID}', userID)
                 );
-                resolve(row);
+                resolve(row ? new UserStats(row) : null);
             });
         });
     }
@@ -71,7 +71,7 @@ export class UserStatsController {
         return new Promise<void>((resolve, reject) => {
             const query = `INSERT INTO user_stats (guild_id, user_id, ${stat})
                            VALUES (?, ?, ?)
-                               ON CONFLICT(guild_id, user_id) DO UPDATE SET ${stat} = ?`;
+                               ON CONFLICT(guild_id, user_id) DO UPDATE SET ${stat} = ${stat} + ?`;
 
             db.run(query, [guildID, userID, value, value], (err: Error | null) => {
                 if (err) {

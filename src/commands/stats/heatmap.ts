@@ -3,11 +3,12 @@ import {AttachmentBuilder, ChatInputCommandInteraction, PermissionsString} from 
 import {Heatmap, HeatmapData} from "@models/heatmap";
 import {TimeUtils} from "@utils/time";
 import {InteractionUtils} from "@utils/interaction";
-import {StartTimestamps} from "@models/database/start_timestamps";
+import {StartTimestamps, StatKey} from "@models/database/start_timestamps";
 import {DailyStatsController} from "@controllers/daily-stats";
 import {StartTimestampsController} from "@controllers/start-timestamps";
 import {DailyStats, DailyStatsMap} from "@models/database/daily_stats";
 import puppeteer from "puppeteer";
+import {UserStatsFields} from "@models/database/user_stats";
 
 export class HeatmapCommand implements Command {
     public names = ['heatmap'];
@@ -32,8 +33,9 @@ export class HeatmapCommand implements Command {
 
         // Get the remaining options
         const format: string = intr.options.getString('format') || 'png';
-        const stat: string = intr.options.getString('stat') || 'time_connected';
-        const startStatKey = StartTimestamps.getStatKey(stat.replace('time_', 'start_'));
+        const stat: string = intr.options.getString('stat') || UserStatsFields.TimeConnected;
+        const startStat: string | null = StartTimestamps.getColNameFromUserStat(stat);
+        const startStatKey: StatKey | null = startStat ? StartTimestamps.getStatKey(startStat) : null;
 
         // Prepare heatmap
         const heatmap = new Heatmap();
@@ -97,7 +99,7 @@ export class HeatmapCommand implements Command {
 
         // Calculate the max time connected for the guild heatmap
         let max_time_connected = -1;
-        if (heatmap.getIsTargetAll() && heatmap.getStat() === 'time_connected') {
+        if (heatmap.getIsTargetAll() && heatmap.getStat() === UserStatsFields.TimeConnected) {
             dailyStatsMap.forEach(data => {
                 if (data.time_connected > max_time_connected) {
                     max_time_connected = data.time_connected;
@@ -135,12 +137,12 @@ export class HeatmapCommand implements Command {
             let valueBis = 0;
 
             // Calculate the value as a percentage of the max time connected, tooltip display the value as time in minutes
-            if (heatmap.getIsTargetAll() && heatmap.getStat() === 'time_connected') {
+            if (heatmap.getIsTargetAll() && heatmap.getStat() === UserStatsFields.TimeConnected) {
                 value = TimeUtils.durationAsPercentage(dailyStats[heatmap.getStat()], max_time_connected);
                 valueBis = TimeUtils.msToMinutes(dailyStats[heatmap.getStat()]);
             }
             // Display the value as time in minutes
-            else if (heatmap.getStat() === 'time_connected') {
+            else if (heatmap.getStat() === UserStatsFields.TimeConnected) {
                 value = TimeUtils.msToMinutes(dailyStats[heatmap.getStat()]);
             }
             // Calculate the value as a percentage of the time connected, tooltip display the value as time in minutes

@@ -5,7 +5,7 @@ import {Logger} from "@services/logger";
 import {VoiceProps} from "@models/voice-props";
 import {TimeUtils} from "@utils/time";
 import {StartTimestampsController} from "@controllers/start-timestamps";
-import {DailyStatsFields} from "@models/database/start_timestamps";
+import {StartTsFields} from "@models/database/start_timestamps";
 import {UserStatsFields} from "@models/database/user_stats";
 import {StatsControllersUtils} from "@utils/stats";
 
@@ -24,7 +24,7 @@ export class ScreenSharingVoice implements Voice {
 
             // Start screensharing timestamp for user
             const startTsController = new StartTimestampsController();
-            await startTsController.setStartTimestamp(props.guildId, props.userId, DailyStatsFields.StartScreenSharing, now);
+            await startTsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartScreenSharing, now);
             return
         }
 
@@ -40,7 +40,7 @@ export class ScreenSharingVoice implements Voice {
                 Logger.debug(`Screen sharing stopped for user: ${props.userName} after ${duration} ms`);
 
                 // Update user stats and stop screensharing timestamp for user
-                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeScreenSharing, DailyStatsFields.StartScreenSharing, duration, now);
+                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeScreenSharing, StartTsFields.StartScreenSharing, duration, now);
                 return;
             }
 

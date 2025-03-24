@@ -6,7 +6,7 @@ import {VoiceProps} from "@models/voice-props";
 import {TimeUtils} from "@utils/time";
 import {StartTimestampsController} from "@controllers/start-timestamps";
 import {UserStatsFields} from "@models/database/user_stats";
-import {DailyStatsFields} from "@models/database/start_timestamps";
+import {StartTsFields} from "@models/database/start_timestamps";
 import {StatsControllersUtils} from "@utils/stats";
 
 export class CameraVoice implements Voice {
@@ -24,7 +24,7 @@ export class CameraVoice implements Voice {
 
             // Start camera timestamp for user
             const startTsController = new StartTimestampsController();
-            await startTsController.setStartTimestamp(props.guildId, props.userId, DailyStatsFields.StartCamera, now);
+            await startTsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartCamera, now);
             return
         }
 
@@ -40,7 +40,7 @@ export class CameraVoice implements Voice {
                 Logger.debug(`Camera stopped for user: ${props.userName} after ${duration} ms`);
 
                 // Update user stats and stop camera timestamp for user
-                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeCamera, DailyStatsFields.StartCamera, duration, now);
+                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeCamera, StartTsFields.StartCamera, duration, now);
                 return;
             }
 

@@ -4,15 +4,13 @@ import {InteractionUtils} from "@utils/interaction";
 import {UserStatsController} from "@controllers/user-stats";
 import {Logger} from "@services/logger";
 import {StartTimestampsController} from "@controllers/start-timestamps";
-import {UserStats} from "@models/database/user_stats";
+import {UserStats, UserStatsFields} from "@models/database/user_stats";
 import {TimeUtils} from "@utils/time";
-import {StartTimestamps} from "@models/database/start_timestamps";
+import {StartTimestamps, StatKey} from "@models/database/start_timestamps";
 import {NumberUtils} from "@utils/number";
 
 type RankUser = UserStats & { guildNickname?: string };
 
-// TODO : fix by dailystreak = no daily_streak field in start_timestamps
-// TODO : fix % is 0
 export class RankCommand implements Command {
     public names = ['rank'];
     public deferType = CommandDeferType.PUBLIC;
@@ -25,7 +23,7 @@ export class RankCommand implements Command {
             return;
         }
 
-        const stat: string = intr.options.getString('stat') || 'time_connected';
+        const stat: string = intr.options.getString('stat') || UserStatsFields.TimeConnected;
 
         // Get the users stats in the guild by the specified stat
         const userStatsController = new UserStatsController();
@@ -38,7 +36,8 @@ export class RankCommand implements Command {
 
         // Get the object keys for the specified stats inside the objects
         const userStatKey = UserStats.getStatKey(stat);
-        const startStatKey = StartTimestamps.getStatKey(stat.replace('time_', 'start_'));
+        const startStat: string | null = StartTimestamps.getColNameFromUserStat(stat);
+        const startStatKey: StatKey | null = startStat ? StartTimestamps.getStatKey(startStat) : null;
 
         Logger.debug(`Calculating ranks for stat: ${userStatKey}`);
 
@@ -93,7 +92,7 @@ export class RankCommand implements Command {
 
     private formatRow(row: RankUser, index: number, stat: string, userStatKey: string): string {
         // If the stat is a time-based stat, format the value as a duration
-        if (stat.includes('time') && stat !== 'time_connected') {
+        if (stat.includes('time') && stat !== UserStatsFields.TimeConnected) {
             const value = TimeUtils.formatDuration(row[userStatKey]);
             const percentage = NumberUtils.getPercentageString(row[userStatKey], row.time_connected);
             return `\`${index + 1}. ${row.guildNickname}\` ${value} **(${percentage})**`;
@@ -103,7 +102,7 @@ export class RankCommand implements Command {
         let value: number | string = row[userStatKey];
 
         // If the stat is time_connected, format the value as a duration
-        if (stat === 'time_connected') {
+        if (stat === UserStatsFields.TimeConnected) {
             value = TimeUtils.formatDuration(row[stat]);
         }
 

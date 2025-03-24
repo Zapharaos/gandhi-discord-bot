@@ -5,7 +5,7 @@ import {Logger} from "@services/logger";
 import {VoiceProps} from "@models/voice-props";
 import {TimeUtils} from "@utils/time";
 import {StartTimestampsController} from "@controllers/start-timestamps";
-import {DailyStatsFields} from "@models/database/start_timestamps";
+import {StartTsFields} from "@models/database/start_timestamps";
 import {UserStatsFields} from "@models/database/user_stats";
 import {StatsControllersUtils} from "@utils/stats";
 
@@ -24,7 +24,7 @@ export class DeafenVoice implements Voice {
 
             // Start deaf timestamp for user
             const startTsController = new StartTimestampsController();
-            await startTsController.setStartTimestamp(props.guildId, props.userId, DailyStatsFields.StartDeafened, now);
+            await startTsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartDeafened, now);
             return
         }
 
@@ -40,7 +40,7 @@ export class DeafenVoice implements Voice {
                 Logger.debug(`Deafen stopped for user: ${props.userName} after ${duration} ms`);
 
                 // Update user stats and stop deaf timestamp for user
-                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeDeafened, DailyStatsFields.StartDeafened, duration, now);
+                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeDeafened, StartTsFields.StartDeafened, duration, now);
                 return;
             }
 

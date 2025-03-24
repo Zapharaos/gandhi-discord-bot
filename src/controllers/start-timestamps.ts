@@ -1,7 +1,7 @@
 import {SQLiteService} from "@services/sqlite-service";
 import {Logger} from "@services/logger";
 import Logs from '../../lang/logs.json';
-import {StartTimestamps} from "@models/database/start_timestamps";
+import {StartTimestamps, StatKey} from "@models/database/start_timestamps";
 
 export class StartTimestampsController {
     private sqliteService: SQLiteService;
@@ -39,7 +39,12 @@ export class StartTimestampsController {
         });
     }
 
-    async getUsersInGuildByStat(guildID: string, stat: string): Promise<StartTimestamps[]> {
+    async getUsersInGuildByStat(guildID: string, stat: StatKey | null): Promise<StartTimestamps[]> {
+        // If the stat label is null, return an empty array
+        if (!stat) {
+            return [];
+        }
+
         const db = await this.sqliteService.getDatabase();
 
         return new Promise<StartTimestamps[]>((resolve, reject) => {

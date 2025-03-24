@@ -1,13 +1,22 @@
-import {StartTimestamps, StatKey as StartStatKey} from "@models/database/start_timestamps";
+import {StartTimestamps, StartTsFields, StatKey as StartStatKey} from "@models/database/start_timestamps";
 import {TimeUtils} from "@utils/time";
 
 export type StatKey =
-    'day_timestamp' |
-    'time_connected' |
-    'time_muted' |
-    'time_deafened' |
-    'time_screen_sharing' |
-    'time_camera';
+    DailyStatsFields.DayTimestamp |
+    DailyStatsFields.TimeConnected |
+    DailyStatsFields.TimeMuted |
+    DailyStatsFields.TimeDeafened |
+    DailyStatsFields.TimeScreenSharing |
+    DailyStatsFields.TimeCamera;
+
+export enum DailyStatsFields {
+    DayTimestamp = 'day_timestamp',
+    TimeConnected = 'time_connected',
+    TimeMuted = 'time_muted',
+    TimeDeafened = 'time_deafened',
+    TimeScreenSharing = 'time_screen_sharing',
+    TimeCamera = 'time_camera',
+}
 
 export type DailyStatsMap = Map<number, DailyStats>;
 
@@ -32,13 +41,32 @@ export class DailyStats {
         this.time_camera = data.time_camera;
     }
 
+    static getColNameFromStartTs(name: string): string | null {
+        switch (name) {
+            case StartTsFields.StartConnected:
+                return DailyStatsFields.TimeConnected;
+            case StartTsFields.StartMuted:
+                return DailyStatsFields.TimeMuted;
+            case StartTsFields.StartDeafened:
+                return DailyStatsFields.TimeDeafened;
+            case StartTsFields.StartScreenSharing:
+                return DailyStatsFields.TimeScreenSharing;
+            case StartTsFields.StartCamera:
+                return DailyStatsFields.TimeCamera;
+            default:
+                return null;
+        }
+    }
+
     static getStatKey(key: string): StatKey {
         return key as StatKey;
     }
 
+    // TODO : StartStatKey is nullable
     static fromStartTimestamps(startTs: StartTimestamps, startStatKey: StartStatKey, now: number): DailyStatsMap {
         const dailyStats: DailyStatsMap = new Map();
-        const statKey = this.getStatKey(startStatKey.replace('start_', 'time_'))
+        const stat = this.getColNameFromStartTs(startStatKey);
+        const statKey = this.getStatKey(stat);
 
         // Duration to split (durationConnected is only used if statKey is not related to time_connected)
         const statDuration = TimeUtils.getDuration(startTs[startStatKey], now);

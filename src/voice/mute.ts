@@ -6,7 +6,7 @@ import {VoiceProps} from "@models/voice-props";
 import {TimeUtils} from "@utils/time";
 import {StatsControllersUtils} from "@utils/stats";
 import {UserStatsFields} from "@models/database/user_stats";
-import {DailyStatsFields} from "@models/database/start_timestamps";
+import {StartTsFields} from "@models/database/start_timestamps";
 import {StartTimestampsController} from "@controllers/start-timestamps";
 
 export class MuteVoice implements Voice {
@@ -31,7 +31,7 @@ export class MuteVoice implements Voice {
                 Logger.debug(`User ${props.userName} was muted before deafen event = stop mute timers after ${duration} ms`);
 
                 // Update user stats and stop mute timestamp for user
-                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeMuted, DailyStatsFields.StartMuted, duration, now);
+                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeMuted, StartTsFields.StartMuted, duration, now);
                 return
             }
 
@@ -41,7 +41,7 @@ export class MuteVoice implements Voice {
 
                 // Start mute timestamp for user
                 const startTsController = new StartTimestampsController();
-                await startTsController.setStartTimestamp(props.guildId, props.userId, DailyStatsFields.StartMuted, now);
+                await startTsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartMuted, now);
                 return
             }
 
@@ -57,7 +57,7 @@ export class MuteVoice implements Voice {
 
             // Start mute timestamp for user
             const startTsController = new StartTimestampsController();
-            await startTsController.setStartTimestamp(props.guildId, props.userId, DailyStatsFields.StartMuted, now);
+            await startTsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartMuted, now);
             return
         }
 
@@ -73,7 +73,7 @@ export class MuteVoice implements Voice {
                 Logger.debug(`Mute stopped for user: ${props.userName} after ${duration} ms`);
 
                 // Update user stats and stop mute timestamp for user
-                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeMuted, DailyStatsFields.StartMuted, duration, now);
+                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeMuted, StartTsFields.StartMuted, duration, now);
                 return;
             }
 

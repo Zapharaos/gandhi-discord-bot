@@ -68,6 +68,7 @@ export class TimeUtils {
      * @returns {string} The formatted duration string.
      */
     static formatDuration(ms: number): string {
+        if (!ms || ms === 0) return `0s`;
         if (ms < 1000*60) return `${(ms / 1000).toFixed(3)}s`;
 
         const seconds = Math.floor(ms / 1000);

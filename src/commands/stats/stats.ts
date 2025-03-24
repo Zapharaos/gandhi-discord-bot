@@ -20,12 +20,14 @@ export class StatsCommand implements Command {
         }
 
         const interactionUser: InteractionUser = InteractionUtils.getInteractionUser(intr);
+        // intrUserRaw is the user mention in the reply
+        const intrUserRaw = InteractionUtils.getInteractionUserRaw(intr);
 
         // Get the user stats
         const userStatsController = new UserStatsController();
         const userStats = await userStatsController.getUserInGuild(guildId, interactionUser.id);
         if(!userStats){
-            await InteractionUtils.editReply(intr, `${interactionUser.id} has no stats yet!`);
+            await InteractionUtils.editReply(intr, `${intrUserRaw} has no stats yet!`);
             return;
         }
 
@@ -34,10 +36,10 @@ export class StatsCommand implements Command {
         const startTimestamps = await startTimestampsController.getUserByGuild(guildId, interactionUser.id);
 
         // Combine the live stats with the user stats
-        startTimestamps?.combineAllWithUserStats(userStats, Date.now());
+        const stats = startTimestamps.combineAllWithUserStats(userStats, Date.now());
 
         // Build the reply
-        const reply = this.formatReply(userStats, InteractionUtils.getInteractionUserRaw(intr));
+        const reply = this.formatReply(stats, InteractionUtils.getInteractionUserRaw(intr));
         await InteractionUtils.editReply(intr, reply);
     }
 
@@ -63,7 +65,7 @@ export class StatsCommand implements Command {
         const timeCameraPercentage = NumberUtils.getPercentageString(userStats.time_camera, userStats.time_connected);
 
         // Last activity
-        const lastActivity = TimeUtils.formatDate(new Date(userStats.last_activity));
+        const lastActivity = userStats.last_activity ? TimeUtils.formatDate(new Date(userStats.last_activity)) : 'Never';
 
         return `
             **Stats for ${user}**

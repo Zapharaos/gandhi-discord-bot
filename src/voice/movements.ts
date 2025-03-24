@@ -6,7 +6,7 @@ import {VoiceProps} from "@models/voice-props";
 import {TimeUtils} from "@utils/time";
 import {StatsControllersUtils} from "@utils/stats";
 import {UserStatsFields} from "@models/database/user_stats";
-import {DailyStatsFields} from "@models/database/start_timestamps";
+import {StartTsFields} from "@models/database/start_timestamps";
 import {StartTimestampsController} from "@controllers/start-timestamps";
 import {UserStatsController} from "@controllers/user-stats";
 
@@ -30,7 +30,7 @@ export class MovementsVoice implements Voice {
             // Start connected timestamp for user
             const now = Date.now();
             const startTsController = new StartTimestampsController();
-            await startTsController.setStartTimestamp(props.guildId, props.userId, DailyStatsFields.StartConnected, now);
+            await startTsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartConnected, now);
 
             // Increment total joins for user
             const userStatsController = new UserStatsController();
@@ -59,7 +59,7 @@ export class MovementsVoice implements Voice {
                 Logger.debug(`User is leaving a channel after ${duration} ms`);
 
                 // Update user stats and stop connected timestamp for user
-                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeConnected, DailyStatsFields.StartConnected, duration, now);
+                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeConnected, StartTsFields.StartConnected, duration, now);
             }
 
             // If user has no live stats, do nothing
@@ -71,7 +71,7 @@ export class MovementsVoice implements Voice {
                 Logger.debug(`Mute stopped for user: ${props.userName} after ${duration} ms`);
 
                 // Update user stats and stop mute timestamp for user
-                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeMuted, DailyStatsFields.StartMuted, duration, now);
+                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeMuted, StartTsFields.StartMuted, duration, now);
             }
 
             // Stop deafen if user was deafened
@@ -80,7 +80,7 @@ export class MovementsVoice implements Voice {
                 Logger.debug(`Deafen stopped for user: ${props.userName} after ${duration} ms`);
 
                 // Update user stats and stop deaf timestamp for user
-                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeDeafened, DailyStatsFields.StartDeafened, duration, now);
+                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeDeafened, StartTsFields.StartDeafened, duration, now);
             }
 
             // Stop screen sharing if user was sharing screen
@@ -89,7 +89,7 @@ export class MovementsVoice implements Voice {
                 Logger.debug(`Screen sharing stopped for user: ${props.userName} after ${duration} ms`);
 
                 // Update user stats and stop screensharing timestamp for user
-                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeScreenSharing, DailyStatsFields.StartScreenSharing, duration, now);
+                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeScreenSharing, StartTsFields.StartScreenSharing, duration, now);
             }
 
             // Stop camera if user was using camera
@@ -98,7 +98,7 @@ export class MovementsVoice implements Voice {
                 Logger.debug(`Camera stopped for user: ${props.userName} after ${duration} ms`);
 
                 // Update user stats and stop camera timestamp for user
-                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeScreenSharing, DailyStatsFields.StartScreenSharing, duration, now);
+                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeScreenSharing, StartTsFields.StartScreenSharing, duration, now);
             }
         }
     }

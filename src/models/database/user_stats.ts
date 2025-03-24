@@ -1,13 +1,14 @@
 export type StatKey =
-    'time_connected' |
-    'time_muted' |
-    'time_deafened' |
-    'time_screen_sharing' |
-    'time_camera' |
-    'daily_streak' |
-    'total_joins' |
-    'last_activity';
+    UserStatsFields.TimeConnected |
+    UserStatsFields.TimeMuted |
+    UserStatsFields.TimeDeafened |
+    UserStatsFields.TimeScreenSharing |
+    UserStatsFields.TimeCamera |
+    UserStatsFields.DailyStreak |
+    UserStatsFields.TotalJoins |
+    UserStatsFields.LastActivity;
 
+// TODO : apply everywhere
 export enum UserStatsFields {
     TimeConnected = 'time_connected',
     TimeMuted = 'time_muted',
@@ -34,13 +35,13 @@ export class UserStats {
     constructor(data: UserStats) {
         this.guild_id = data.guild_id;
         this.user_id = data.user_id;
-        this.time_connected = data.time_connected;
-        this.time_muted = data.time_muted;
-        this.time_deafened = data.time_deafened;
-        this.time_screen_sharing = data.time_screen_sharing;
-        this.time_camera = data.time_camera;
-        this.daily_streak = data.daily_streak;
-        this.total_joins = data.total_joins;
+        this.time_connected = data.time_connected ?? 0;
+        this.time_muted = data.time_muted ?? 0;
+        this.time_deafened = data.time_deafened ?? 0;
+        this.time_screen_sharing = data.time_screen_sharing ?? 0;
+        this.time_camera = data.time_camera ?? 0;
+        this.daily_streak = data.daily_streak ?? 0;
+        this.total_joins = data.total_joins ?? 0;
         this.last_activity = data.last_activity;
     }
 

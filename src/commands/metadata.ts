@@ -4,6 +4,7 @@ import {
     PermissionsBitField,
     RESTPostAPIChatInputApplicationCommandsJSONBody,
 } from 'discord.js';
+import {UserStatsFields} from "@models/database/user_stats";
 
 // TODO : const file with labels
 
@@ -90,13 +91,13 @@ export const CommandMetadata: {
                 description: 'The stat to rank by (default: Time Connected)',
                 required: false,
                 choices: [
-                    { name: 'Time Connected', value: 'time_connected' },
-                    { name: 'Time Muted', value: 'time_muted' },
-                    { name: 'Time Deafened', value: 'time_deafened' },
-                    { name: 'Time Screen Sharing', value: 'time_screen_sharing' },
-                    { name: 'Time Camera', value: 'time_camera' },
-                    { name: 'Daily Streak', value: 'daily_streak' },
-                    { name: 'Total Joins', value: 'total_joins' },
+                    { name: 'Time Connected', value: UserStatsFields.TimeConnected },
+                    { name: 'Time Muted', value: UserStatsFields.TimeMuted },
+                    { name: 'Time Deafened', value: UserStatsFields.TimeDeafened },
+                    { name: 'Time Screen Sharing', value: UserStatsFields.TimeScreenSharing },
+                    { name: 'Time Camera', value: UserStatsFields.TimeCamera },
+                    { name: 'Daily Streak', value: UserStatsFields.DailyStreak },
+                    { name: 'Total Joins', value: UserStatsFields.TotalJoins },
                 ],
             },
         ],
