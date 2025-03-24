@@ -34,7 +34,7 @@ export class StartTimestampsController {
                     .replaceAll('{GUILD_ID}', guildID)
                     .replaceAll('{USER_ID}', userID)
                 );
-                resolve(row);
+                resolve(new StartTimestamps(row ?? {} as StartTimestamps));
             });
         });
     }
@@ -61,6 +61,37 @@ export class StartTimestampsController {
                     .replaceAll('{GUILD_ID}', guildID)
                 );
                 resolve(rows);
+            });
+        });
+    }
+
+    async setStartTimestamp(guildID: string, userID: string, stat: string, timestamp: number): Promise<void> {
+        const db = await this.sqliteService.getDatabase();
+
+        return new Promise<void>((resolve, reject) => {
+            const query = `INSERT INTO start_timestamps (guild_id, user_id, ${stat})
+                           VALUES (?, ?, ?)
+                           ON CONFLICT(guild_id, user_id) DO UPDATE SET ${stat} = ?`;
+
+            db.run(query, [guildID, userID, timestamp, timestamp], (err: Error | null) => {
+                if (err) {
+                    Logger.error(
+                        Logs.error.queryStartTsSetTimestamp
+                            .replaceAll('{GUILD_ID}', guildID)
+                            .replaceAll('{USER_ID}', userID)
+                            .replaceAll('{STAT}', stat)
+                            .replaceAll('{TIMESTAMP}', timestamp.toString())
+                        , err);
+                    reject(err);
+                    return;
+                }
+                Logger.debug(Logs.debug.queryStartTsSetTimestamp
+                    .replaceAll('{GUILD_ID}', guildID)
+                    .replaceAll('{USER_ID}', userID)
+                    .replaceAll('{STAT}', stat)
+                    .replaceAll('{TIMESTAMP}', timestamp.toString())
+                );
+                resolve();
             });
         });
     }

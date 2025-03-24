@@ -3,20 +3,50 @@ import {EventData} from "@models/event-data";
 import {VoiceStateUtils} from "@utils/voice-state";
 import {Logger} from "@services/logger";
 import {VoiceProps} from "@models/voice-props";
+import {TimeUtils} from "@utils/time";
+import {StartTimestampsController} from "@controllers/start-timestamps";
+import {UserStatsFields} from "@models/database/user_stats";
+import {DailyStatsFields} from "@models/database/start_timestamps";
+import {StatsControllersUtils} from "@utils/stats";
 
 export class CameraVoice implements Voice {
+    public name = 'CameraVoice';
 
     public async execute(props: VoiceProps, data: EventData): Promise<void> {
+
+        const now = Date.now();
+
+        // User is camera
         if (VoiceStateUtils.startCamera(props.oldState, props.newState)) {
-            Logger.debug('User is camera');
-            // TODO : start timer
+            // Send message to log channel
+            await props.logChannel.send(`📷 **${props.userName}** turned on their camera`);
+            Logger.debug(`Camera started for user: ${props.userName}`);
+
+            // Start camera timestamp for user
+            const startTsController = new StartTimestampsController();
+            await startTsController.setStartTimestamp(props.guildId, props.userId, DailyStatsFields.StartCamera, now);
             return
         }
 
+        // User is not camera
         if (VoiceStateUtils.stopCamera(props.oldState, props.newState)) {
-            Logger.debug('User is not camera');
-            // TODO : stop timer
-            // TODO : update stats
+
+            // Time tracked: calculate duration and update database
+            if (props.userStartTs && props.userStartTs.start_camera !== 0) {
+                const duration = TimeUtils.getDuration(props.userStartTs.start_camera, now);
+
+                // Send message to log channel
+                await props.logChannel.send(`🙈 **${props.userName}** turned off their camera after **${TimeUtils.formatDuration(duration)}**`);
+                Logger.debug(`Camera stopped for user: ${props.userName} after ${duration} ms`);
+
+                // Update user stats and stop camera timestamp for user
+                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeCamera, DailyStatsFields.StartCamera, duration, now);
+                return;
+            }
+
+            // Time was not tracked, send default message
+            await props.logChannel.send(`🙈 **${props.userName}** turned off their camera`);
+            Logger.debug(`Camera stopped for user: ${props.userName} but no start time was tracked`);
             return
         }
     }

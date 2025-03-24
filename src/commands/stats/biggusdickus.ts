@@ -5,6 +5,7 @@ import {UserStatsController} from "@controllers/user-stats";
 import {StartTimestampsController} from "@controllers/start-timestamps";
 import {TimeUtils} from "@utils/time";
 import {Logger} from "@services/logger";
+import {StartTimestamps} from "@models/database/start_timestamps";
 
 export class BiggusdickusCommand implements Command {
     public names = ['biggusdickus'];
@@ -32,7 +33,7 @@ export class BiggusdickusCommand implements Command {
         let streak = userStats.daily_streak;
 
         // Check if the user has any live start timestamps
-        if (startTimestamps?.isActive()) {
+        if (startTimestamps.isActive()) {
             const todayDate = TimeUtils.tsRoundDownToDay();
             // Compare with last activity date -> every user action updates the last activity date and the daily streak
             const lastActivityDate = TimeUtils.tsRoundDownToDay(userStats.last_activity);

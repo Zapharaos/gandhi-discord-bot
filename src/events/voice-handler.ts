@@ -1,9 +1,8 @@
 import {EventHandler} from "@events/event-handler";
 import {EventDataService} from "@services/event-data-service";
 import {
-    CommandInteraction,
     VoiceState,
-    ChannelType,
+    ChannelType, TextChannel,
 } from "discord.js";
 import {Voice} from "../voice/voice";
 import {EventData} from "@models/event-data";
@@ -11,6 +10,8 @@ import {VoiceProps} from "@models/voice-props";
 import {ServerController} from "@controllers/server";
 import {StartTimestampsController} from "@controllers/start-timestamps";
 import {StartTimestamps} from "@models/database/start_timestamps";
+import {Logger} from "@services/logger";
+import Logs from "../../lang/logs.json";
 
 export class VoiceHandler implements EventHandler {
 
@@ -35,7 +36,7 @@ export class VoiceHandler implements EventHandler {
         const server = await serverController.getServer(guild.id);
         if (!server) return;
         const logChannel = guild.channels.cache.get(server.log_channel_id);
-        if (!logChannel || logChannel.type !== ChannelType.GuildText) return;
+        if (!logChannel || logChannel.type !== ChannelType.GuildText || !(logChannel instanceof TextChannel)) return;
 
         // Retrieve the user start timestamps
         const startTimestampController = new StartTimestampsController();
@@ -45,23 +46,23 @@ export class VoiceHandler implements EventHandler {
         const props = new VoiceProps(oldState, newState, guild.id, user.id, userName, startTimestamps, logChannel);
 
         for (const voice of this.voices) {
-            await voice.execute(props, {} as EventData);
+            try {
+                await voice.execute(props, {} as EventData);
+            }
+            catch (error) {
+                // Log command error
+                Logger.error(
+                    Logs.error.voiceEventGuild
+                        .replaceAll('{EVENT_NAME}', voice.name)
+                        .replaceAll('{USER_TAG}', user.tag)
+                        .replaceAll('{USER_ID}', user.id)
+                        .replaceAll('{CHANNEL_NAME}', oldState.channel?.name)
+                        .replaceAll('{CHANNEL_ID}', oldState.channel?.id)
+                        .replaceAll('{GUILD_NAME}', guild?.name)
+                        .replaceAll('{GUILD_ID}', guild?.id),
+                    error
+                );
+            }
         }
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    private async sendError(intr: CommandInteraction, data: EventData): Promise<void> {
-        /*try {
-            await InteractionUtils.send(
-                intr,
-                new EmbedBuilder().addFields(
-                    {name: 'ERROR_CODE', value: intr.id},
-                    {name: 'GUILD_ID', value: intr.guild?.id ?? "N/A"},
-                    {name: 'SHARD_ID', value: (intr.guild?.shardId ?? 0).toString()}
-                )
-            );
-        } catch {
-            // Ignore
-        }*/
     }
 }

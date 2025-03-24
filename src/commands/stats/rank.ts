@@ -11,6 +11,8 @@ import {NumberUtils} from "@utils/number";
 
 type RankUser = UserStats & { guildNickname?: string };
 
+// TODO : fix by dailystreak = no daily_streak field in start_timestamps
+// TODO : fix % is 0
 export class RankCommand implements Command {
     public names = ['rank'];
     public deferType = CommandDeferType.PUBLIC;

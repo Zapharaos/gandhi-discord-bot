@@ -62,6 +62,7 @@
     "autocompleteGuild": "[{INTERACTION_ID}] An error occurred while autocompleting the '{OPTION_NAME}' option for the '{COMMAND_NAME}' command for user '{USER_TAG}' ({USER_ID}) in channel '{CHANNEL_NAME}' ({CHANNEL_ID}) in guild '{GUILD_NAME}' ({GUILD_ID}).",
     "commandOther": "[{INTERACTION_ID}] An error occurred while executing the '{COMMAND_NAME}' command for user '{USER_TAG}' ({USER_ID}).",
     "autocompleteOther": "[{INTERACTION_ID}] An error occurred while autocompleting the '{OPTION_NAME}' option for the '{COMMAND_NAME}' command for user '{USER_TAG}' ({USER_ID}).",
+    "voiceEventGuild": "An error occurred while executing the voice event '{EVENT_NAME}' command for user '{USER_TAG}' ({USER_ID}) in channel '{CHANNEL_NAME}' ({CHANNEL_ID}) in guild '{GUILD_NAME}' ({GUILD_ID}).",
     "apiRequest": "An error occurred while processing a '{HTTP_METHOD}' request to '{URL}'.",
     "apiRateLimit": "A rate limit was hit while making a request.",
     "databaseMigration": "Failed to handle databases migrations.",
@@ -71,10 +72,16 @@
     "queryServerLogChannel": "An error occurred while setting the server {GUILD_ID} with log channel {CHANNEL_ID}.",
     "queryStatsUserInGuild": "An error occurred while querying user {USER_ID} stats in guild {GUILD_ID}.",
     "queryStatsUserInGuildByStat": "An error occurred while querying users {STAT_KEY} in guild {GUILD_ID}.",
+    "queryStatsUserUpdateStat": "An error occurred while updating user {USER_ID} stat {STAT_KEY} with {STAT_VALUE} in guild {GUILD_ID}.",
+    "queryStatsUserGetActivityStreak": "An error occurred while querying user {USER_ID} activity and streak in guild {GUILD_ID}.",
+    "queryStatsUserSetActivityStreak": "An error occurred while setting user {USER_ID} activity and streak in guild {GUILD_ID}.",
+    "queryStatsUserIncrementTotalJoins": "An error occurred while incrementing total joins for user {USER_ID} in guild {GUILD_ID}.",
     "queryStartTsUserInGuild": "An error occurred while querying user {USER_ID} start timestamp in guild {GUILD_ID}.",
     "queryStartTsUserInGuildByStat": "An error occurred while querying users start timestamp in guild {GUILD_ID}.",
+    "queryStartTsSetTimestamp": "An error occurred while setting timestamp {TIMESTAMP} for stat {STAT} and user {USER_ID} in guild {GUILD_ID}.",
     "queryDailyStatsTotalUsersInGuildByStat": "An error occurred while querying total users daily stats in guild {GUILD_ID} by stat {STAT_KEY}.",
-    "queryDailyStatsUserInGuildByStat": "An error occurred while querying user {USER_ID} daily stats in guild {GUILD_ID} by stat {STAT_KEY}."
+    "queryDailyStatsUserInGuildByStat": "An error occurred while querying user {USER_ID} daily stats in guild {GUILD_ID} by stat {STAT_KEY}.",
+    "queryDailyStatsUpdateUser": "An error occurred while updating user {USER_ID} daily stats in guild {GUILD_ID} by stat {STAT_KEY}."
   },
   "debug": {
     "sqliteConnected": "Already connected to SQLite database.",
@@ -82,8 +89,13 @@
     "queryServerLogChannel": "Successfully updated server {GUILD_ID} with log channel {CHANNEL_ID}.",
     "queryStatsUserInGuild": "Successfully queried user {USER_ID} stats in guild {GUILD_ID}.",
     "queryStatsUserInGuildByStat": "Successfully queried users {STAT_KEY} in guild {GUILD_ID}.",
+    "queryStatsUserUpdateStat": "Successfully updated user {USER_ID} stat {STAT_KEY} with {STAT_VALUE} in guild {GUILD_ID}.",
+    "queryStatsUserGetActivityStreak": "Successfully queried user {USER_ID} activity streak in guild {GUILD_ID}.",
+    "queryStatsUserSetActivityStreak": "Successfully set user {USER_ID} activity and streak in guild {GUILD_ID}.",
+    "queryStatsUserIncrementTotalJoins": "Successfully incremented total joins for user {USER_ID} in guild {GUILD_ID}.",
     "queryStartTsUserInGuild": "Successfully queried user {USER_ID} start timestamp in guild {GUILD_ID}.",
     "queryStartTsUserInGuildByStat": "Successfully queried users start timestamp in guild {GUILD_ID}.",
+    "queryStartTsSetTimestamp": "Successfully set timestamp {TIMESTAMP} for stat {STAT} and user {USER_ID} in guild {GUILD_ID}.",
     "queryDailyStatsTotalUsersInGuildByStat": "Successfully queried total users daily stats in guild {GUILD_ID} by stat {STAT_KEY}.",
     "queryDailyStatsUserInGuildByStat": "Successfully queried user {USER_ID} daily stats in guild {GUILD_ID} by stat {STAT_KEY}."
   }

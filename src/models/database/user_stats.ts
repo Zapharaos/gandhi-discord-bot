@@ -8,6 +8,17 @@ export type StatKey =
     'total_joins' |
     'last_activity';
 
+export enum UserStatsFields {
+    TimeConnected = 'time_connected',
+    TimeMuted = 'time_muted',
+    TimeDeafened = 'time_deafened',
+    TimeScreenSharing = 'time_screen_sharing',
+    TimeCamera = 'time_camera',
+    DailyStreak = 'daily_streak',
+    TotalJoins = 'total_joins',
+    LastActivity = 'last_activity'
+}
+
 export class UserStats {
     public guild_id: string;
     public user_id: string;

@@ -8,6 +8,14 @@ export type StatKey =
     'start_screen_sharing' |
     'start_camera';
 
+export enum DailyStatsFields {
+    StartConnected = 'start_connected',
+    StartMuted = 'start_muted',
+    StartDeafened = 'start_deafened',
+    StartScreenSharing = 'start_screen_sharing',
+    StartCamera = 'start_camera'
+}
+
 export class StartTimestamps {
     public guild_id: string;
     public user_id: string;
