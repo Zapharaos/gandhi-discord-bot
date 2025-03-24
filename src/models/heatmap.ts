@@ -80,7 +80,7 @@ export class Heatmap {
 
     public getHtml(): string {
 
-        let heatmapLegend = this.getLegend();
+        const heatmapLegend = this.getLegend();
 
         // Html header icons and names
         const header: HmlHeader = this.buildHeader();

@@ -17,7 +17,6 @@ export class EventDataService {
             args?: Omit<CommandInteractionOptionResolver, 'getMessage' | 'getFocused'>;
         } = {}
     ): Promise<EventData> {
-        // TODO: Retrieve any data you want to pass along in events
 
         // Event language
         const lang =

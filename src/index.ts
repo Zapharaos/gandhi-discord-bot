@@ -28,8 +28,7 @@ import {CameraVoice} from "./voice/camera";
 
 dotenv.config();
 
-// TODO : v2.1.0 -> sql queries
-// TODO : v2.2.0 -> live streak & last activity + max stats + stats with rank associated + display time with double digits
+// TODO : v2.2.0 -> stats with rank associated
 
 async function start(): Promise<void> {
 

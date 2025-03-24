@@ -19,6 +19,7 @@ export class MovementsVoice implements Voice {
         await this.handleSwitch(props, data);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private async handleJoin(props: VoiceProps, data: EventData): Promise<void> {
         // Check if the user is joining a channel
         if (VoiceStateUtils.isJoiningChannel(props.oldState, props.newState)) {
@@ -38,6 +39,7 @@ export class MovementsVoice implements Voice {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private async handleLeave(props: VoiceProps, data: EventData): Promise<void> {
         // Check if the user is leaving a channel
         if (VoiceStateUtils.isLeavingChannel(props.oldState, props.newState)) {
@@ -103,6 +105,7 @@ export class MovementsVoice implements Voice {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private async handleSwitch(props: VoiceProps, data: EventData): Promise<void> {
         // Check if the user is switching channels
         if (VoiceStateUtils.isSwitchingChannel(props.oldState, props.newState)) {

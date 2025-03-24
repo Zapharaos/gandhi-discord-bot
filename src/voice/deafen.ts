@@ -12,6 +12,7 @@ import {StatsControllersUtils} from "@utils/stats";
 export class DeafenVoice implements Voice {
     public name = 'DeafenVoice';
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async execute(props: VoiceProps, data: EventData): Promise<void> {
 
         const now = Date.now();

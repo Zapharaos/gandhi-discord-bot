@@ -12,6 +12,7 @@ import {StatsControllersUtils} from "@utils/stats";
 export class ScreenSharingVoice implements Voice {
     public name = 'ScreenSharingVoice';
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async execute(props: VoiceProps, data: EventData): Promise<void> {
 
         const now = Date.now();

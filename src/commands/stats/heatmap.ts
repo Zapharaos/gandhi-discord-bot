@@ -121,7 +121,7 @@ export class HeatmapCommand implements Command {
         const dailyStatsStatKey = DailyStats.getStatKey(heatmap.getStat());
 
         // Convert the rows into a format that cal-heatmap can consume
-        let data: HeatmapData[] = [];
+        const data: HeatmapData[] = [];
         dailyStatsMap.forEach(dailyStats => {
 
             let value = 0;

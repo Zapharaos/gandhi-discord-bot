@@ -12,6 +12,7 @@ import {StartTimestampsController} from "@controllers/start-timestamps";
 export class MuteVoice implements Voice {
     public name = 'MuteVoice';
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async execute(props: VoiceProps, data: EventData): Promise<void> {
 
         const now = Date.now();

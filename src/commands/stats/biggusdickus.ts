@@ -5,7 +5,6 @@ import {UserStatsController} from "@controllers/user-stats";
 import {StartTimestampsController} from "@controllers/start-timestamps";
 import {TimeUtils} from "@utils/time";
 import {Logger} from "@services/logger";
-import {StartTimestamps} from "@models/database/start_timestamps";
 
 export class BiggusdickusCommand implements Command {
     public names = ['biggusdickus'];

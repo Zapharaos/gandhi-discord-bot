@@ -6,8 +6,6 @@ import {
 } from 'discord.js';
 import {UserStatsFields} from "@models/database/user_stats";
 
-// TODO : const file with labels
-
 // Type : https://discord-api-types.dev/api/discord-api-types-v10/enum/ApplicationCommandOptionType
 
 export const CommandMetadata: {
