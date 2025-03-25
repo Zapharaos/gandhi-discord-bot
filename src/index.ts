@@ -28,7 +28,7 @@ import {CameraVoice} from "./voice/camera";
 
 dotenv.config();
 
-// TODO : fix heatmap
+// TODO : migrations and command + types gen
 
 async function start(): Promise<void> {
 

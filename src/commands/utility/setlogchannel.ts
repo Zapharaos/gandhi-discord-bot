@@ -25,9 +25,8 @@ export class SetLogChannelCommand implements Command {
             return;
         }
 
-        const serverController = new ServerController();
         try {
-            const success = await serverController.setLogChannel(guildId, channel.id);
+            const success = await ServerController.setLogChannel(guildId, channel.id);
             if (success) {
                 await InteractionUtils.send(intr, `✅ Log channel set to <#${channel.id}>`);
             }

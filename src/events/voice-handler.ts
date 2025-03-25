@@ -9,7 +9,6 @@ import {EventData} from "@models/event-data";
 import {VoiceProps} from "@models/voice-props";
 import {ServerController} from "@controllers/server";
 import {StartTimestampsController} from "@controllers/start-timestamps";
-import {StartTimestamps} from "@models/database/start_timestamps";
 import {Logger} from "@services/logger";
 import Logs from "../../lang/logs.json";
 
@@ -32,9 +31,8 @@ export class VoiceHandler implements EventHandler {
         const userName = newState.member?.nickname || user.displayName;
 
         // Retrieve the server and log channel
-        const serverController = new ServerController();
-        const server = await serverController.getServer(guild.id);
-        if (!server) return;
+        const server = await ServerController.getServer(guild.id);
+        if (!server || !server.log_channel_id) return;
         const logChannel = guild.channels.cache.get(server.log_channel_id);
         if (!logChannel || logChannel.type !== ChannelType.GuildText || !(logChannel instanceof TextChannel)) return;
 
@@ -50,7 +48,7 @@ export class VoiceHandler implements EventHandler {
             }
             catch (error) {
                 // Log command error
-                Logger.error(
+                await Logger.error(
                     Logs.error.voiceEventGuild
                         .replaceAll('{EVENT_NAME}', voice.name)
                         .replaceAll('{USER_TAG}', user.tag)

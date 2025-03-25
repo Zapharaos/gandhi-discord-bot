@@ -5,7 +5,7 @@ import sqlite3, {Database} from "sqlite3";
 import {LocalMigration} from "@models/database/migration";
 import Logs from "../../lang/logs.json";
 
-const defaultDbFilePath = process.env.DB_PATH ?? "data/gandhi-bot.db";
+const defaultDbFilePath = process.env.DATABASE_URL ?? "data/gandhi-bot.db";
 
 export class SQLiteService {
 

@@ -21,7 +21,7 @@ export class MuteVoice implements Voice {
         if (VoiceStateUtils.isJoiningChannel(props.oldState, props.newState)) {
 
             // Skip is user is deafened as it already involves mute
-            if (!VoiceStateUtils.isDeafen(props.newState)) return;
+            if (VoiceStateUtils.isDeafen(props.newState)) return;
 
             // While muted
             if (VoiceStateUtils.isMuted(props.newState)) {
