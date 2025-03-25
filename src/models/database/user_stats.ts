@@ -1,16 +1,6 @@
 import {UserStats} from "../../types/db";
 import {DatabaseUtils} from "@utils/database";
 
-export type StatKey =
-    UserStatsFields.TimeConnected |
-    UserStatsFields.TimeMuted |
-    UserStatsFields.TimeDeafened |
-    UserStatsFields.TimeScreenSharing |
-    UserStatsFields.TimeCamera |
-    UserStatsFields.DailyStreak |
-    UserStatsFields.TotalJoins |
-    UserStatsFields.LastActivity;
-
 export enum UserStatsFields {
     DailyStreak = 'daily_streak',
     GuildId = 'guild_id',
@@ -23,6 +13,24 @@ export enum UserStatsFields {
     TotalJoins = 'total_joins',
     UserId = 'user_id',
 }
+
+export const StatTimeRelated = [
+    UserStatsFields.TimeConnected,
+    UserStatsFields.TimeMuted,
+    UserStatsFields.TimeDeafened,
+    UserStatsFields.TimeScreenSharing,
+    UserStatsFields.TimeCamera
+];
+
+export type StatKey =
+    UserStatsFields.TimeConnected |
+    UserStatsFields.TimeMuted |
+    UserStatsFields.TimeDeafened |
+    UserStatsFields.TimeScreenSharing |
+    UserStatsFields.TimeCamera |
+    UserStatsFields.DailyStreak |
+    UserStatsFields.TotalJoins |
+    UserStatsFields.LastActivity;
 
 export class UserStatsModel {
 

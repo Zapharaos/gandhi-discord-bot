@@ -4,7 +4,7 @@ import {InteractionUtils} from "@utils/interaction";
 import {UserStatsController} from "@controllers/user-stats";
 import {Logger} from "@services/logger";
 import {StartTimestampsController} from "@controllers/start-timestamps";
-import {UserStatsModel, StatKey as UserStatsKey, UserStatsFields} from "@models/database/user_stats";
+import {UserStatsModel, StatKey as UserStatsKey, UserStatsFields, StatTimeRelated} from "@models/database/user_stats";
 import {TimeUtils} from "@utils/time";
 import {StartTimestampsModel, StatKey} from "@models/database/start_timestamps";
 import {NumberUtils} from "@utils/number";
@@ -90,7 +90,7 @@ export class RankCommand implements Command {
 
     private formatRow(row: RankUser, index: number, stat: string, userStatKey: UserStatsKey): string {
         // If the stat is a time-based stat, format the value as a duration
-        if (stat !== UserStatsFields.TimeConnected && typeof row[userStatKey] === 'number') {
+        if (stat !== UserStatsFields.TimeConnected && StatTimeRelated.includes(stat as UserStatsFields)) {
             const value = TimeUtils.formatDuration(row[userStatKey]);
             const percentage = NumberUtils.getPercentageString(row[userStatKey], row.time_connected);
             return `\`${index + 1}. ${row.guildNickname}\` ${value} **(${percentage})**`;
