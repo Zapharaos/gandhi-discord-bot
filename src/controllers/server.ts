@@ -39,14 +39,21 @@ export class ServerController {
                 .where('guild_id', '=', guildID)
                 .executeTakeFirst();
 
+            Logger.debug(
+                Logs.debug.queryServerGet
+                    .replaceAll('{GUILD_ID}', guildID)
+            );
+
             if (!server) {
                 return null;
             }
 
-            Logger.debug(Logs.debug.queryServerGet.replaceAll('{GUILD_ID}', guildID));
             return server;
         } catch (err) {
-            await Logger.error(Logs.error.queryServerGet.replaceAll('{GUILD_ID}', guildID), err);
+            await Logger.error(
+                Logs.error.queryServerGet
+                    .replaceAll('{GUILD_ID}', guildID)
+                , err);
             return null;
         }
     }

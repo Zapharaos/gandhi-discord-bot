@@ -40,7 +40,6 @@ export class VoiceHandler implements EventHandler {
         // Retrieve the user start timestamps
         const row = await StartTimestampsController.getUserByGuild(guild.id, user.id);
         const startTimestamps = StartTimestampsModel.fromStartTimestamps(row);
-        console.log(row, startTimestamps);
 
         const props = new VoiceProps(oldState, newState, guild.id, user.id, userName, startTimestamps, logChannel);
 

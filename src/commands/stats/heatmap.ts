@@ -72,7 +72,6 @@ export class HeatmapCommand implements Command {
 
             // Get the start timestamps for the user
             const row = await StartTimestampsController.getUserByGuild(guildId, interactionUser.id);
-            console.log('test', row);
             startTimestamps = [StartTimestampsModel.fromStartTimestamps(row)];
         }
 

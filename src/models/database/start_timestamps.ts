@@ -1,4 +1,4 @@
-import {UserStats, StatKey as UserStatsStatKey, UserStatsFields} from "@models/database/user_stats";
+import {UserStatsModel, StatKey as UserStatsStatKey, UserStatsFields} from "@models/database/user_stats";
 import {TimeUtils} from "@utils/time";
 import {StartTimestamps} from "../../types/db";
 import {DatabaseUtils} from "@utils/database";
@@ -78,7 +78,7 @@ export class StartTimestampsModel {
         return this.start_connected !== 0;
     }
 
-    public combineWithUserStats(userStats: UserStats, userStatKey: UserStatsStatKey, statKey: StatKey | null, now: number): void {
+    public combineWithUserStats(userStats: UserStatsModel, userStatKey: UserStatsStatKey, statKey: StatKey | null, now: number): void {
         // No stat key to use
         if (!statKey) return;
 
@@ -100,7 +100,7 @@ export class StartTimestampsModel {
         }
     }
 
-    public combineAllWithUserStats(userStats: UserStats, now: number): UserStats {
+    public combineAllWithUserStats(userStats: UserStatsModel, now: number): UserStatsModel {
         // User is not active yet -> no live stats to use
         if (!this || !this.isActive()) return userStats;
 

@@ -7,6 +7,7 @@ import {TimeUtils} from "@utils/time";
 import {Logger} from "@services/logger";
 import Logs from "../../../lang/logs.json";
 import {StartTimestampsModel} from "@models/database/start_timestamps";
+import {UserStatsModel} from "@models/database/user_stats";
 
 export class BiggusdickusCommand implements Command {
     public names = ['biggusdickus'];
@@ -26,12 +27,12 @@ export class BiggusdickusCommand implements Command {
         const intrUserRaw = InteractionUtils.getInteractionUserRaw(intr);
 
         // Get the user stats
-        const userStatsController = new UserStatsController();
-        const userStats = await userStatsController.getUserInGuild(guildId, interactionUser.id);
-        if(!userStats){
+        const rowUserStats = await UserStatsController.getUserInGuild(guildId, interactionUser.id);
+        if(!rowUserStats){
             await InteractionUtils.send(intr, `${intrUserRaw} has no stats yet!`);
             return;
         }
+        const userStats = UserStatsModel.fromUserStats(rowUserStats);
 
         // Get the user live stats
         const row = await StartTimestampsController.getUserByGuild(guildId, interactionUser.id);

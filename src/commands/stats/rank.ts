@@ -4,12 +4,12 @@ import {InteractionUtils} from "@utils/interaction";
 import {UserStatsController} from "@controllers/user-stats";
 import {Logger} from "@services/logger";
 import {StartTimestampsController} from "@controllers/start-timestamps";
-import {UserStats, StatKey as UserStatsKey, UserStatsFields} from "@models/database/user_stats";
+import {UserStatsModel, StatKey as UserStatsKey, UserStatsFields} from "@models/database/user_stats";
 import {TimeUtils} from "@utils/time";
 import {StartTimestampsModel, StatKey} from "@models/database/start_timestamps";
 import {NumberUtils} from "@utils/number";
 
-type RankUser = UserStats & { guildNickname?: string };
+type RankUser = UserStatsModel & { guildNickname?: string };
 
 export class RankCommand implements Command {
     public names = ['rank'];
@@ -26,16 +26,16 @@ export class RankCommand implements Command {
         const stat: string = intr.options.getString('stat') || UserStatsFields.TimeConnected;
 
         // Get the users stats in the guild by the specified stat
-        const userStatsController = new UserStatsController();
-        const usersStats = await userStatsController.getUsersInGuildByStat(guildId, stat);
-        if (!usersStats.length) {
+        const rows = await UserStatsController.getUsersInGuildByStat(guildId, stat);
+        if (!rows.length) {
             Logger.debug(`RankCommand - No user stats found for the stat ${stat}`);
             await InteractionUtils.editReply(intr, `No data found for the stat ${stat}.`);
             return;
         }
+        const usersStats = rows.map(row => UserStatsModel.fromUserStats(row));
 
         // Get the object keys for the specified stats inside the objects
-        const userStatKey = UserStats.getStatKey(stat);
+        const userStatKey = UserStatsModel.getStatKey(stat);
         const startStat: string | null = StartTimestampsModel.getColNameFromUserStat(stat);
         const startStatKey: StatKey | null = startStat ? StartTimestampsModel.getStatKey(startStat) : null;
 
@@ -57,11 +57,11 @@ export class RankCommand implements Command {
         for (const row of usersStats) {
 
             // Combine the user stats with his live stats (if any)
-            const liveStat = usersLiveStats.get(row.user_id);
+            const liveStat = usersLiveStats.get(row.user_id!);
             liveStat?.combineWithUserStats(row, userStatKey, startStatKey, now);
 
             // Retrieve the user's nickname in the guild
-            const guildNickname = await InteractionUtils.fetchGuildMemberNickname(intr.guild as Guild, row.user_id);
+            const guildNickname = await InteractionUtils.fetchGuildMemberNickname(intr.guild as Guild, row.user_id!);
             if (!guildNickname) {
                 // TODO : on user quit or user ban -> remove user from guild related tables
                 continue;
