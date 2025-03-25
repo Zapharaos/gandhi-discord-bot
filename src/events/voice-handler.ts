@@ -11,6 +11,7 @@ import {ServerController} from "@controllers/server";
 import {StartTimestampsController} from "@controllers/start-timestamps";
 import {Logger} from "@services/logger";
 import Logs from "../../lang/logs.json";
+import {StartTimestampsModel} from "@models/database/start_timestamps";
 
 export class VoiceHandler implements EventHandler {
 
@@ -37,8 +38,9 @@ export class VoiceHandler implements EventHandler {
         if (!logChannel || logChannel.type !== ChannelType.GuildText || !(logChannel instanceof TextChannel)) return;
 
         // Retrieve the user start timestamps
-        const startTimestampController = new StartTimestampsController();
-        const startTimestamps = await startTimestampController.getUserByGuild(guild.id, user.id);
+        const row = await StartTimestampsController.getUserByGuild(guild.id, user.id);
+        const startTimestamps = StartTimestampsModel.fromStartTimestamps(row);
+        console.log(row, startTimestamps);
 
         const props = new VoiceProps(oldState, newState, guild.id, user.id, userName, startTimestamps, logChannel);
 

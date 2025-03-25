@@ -40,7 +40,6 @@ export class ServerController {
                 .executeTakeFirst();
 
             if (!server) {
-                await Logger.error(Logs.error.queryServerGet.replaceAll('{GUILD_ID}', guildID));
                 return null;
             }
 

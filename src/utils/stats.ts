@@ -16,7 +16,6 @@ export class StatsControllersUtils {
         await DailyStatsController.updateUserDailyStats(props.guildId, props.userId, userStatsField, duration, now);
 
         // Stop camera timestamp for user
-        const startTsController = new StartTimestampsController();
-        await startTsController.setStartTimestamp(props.guildId, props.userId, startTsField, 0);
+        await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, startTsField, 0);
     }
 }

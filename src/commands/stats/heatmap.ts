@@ -3,7 +3,7 @@ import {AttachmentBuilder, ChatInputCommandInteraction, PermissionsString} from 
 import {Heatmap, HeatmapData} from "@models/heatmap";
 import {TimeUtils} from "@utils/time";
 import {InteractionUtils} from "@utils/interaction";
-import {StartTimestamps, StatKey} from "@models/database/start_timestamps";
+import {StartTimestampsModel, StatKey} from "@models/database/start_timestamps";
 import {DailyStatsController} from "@controllers/daily-stats";
 import {StartTimestampsController} from "@controllers/start-timestamps";
 import {DailyStatsModel, DailyStatsMap} from "@models/database/daily_stats";
@@ -37,8 +37,8 @@ export class HeatmapCommand implements Command {
         // Get the remaining options
         const format: string = intr.options.getString('format') || 'png';
         const stat: string = intr.options.getString('stat') || UserStatsFields.TimeConnected;
-        const startStat: string | null = StartTimestamps.getColNameFromUserStat(stat);
-        const startStatKey: StatKey | null = startStat ? StartTimestamps.getStatKey(startStat) : null;
+        const startStat: string | null = StartTimestampsModel.getColNameFromUserStat(stat);
+        const startStatKey: StatKey | null = startStat ? StartTimestampsModel.getStatKey(startStat) : null;
 
         // Prepare heatmap
         const heatmap = new Heatmap();
@@ -49,7 +49,7 @@ export class HeatmapCommand implements Command {
 
         // Heatmap data
         let dailyStats: DailyStatsModel[];
-        let startTimestamps: StartTimestamps[];
+        let startTimestamps: StartTimestampsModel[];
 
         // Check if the heatmap should be generated for all users
         if (targetAll) {
@@ -58,9 +58,8 @@ export class HeatmapCommand implements Command {
             dailyStats = rowsDailyStats.map(row => DailyStatsModel.fromDailyStats(row));
 
             // Get the start timestamps for the active users
-            const startTimestampController = new StartTimestampsController();
-            const rows = await startTimestampController.getUsersInGuildByStat(guildId, startStatKey);
-            startTimestamps = rows ? rows : [];
+            const rows = await StartTimestampsController.getUsersInGuildByStat(guildId, startStatKey);
+            startTimestamps = rows.map(row => StartTimestampsModel.fromStartTimestamps(row));
         }
         else {
             const interactionUser = InteractionUtils.getInteractionUser(intr);
@@ -72,9 +71,9 @@ export class HeatmapCommand implements Command {
             dailyStats = rowsDailyStats.map(row => DailyStatsModel.fromDailyStats(row));
 
             // Get the start timestamps for the user
-            const startTimestampController = new StartTimestampsController();
-            const startTimestamp = await startTimestampController.getUserByGuild(guildId, interactionUser.id);
-            startTimestamps = startTimestamp ? [startTimestamp] : [];
+            const row = await StartTimestampsController.getUserByGuild(guildId, interactionUser.id);
+            console.log('test', row);
+            startTimestamps = [StartTimestampsModel.fromStartTimestamps(row)];
         }
 
         // Calculate the live daily stats for all users

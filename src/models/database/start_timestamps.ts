@@ -1,5 +1,7 @@
 import {UserStats, StatKey as UserStatsStatKey, UserStatsFields} from "@models/database/user_stats";
 import {TimeUtils} from "@utils/time";
+import {StartTimestamps} from "../../types/db";
+import {DatabaseUtils} from "@utils/database";
 
 export type StatKey =
     StartTsFields.StartConnected |
@@ -9,30 +11,34 @@ export type StatKey =
     StartTsFields.StartCamera;
 
 export enum StartTsFields {
+    GuildId = 'guild_id',
+    StartCamera = 'start_camera',
     StartConnected = 'start_connected',
-    StartMuted = 'start_muted',
     StartDeafened = 'start_deafened',
+    StartMuted = 'start_muted',
     StartScreenSharing = 'start_screen_sharing',
-    StartCamera = 'start_camera'
+    UserId = 'user_id',
 }
 
-export class StartTimestamps {
-    public guild_id: string;
-    public user_id: string;
-    public start_connected: number;
-    public start_muted: number;
-    public start_deafened: number;
-    public start_screen_sharing: number;
-    public start_camera: number;
+export class StartTimestampsModel {
 
-    constructor(data: Partial<StartTimestamps> = {}) {
-        this.guild_id = data.guild_id || '';
-        this.user_id = data.user_id || '';
-        this.start_connected = data.start_connected || 0;
-        this.start_muted = data.start_muted || 0;
-        this.start_deafened = data.start_deafened || 0;
-        this.start_screen_sharing = data.start_screen_sharing || 0;
-        this.start_camera = data.start_camera || 0;
+    // Database fields
+    guild_id: string | null;
+    start_camera: number;
+    start_connected: number;
+    start_deafened: number;
+    start_muted: number;
+    start_screen_sharing: number;
+    user_id: string | null;
+
+    constructor(data: Partial<StartTimestampsModel> = {}) {
+        this.guild_id = data.guild_id ?? null;
+        this.start_camera = data.start_camera ?? 0;
+        this.start_connected = data.start_connected ?? 0;
+        this.start_deafened = data.start_deafened ?? 0;
+        this.start_muted = data.start_muted ?? 0;
+        this.start_screen_sharing = data.start_screen_sharing ?? 0;
+        this.user_id = data.user_id ?? null;
     }
 
     static getColNameFromUserStat(name: string): string | null {
@@ -54,6 +60,18 @@ export class StartTimestamps {
 
     static getStatKey(key: string): StatKey {
         return key as StatKey;
+    }
+
+    static fromStartTimestamps(stats: Partial<StartTimestamps> = {}): StartTimestampsModel {
+        return new StartTimestampsModel({
+            guild_id: stats.guild_id ?? null,
+            start_camera: DatabaseUtils.unwrapGeneratedNumber(stats.start_camera),
+            start_connected: DatabaseUtils.unwrapGeneratedNumber(stats.start_connected),
+            start_deafened: DatabaseUtils.unwrapGeneratedNumber(stats.start_deafened),
+            start_muted: DatabaseUtils.unwrapGeneratedNumber(stats.start_muted),
+            start_screen_sharing: DatabaseUtils.unwrapGeneratedNumber(stats.start_screen_sharing),
+            user_id: stats.user_id ?? null,
+        })
     }
 
     public isActive(): boolean {

@@ -25,8 +25,7 @@ export class DeafenVoice implements Voice {
                 Logger.debug('User is joining a channel while deafened');
 
                 // Start deaf timestamp for user
-                const startTsController = new StartTimestampsController();
-                await startTsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartDeafened, now);
+                await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartDeafened, now);
             }
 
             return;
@@ -39,8 +38,7 @@ export class DeafenVoice implements Voice {
             Logger.debug(`Deafen for user: ${props.userName}`);
 
             // Start deaf timestamp for user
-            const startTsController = new StartTimestampsController();
-            await startTsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartDeafened, now);
+            await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartDeafened, now);
             return
         }
 

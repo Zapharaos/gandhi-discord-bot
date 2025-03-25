@@ -28,8 +28,7 @@ export class MuteVoice implements Voice {
                 Logger.debug('User is joining a channel while muted');
 
                 // Start mute timestamp for user
-                const startTsController = new StartTimestampsController();
-                await startTsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartMuted, now);
+                await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartMuted, now);
             }
 
             return;
@@ -59,8 +58,7 @@ export class MuteVoice implements Voice {
                 Logger.debug('User still muted after deafen event = restart mute timers');
 
                 // Start mute timestamp for user
-                const startTsController = new StartTimestampsController();
-                await startTsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartMuted, now);
+                await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartMuted, now);
                 return
             }
 
@@ -75,8 +73,7 @@ export class MuteVoice implements Voice {
             Logger.debug(`Mute for user: ${props.userName}`);
 
             // Start mute timestamp for user
-            const startTsController = new StartTimestampsController();
-            await startTsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartMuted, now);
+            await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartMuted, now);
             return
         }
 

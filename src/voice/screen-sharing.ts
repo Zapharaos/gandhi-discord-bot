@@ -25,8 +25,7 @@ export class ScreenSharingVoice implements Voice {
                 Logger.debug('User is joining a channel while streaming');
 
                 // Start screensharing timestamp for user
-                const startTsController = new StartTimestampsController();
-                await startTsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartScreenSharing, now);
+                await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartScreenSharing, now);
             }
 
             return;
@@ -39,8 +38,7 @@ export class ScreenSharingVoice implements Voice {
             Logger.debug(`Screen sharing started for user: ${props.userName}`);
 
             // Start screensharing timestamp for user
-            const startTsController = new StartTimestampsController();
-            await startTsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartScreenSharing, now);
+            await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartScreenSharing, now);
             return
         }
 

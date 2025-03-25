@@ -6,7 +6,7 @@ import {Logger} from "@services/logger";
 import {StartTimestampsController} from "@controllers/start-timestamps";
 import {UserStats, StatKey as UserStatsKey, UserStatsFields} from "@models/database/user_stats";
 import {TimeUtils} from "@utils/time";
-import {StartTimestamps, StatKey} from "@models/database/start_timestamps";
+import {StartTimestampsModel, StatKey} from "@models/database/start_timestamps";
 import {NumberUtils} from "@utils/number";
 
 type RankUser = UserStats & { guildNickname?: string };
@@ -36,19 +36,19 @@ export class RankCommand implements Command {
 
         // Get the object keys for the specified stats inside the objects
         const userStatKey = UserStats.getStatKey(stat);
-        const startStat: string | null = StartTimestamps.getColNameFromUserStat(stat);
-        const startStatKey: StatKey | null = startStat ? StartTimestamps.getStatKey(startStat) : null;
+        const startStat: string | null = StartTimestampsModel.getColNameFromUserStat(stat);
+        const startStatKey: StatKey | null = startStat ? StartTimestampsModel.getStatKey(startStat) : null;
 
         Logger.debug(`Calculating ranks for stat: ${userStatKey}`);
 
         // Get the users live stats in the guild by the specified stat
-        const startTsController = new StartTimestampsController();
-        const usersLiveStatsArray: StartTimestamps[] = await startTsController.getUsersInGuildByStat(guildId, startStatKey);
+        const usersLiveStatsArray = await StartTimestampsController.getUsersInGuildByStat(guildId, startStatKey);
 
         // Convert the live stats array to a map for faster lookup
-        const usersLiveStats = new Map<string, StartTimestamps>();
+        const usersLiveStats = new Map<string, StartTimestampsModel>();
         usersLiveStatsArray.forEach(item => {
-            usersLiveStats.set(item.user_id, new StartTimestamps(item));
+            if (!item.user_id) return;
+            usersLiveStats.set(item.user_id, StartTimestampsModel.fromStartTimestamps(item));
         });
 
         // Process the stats : combine with live stats + retrieve user nickname
@@ -56,10 +56,8 @@ export class RankCommand implements Command {
         const now = Date.now();
         for (const row of usersStats) {
 
-            // Retrieve the live stat for the user
-            const liveStat = usersLiveStats.get(row.user_id) as StartTimestamps;
-
-            // Combine the user stats with his live stats
+            // Combine the user stats with his live stats (if any)
+            const liveStat = usersLiveStats.get(row.user_id);
             liveStat?.combineWithUserStats(row, userStatKey, startStatKey, now);
 
             // Retrieve the user's nickname in the guild

@@ -6,6 +6,7 @@ import {StartTimestampsController} from "@controllers/start-timestamps";
 import {TimeUtils} from "@utils/time";
 import {Logger} from "@services/logger";
 import Logs from "../../../lang/logs.json";
+import {StartTimestampsModel} from "@models/database/start_timestamps";
 
 export class BiggusdickusCommand implements Command {
     public names = ['biggusdickus'];
@@ -33,8 +34,8 @@ export class BiggusdickusCommand implements Command {
         }
 
         // Get the user live stats
-        const startTimestampsController = new StartTimestampsController();
-        const startTimestamps = await startTimestampsController.getUserByGuild(guildId, interactionUser.id);
+        const row = await StartTimestampsController.getUserByGuild(guildId, interactionUser.id);
+        const startTimestamps = StartTimestampsModel.fromStartTimestamps(row);
 
         let streak = userStats.daily_streak;
 

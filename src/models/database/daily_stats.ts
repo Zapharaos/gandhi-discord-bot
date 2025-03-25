@@ -1,4 +1,4 @@
-import {StartTimestamps, StartTsFields, StatKey as StartStatKey} from "@models/database/start_timestamps";
+import {StartTimestampsModel, StartTsFields, StatKey as StartStatKey} from "@models/database/start_timestamps";
 import {TimeUtils} from "@utils/time";
 import { DailyStats } from "../../types/db";
 import {DatabaseUtils} from "@utils/database";
@@ -81,7 +81,7 @@ export class DailyStatsModel {
         })
     }
 
-    static fromStartTimestamps(startTs: StartTimestamps, startStatKey: StartStatKey | null, now: number): DailyStatsMap {
+    static fromStartTimestamps(startTs: StartTimestampsModel, startStatKey: StartStatKey | null, now: number): DailyStatsMap {
         const dailyStats: DailyStatsMap = new Map();
 
         // If the user is not active, return an empty map

@@ -6,6 +6,7 @@ import {StartTimestampsController} from "@controllers/start-timestamps";
 import {TimeUtils} from "@utils/time";
 import {UserStats} from "@models/database/user_stats";
 import {NumberUtils} from "@utils/number";
+import {StartTimestampsModel} from "@models/database/start_timestamps";
 
 export class StatsCommand implements Command {
     public names = ['stats'];
@@ -32,8 +33,8 @@ export class StatsCommand implements Command {
         }
 
         // Get the user live stats
-        const startTimestampsController = new StartTimestampsController();
-        const startTimestamps = await startTimestampsController.getUserByGuild(guildId, interactionUser.id);
+        const row = await StartTimestampsController.getUserByGuild(guildId, interactionUser.id);
+        const startTimestamps = StartTimestampsModel.fromStartTimestamps(row);
 
         // Combine the live stats with the user stats
         const stats = startTimestamps?.combineAllWithUserStats(userStats, Date.now()) ?? {} as UserStats;
