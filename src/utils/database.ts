@@ -5,7 +5,7 @@ export class DatabaseUtils {
         return value as unknown as Generated<T>;
     }
 
-    static unwrapGeneratedNumber<T>(value: Generated<number | null> | undefined): number {
+    static unwrapGeneratedNumber(value: Generated<number | null> | undefined): number {
         return value as unknown as number | 0;
     }
 }

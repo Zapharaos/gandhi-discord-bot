@@ -7,14 +7,15 @@
   "scripts": {
     "lint": "eslint . --cache --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint . --fix --cache --ext .js,.jsx,.ts,.tsx",
+    "migrate": "ts-node --project tsconfig.json scripts/migrate-to-latest.ts",
+    "generate": "kysely-codegen --out-file ./src/types/db.d.ts",
     "build": "tspc --project tsconfig.json",
     "commands:view": "npm run build && node --enable-source-maps dist/src/index.js commands view",
     "commands:register": "npm run build && node --enable-source-maps dist/src/index.js commands register",
     "commands:rename": "npm run build && node --enable-source-maps dist/src/index.js commands rename",
     "commands:delete": "npm run build && node --enable-source-maps dist/src/index.js commands delete",
     "commands:clear": "npm run build && node --enable-source-maps dist/src/index.js commands clear",
-    "generate:types": "kysely-codegen --out-file ./src/types/db.d.ts",
-    "start": "npm run build && npm run generate:types && node --enable-source-maps dist/src/index.js",
+    "start": "npm run build && node --enable-source-maps dist/src/index.js",
     "test": "echo \"Error: no test specified\""
   },
   "dependencies": {

@@ -10,7 +10,7 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
   : ColumnType<T, T | undefined, T>;
 
 export interface DailyStats {
-  day_timestamp: number | null;
+  day_timestamp: Generated<number | null>;
   guild_id: string | null;
   time_camera: Generated<number | null>;
   time_connected: Generated<number | null>;
@@ -18,11 +18,6 @@ export interface DailyStats {
   time_muted: Generated<number | null>;
   time_screen_sharing: Generated<number | null>;
   user_id: string | null;
-}
-
-export interface Migrations {
-  id: Generated<number | null>;
-  name: string | null;
 }
 
 export interface Servers {
@@ -55,7 +50,6 @@ export interface UserStats {
 
 export interface DB {
   daily_stats: DailyStats;
-  migrations: Migrations;
   servers: Servers;
   start_timestamps: StartTimestamps;
   user_stats: UserStats;

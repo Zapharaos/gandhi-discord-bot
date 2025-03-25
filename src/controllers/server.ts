@@ -48,7 +48,7 @@ export class ServerController {
                 return null;
             }
 
-            return server;
+            return server as Servers;
         } catch (err) {
             await Logger.error(
                 Logs.error.queryServerGet
