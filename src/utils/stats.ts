@@ -13,8 +13,7 @@ export class StatsControllersUtils {
         await userStatsController.updateLastActivityAndStreak(props.guildId, props.userId, now);
 
         // Update user daily stats
-        const dailyStatsController = new DailyStatsController();
-        await dailyStatsController.updateUserDailyStats(props.guildId, props.userId, userStatsField, duration, now);
+        await DailyStatsController.updateUserDailyStats(props.guildId, props.userId, userStatsField, duration, now);
 
         // Stop camera timestamp for user
         const startTsController = new StartTimestampsController();

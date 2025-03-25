@@ -1,116 +1,72 @@
-import {SQLiteService} from "@services/sqlite-service";
-import {DailyStats} from "@models/database/daily_stats";
 import {Logger} from "@services/logger";
 import Logs from "../../lang/logs.json";
+import {db} from '@services/database'
+import {DailyStats, DB} from '../types/db'
+import {ExpressionBuilder} from "kysely";
+import {StatKey} from "@models/database/daily_stats";
 
 export class DailyStatsController {
-    private sqliteService: SQLiteService;
 
-    constructor() {
-        this.sqliteService = SQLiteService.getInstance();
-    }
+    static async getTotalForUsersInGuildByStat(guildID: string, stat: string): Promise<DailyStats[]> {
+        try {
+            const result = await db
+                .selectFrom('daily_stats')
+                .select([
+                    'day_timestamp',
+                    db.fn.sum('time_connected').as('time_connected'),
+                    db.fn.sum(db.dynamic.ref<StatKey>(stat)).as(stat)
+                ])
+                .where('guild_id', '=', guildID)
+                .groupBy('day_timestamp')
+                .execute();
 
-    async getTotalForUsersInGuildByStat(guildID: string, stat: string): Promise<DailyStats[]> {
-        const db = await this.sqliteService.getDatabase();
-        if (!db) {
-            await Logger.error(Logs.error.databaseNotFound);
-            return [];
-        }
+            Logger.debug(Logs.debug.queryDailyStatsTotalUsersInGuildByStat
+                .replaceAll('{GUILD_ID}', guildID)
+                .replaceAll('{STAT_KEY}', stat)
+            );
 
-        return new Promise<DailyStats[]>((resolve, reject) => {
-            const query = ` SELECT day_timestamp, SUM(time_connected) as time_connected, SUM(${stat}) as ${stat}
-                            FROM daily_stats
-                            WHERE guild_id = ?
-                            GROUP BY day_timestamp`;
-
-            db.all(query, [guildID], (err: Error | null, rows: DailyStats[]) => {
-                if (err) {
-                    Logger.error(
-                        Logs.error.queryDailyStatsTotalUsersInGuildByStat
-                            .replaceAll('{GUILD_ID}', guildID)
-                            .replaceAll('{STAT_KEY}', stat)
-                        , err);
-                    reject(err);
-                    return;
-                }
-                Logger.debug(Logs.debug.queryDailyStatsTotalUsersInGuildByStat
+            return result as unknown as DailyStats[];
+        } catch (err) {
+            await Logger.error(
+                Logs.error.queryDailyStatsTotalUsersInGuildByStat
                     .replaceAll('{GUILD_ID}', guildID)
                     .replaceAll('{STAT_KEY}', stat)
-                );
-                resolve(rows);
-            });
-        });
-    }
-
-    async getUserInGuildByStat(guildID: string, userID: string, stat: string): Promise<DailyStats[]> {
-        const db = await this.sqliteService.getDatabase();
-        if (!db) {
-            await Logger.error(Logs.error.databaseNotFound);
+                , err);
             return [];
         }
-
-        return new Promise<DailyStats[]>((resolve, reject) => {
-            const query = ` SELECT day_timestamp, time_connected, ${stat}
-                            FROM daily_stats
-                            WHERE guild_id = ?
-                            AND user_id = ?
-                            GROUP BY day_timestamp`;
-
-            db.all(query, [guildID, userID], (err: Error | null, rows: DailyStats[]) => {
-                if (err) {
-                    Logger.error(
-                        Logs.error.queryDailyStatsUserInGuildByStat
-                            .replaceAll('{USER_ID}', userID)
-                            .replaceAll('{GUILD_ID}', guildID)
-                            .replaceAll('{USER_ID}', userID)
-                        , err);
-                    reject(err);
-                    return;
-                }
-                Logger.debug(Logs.debug.queryDailyStatsUserInGuildByStat
-                    .replaceAll('{USER_ID}', userID)
-                    .replaceAll('{GUILD_ID}', guildID)
-                    .replaceAll('{USER_ID}', userID)
-                );
-                resolve(rows);
-            });
-        });
     }
 
-    async updateUserDailyStats(guildID: string, userID: string, stat: string, duration: number, now: number): Promise<void> {
-        const db = await this.sqliteService.getDatabase();
-        if (!db) {
-            await Logger.error(Logs.error.databaseNotFound);
-            return;
+    static async getUserInGuildByStat(guildID: string, userID: string, stat: string): Promise<DailyStats[]> {
+        try {
+            const result = await db
+                .selectFrom('daily_stats')
+                .select([
+                    'day_timestamp',
+                    'time_connected',
+                    db.dynamic.ref<StatKey>(stat)
+                ])
+                .where('guild_id', '=', guildID)
+                .where('user_id', '=', userID)
+                .groupBy('day_timestamp')
+                .execute();
+
+            Logger.debug(Logs.debug.queryDailyStatsUserInGuildByStat
+                .replaceAll('{USER_ID}', userID)
+                .replaceAll('{GUILD_ID}', guildID)
+            );
+
+            return result as unknown as DailyStats[];
+        } catch (err) {
+            await Logger.error(
+                Logs.error.queryDailyStatsUserInGuildByStat
+                    .replaceAll('{USER_ID}', userID)
+                    .replaceAll('{GUILD_ID}', guildID)
+                , err);
+            return [];
         }
+    }
 
-        // Generic function to call to update the daily stats
-        async function update(date: number, duration: number): Promise<void> {
-            if (!db) {
-                return;
-            }
-
-            return new Promise<void>((resolve, reject) => {
-                db.run(`
-                    INSERT INTO daily_stats (guild_id, user_id, day_timestamp, ${stat})
-                    VALUES (?, ?, ?, ?) ON CONFLICT(guild_id, user_id, day_timestamp) DO
-                    UPDATE SET ${stat} = ${stat} + ?
-                `, [guildID, userID, date, duration, duration], function (err: Error | null) {
-                    if (err) {
-                        Logger.error(
-                            Logs.error.queryDailyStatsUpdateUser
-                                .replaceAll('{GUILD_ID}', guildID)
-                                .replaceAll('{USER_ID}', userID)
-                                .replaceAll('{STAT_KEY}', stat)
-                            , err);
-                        reject(err);
-                        return;
-                    }
-                    resolve();
-                });
-            });
-        }
-
+    static async updateUserDailyStats(guildID: string, userID: string, stat: string, duration: number, now: number): Promise<void> {
         const days = [];
         let remainingDuration = duration;
         let dayMax = now;
@@ -137,7 +93,31 @@ export class DailyStatsController {
 
         // Update the daily stats for each day
         for (const day of days) {
-            await update(day.date, day.duration);
+            try {
+                await db
+                    .insertInto('daily_stats')
+                    .values({
+                        guild_id: guildID,
+                        user_id: userID,
+                        day_timestamp: day.date,
+                        [stat]: day.duration,
+                    })
+                    .onConflict((oc) => oc
+                        .columns(['guild_id', 'user_id', 'day_timestamp'])
+                        .doUpdateSet({
+                            [stat]: (eb: ExpressionBuilder<DB, 'daily_stats'>) => eb(db.dynamic.ref<StatKey>(stat), '+', day.duration),
+                        })
+                    )
+                    .execute();
+            } catch (err) {
+                await Logger.error(
+                    Logs.error.queryDailyStatsUpdateUser
+                        .replaceAll('{GUILD_ID}', guildID)
+                        .replaceAll('{USER_ID}', userID)
+                        .replaceAll('{STAT_KEY}', stat)
+                    , err);
+            }
+
         }
     }
 }

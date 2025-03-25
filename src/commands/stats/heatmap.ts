@@ -6,7 +6,7 @@ import {InteractionUtils} from "@utils/interaction";
 import {StartTimestamps, StatKey} from "@models/database/start_timestamps";
 import {DailyStatsController} from "@controllers/daily-stats";
 import {StartTimestampsController} from "@controllers/start-timestamps";
-import {DailyStats, DailyStatsMap} from "@models/database/daily_stats";
+import {DailyStatsModel, DailyStatsMap} from "@models/database/daily_stats";
 import puppeteer from "puppeteer";
 import {UserStatsFields} from "@models/database/user_stats";
 import {Logger} from "@services/logger";
@@ -48,15 +48,14 @@ export class HeatmapCommand implements Command {
         heatmap.setGuildIcon(intr.guild?.iconURL() ?? undefined);
 
         // Heatmap data
-        let dailyStats: DailyStats[];
+        let dailyStats: DailyStatsModel[];
         let startTimestamps: StartTimestamps[];
 
         // Check if the heatmap should be generated for all users
         if (targetAll) {
             // Get the daily_stats heatmap data for all users
-            const dailyStatsController = new DailyStatsController();
-            const rowsDailyStats = await dailyStatsController.getTotalForUsersInGuildByStat(guildId, stat);
-            dailyStats = rowsDailyStats ?? [];
+            const rowsDailyStats = await DailyStatsController.getTotalForUsersInGuildByStat(guildId, stat);
+            dailyStats = rowsDailyStats.map(row => DailyStatsModel.fromDailyStats(row));
 
             // Get the start timestamps for the active users
             const startTimestampController = new StartTimestampsController();
@@ -69,9 +68,8 @@ export class HeatmapCommand implements Command {
             heatmap.setUserAvatar(interactionUser.avatar);
 
             // Get the daily_stats heatmap data for the user
-            const dailyStatsController = new DailyStatsController();
-            const rowsDailyStats = await dailyStatsController.getUserInGuildByStat(guildId, interactionUser.id, stat);
-            dailyStats = rowsDailyStats ?? [];
+            const rowsDailyStats = await DailyStatsController.getUserInGuildByStat(guildId, interactionUser.id, stat);
+            dailyStats = rowsDailyStats.map(row => DailyStatsModel.fromDailyStats(row));
 
             // Get the start timestamps for the user
             const startTimestampController = new StartTimestampsController();
@@ -84,14 +82,14 @@ export class HeatmapCommand implements Command {
         const now = Date.now();
         startTimestamps.forEach(row => {
             // Retrieve user live daily stats as a map
-            const local = DailyStats.fromStartTimestamps(row, startStatKey, now);
+            const local = DailyStatsModel.fromStartTimestamps(row, startStatKey, now);
             // Merge user live daily stats with global live daily stats
-            dailyStatsLive = DailyStats.mergeDailyStatsMaps(dailyStatsLive, local);
+            dailyStatsLive = DailyStatsModel.mergeDailyStatsMaps(dailyStatsLive, local);
         });
 
         // Convert the daily stats into a map for easier access
         let dailyStatsMap: DailyStatsMap = new Map(dailyStats.map(item => [item.day_timestamp, item]));
-        dailyStatsMap = DailyStats.mergeDailyStatsMaps(dailyStatsMap, dailyStatsLive);
+        dailyStatsMap = DailyStatsModel.mergeDailyStatsMaps(dailyStatsMap, dailyStatsLive);
 
         // Calculate the max time connected for the guild heatmap
         let max_time_connected = -1;
@@ -121,7 +119,7 @@ export class HeatmapCommand implements Command {
     }
 
     public formatHeatmapData(heatmap: Heatmap, dailyStatsMap: DailyStatsMap, max_time_connected: number): HeatmapData[] {
-        const dailyStatsStatKey = DailyStats.getStatKey(heatmap.getStat());
+        const dailyStatsStatKey = DailyStatsModel.getStatKey(heatmap.getStat());
 
         // Convert the rows into a format that cal-heatmap can consume
         const data: HeatmapData[] = [];
