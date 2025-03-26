@@ -4,6 +4,7 @@ import {db} from '@services/database'
 import {DB, UserStats} from "../types/db";
 import {ExpressionBuilder} from "kysely";
 import {StatKey} from "@models/database/user_stats";
+import {DatabaseUtils} from "@utils/database";
 
 export class UserStatsController {
 
@@ -92,12 +93,16 @@ export class UserStatsController {
 
     static async updateLastActivityAndStreak(guildID: string, userID: string, timestamp: number): Promise<void> {
         try {
-            const userStats = await db
+
+            const row = await db
                 .selectFrom('user_stats')
-                .select(['last_activity', 'daily_streak'])
+                .selectAll()
                 .where('guild_id', '=', guildID)
                 .where('user_id', '=', userID)
                 .executeTakeFirst();
+            const userStats = row as unknown as UserStats;
+            const last_activity : number = userStats ? DatabaseUtils.unwrapGeneratedNumber(userStats.last_activity) : 0;
+            const daily_streak : number = userStats ? DatabaseUtils.unwrapGeneratedNumber(userStats.daily_streak) : 0;
 
             Logger.debug(Logs.debug.queryStatsUserGetActivityStreak
                 .replaceAll('{GUILD_ID}', guildID)
@@ -105,17 +110,17 @@ export class UserStatsController {
             );
 
             let newStreak = 1;
-            if (userStats && userStats.last_activity && userStats.daily_streak) {
-                const lastActivityDate = new Date(userStats.last_activity).setUTCHours(0, 0, 0, 0);
+            if (userStats && last_activity !== 0) {
+                const lastActivityDate = new Date(last_activity).setUTCHours(0, 0, 0, 0);
                 const currentDate = new Date(timestamp).setUTCHours(0, 0, 0, 0);
                 const oneDay = 24 * 60 * 60 * 1000;
 
                 if (currentDate - lastActivityDate === oneDay) {
-                    newStreak = userStats.daily_streak + 1;
+                    newStreak = daily_streak + 1;
                 } else if (currentDate - lastActivityDate > oneDay) {
                     newStreak = 1;
                 } else {
-                    newStreak = userStats.daily_streak;
+                    newStreak = daily_streak;
                 }
             }
 

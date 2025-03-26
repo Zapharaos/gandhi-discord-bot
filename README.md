@@ -56,8 +56,10 @@ docker compose up -d
 
 To run the bot without Docker, use the following command:
 ```bash
-npm run build # If you only want to build the project
-npm run start # If you want to build and run the project
+npm run migrate # To setup the database and run the migrations
+npm run generate # To generate the database models for TypeScript
+npm run build # To build the project
+npm run start # To build and run the project
 ```
 
 ## License

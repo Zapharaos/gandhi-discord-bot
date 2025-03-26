@@ -28,15 +28,19 @@ export class BiggusdickusCommand implements Command {
 
         // Get the user stats
         const rowUserStats = await UserStatsController.getUserInGuild(guildId, interactionUser.id);
-        if(!rowUserStats){
+
+        // Get the user live stats
+        const rowStartTs = await StartTimestampsController.getUserByGuild(guildId, interactionUser.id);
+
+        // User has no stats yet
+        if(!rowUserStats && !rowStartTs){
             await InteractionUtils.send(intr, `${intrUserRaw} has no stats yet!`);
             return;
         }
-        const userStats = UserStatsModel.fromUserStats(rowUserStats);
 
-        // Get the user live stats
-        const row = await StartTimestampsController.getUserByGuild(guildId, interactionUser.id);
-        const startTimestamps = StartTimestampsModel.fromStartTimestamps(row);
+        // Map from db generated types
+        const userStats = UserStatsModel.fromUserStats(rowUserStats ?? {});
+        const startTimestamps = StartTimestampsModel.fromStartTimestamps(rowStartTs ?? {});
 
         let streak = userStats.daily_streak;
 

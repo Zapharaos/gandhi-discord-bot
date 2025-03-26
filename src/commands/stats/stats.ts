@@ -21,20 +21,22 @@ export class StatsCommand implements Command {
         }
 
         const interactionUser: InteractionUser = InteractionUtils.getInteractionUser(intr);
-        // intrUserRaw is the user mention in the reply
-        const intrUserRaw = InteractionUtils.getInteractionUserRaw(intr);
 
         // Get the user stats
         const rowUserStats = await UserStatsController.getUserInGuild(guildId, interactionUser.id);
-        if(!rowUserStats){
-            await InteractionUtils.editReply(intr, `${intrUserRaw} has no stats yet!`);
-            return;
-        }
-        const userStats = UserStatsModel.fromUserStats(rowUserStats);
 
         // Get the user live stats
         const rowStartTs = await StartTimestampsController.getUserByGuild(guildId, interactionUser.id);
-        const startTimestamps = StartTimestampsModel.fromStartTimestamps(rowStartTs);
+
+        // User has no stats yet
+        if(!rowUserStats && !rowStartTs){
+            await InteractionUtils.send(intr, `${InteractionUtils.getInteractionUserRaw(intr)} has no stats yet!`);
+            return;
+        }
+
+        // Map from db generated types
+        const userStats = UserStatsModel.fromUserStats(rowUserStats ?? {});
+        const startTimestamps = StartTimestampsModel.fromStartTimestamps(rowStartTs ?? {});
 
         // Combine the live stats with the user stats
         const stats = startTimestamps?.combineAllWithUserStats(userStats, Date.now()) ?? {} as UserStatsModel;

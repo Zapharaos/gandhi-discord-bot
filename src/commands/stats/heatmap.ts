@@ -72,7 +72,7 @@ export class HeatmapCommand implements Command {
 
             // Get the start timestamps for the user
             const row = await StartTimestampsController.getUserByGuild(guildId, interactionUser.id);
-            startTimestamps = [StartTimestampsModel.fromStartTimestamps(row)];
+            startTimestamps = row ? [StartTimestampsModel.fromStartTimestamps(row)] : [];
         }
 
         // Calculate the live daily stats for all users

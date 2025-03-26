@@ -26,13 +26,8 @@ export class RankCommand implements Command {
         const stat: string = intr.options.getString('stat') || UserStatsFields.TimeConnected;
 
         // Get the users stats in the guild by the specified stat
-        const rows = await UserStatsController.getUsersInGuildByStat(guildId, stat);
-        if (!rows.length) {
-            Logger.debug(`RankCommand - No user stats found for the stat ${stat}`);
-            await InteractionUtils.editReply(intr, `No data found for the stat ${stat}.`);
-            return;
-        }
-        const usersStats = rows.map(row => UserStatsModel.fromUserStats(row));
+        const rowsUserStats = await UserStatsController.getUsersInGuildByStat(guildId, stat);
+        const usersStats = rowsUserStats.map(row => UserStatsModel.fromUserStats(row));
 
         // Get the object keys for the specified stats inside the objects
         const userStatKey = UserStatsModel.getStatKey(stat);
@@ -42,11 +37,11 @@ export class RankCommand implements Command {
         Logger.debug(`Calculating ranks for stat: ${userStatKey}`);
 
         // Get the users live stats in the guild by the specified stat
-        const usersLiveStatsArray = await StartTimestampsController.getUsersInGuildByStat(guildId, startStatKey);
+        const rowsStartTs = await StartTimestampsController.getUsersInGuildByStat(guildId, startStatKey);
 
         // Convert the live stats array to a map for faster lookup
         const usersLiveStats = new Map<string, StartTimestampsModel>();
-        usersLiveStatsArray.forEach(item => {
+        rowsStartTs.forEach(item => {
             if (!item.user_id) return;
             usersLiveStats.set(item.user_id, StartTimestampsModel.fromStartTimestamps(item));
         });
@@ -72,6 +67,12 @@ export class RankCommand implements Command {
                 ...row,
                 guildNickname: guildNickname
             });
+        }
+
+        if (!rankUsers.length) {
+            Logger.debug(`RankCommand - No user stats found for the stat ${stat}`);
+            await InteractionUtils.editReply(intr, `No data found for the stat ${stat}.`);
+            return;
         }
 
         // Sort the rows by the stat in descending order

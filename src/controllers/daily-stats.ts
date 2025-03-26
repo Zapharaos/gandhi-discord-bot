@@ -53,6 +53,7 @@ export class DailyStatsController {
             Logger.debug(Logs.debug.queryDailyStatsUserInGuildByStat
                 .replaceAll('{USER_ID}', userID)
                 .replaceAll('{GUILD_ID}', guildID)
+                .replaceAll('{STAT_KEY}', stat)
             );
 
             return result as unknown as DailyStats[];
@@ -61,6 +62,7 @@ export class DailyStatsController {
                 Logs.error.queryDailyStatsUserInGuildByStat
                     .replaceAll('{USER_ID}', userID)
                     .replaceAll('{GUILD_ID}', guildID)
+                    .replaceAll('{STAT_KEY}', stat)
                 , err);
             return [];
         }

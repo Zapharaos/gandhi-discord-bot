@@ -70,7 +70,7 @@ export class DailyStatsModel {
 
     static fromDailyStats(stats: Partial<DailyStats> = {}): DailyStatsModel {
         return new DailyStatsModel({
-            day_timestamp: DatabaseUtils.unwrapGeneratedNumber(stats.time_camera),
+            day_timestamp: DatabaseUtils.unwrapGeneratedNumber(stats.day_timestamp),
             guild_id: stats.guild_id ?? null,
             time_camera: DatabaseUtils.unwrapGeneratedNumber(stats.time_camera),
             time_connected: DatabaseUtils.unwrapGeneratedNumber(stats.time_connected),

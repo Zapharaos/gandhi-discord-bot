@@ -6,7 +6,7 @@ import {StartTimestamps} from '../types/db'
 
 export class StartTimestampsController {
 
-    static async getUserByGuild(guildID: string, userID: string): Promise<StartTimestamps> {
+    static async getUserByGuild(guildID: string, userID: string): Promise<StartTimestamps | null> {
         try {
             const result = await db
                 .selectFrom('start_timestamps')
@@ -22,7 +22,7 @@ export class StartTimestampsController {
             );
 
             if (!result) {
-                return {} as StartTimestamps;
+                return null;
             }
 
             return result as unknown as StartTimestamps;
@@ -32,7 +32,7 @@ export class StartTimestampsController {
                     .replaceAll('{GUILD_ID}', guildID)
                     .replaceAll('{USER_ID}', userID)
                 , err);
-            return {} as StartTimestamps;
+            return null;
         }
     }
 
