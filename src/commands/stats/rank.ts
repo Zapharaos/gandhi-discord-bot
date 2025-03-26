@@ -4,12 +4,12 @@ import {InteractionUtils} from "@utils/interaction";
 import {UserStatsController} from "@controllers/user-stats";
 import {Logger} from "@services/logger";
 import {StartTimestampsController} from "@controllers/start-timestamps";
-import {UserStats, UserStatsFields} from "@models/database/user_stats";
+import {UserStatsModel, StatKey as UserStatsKey, UserStatsFields, StatTimeRelated} from "@models/database/user_stats";
 import {TimeUtils} from "@utils/time";
-import {StartTimestamps, StatKey} from "@models/database/start_timestamps";
+import {StartTimestampsModel, StatKey} from "@models/database/start_timestamps";
 import {NumberUtils} from "@utils/number";
 
-type RankUser = UserStats & { guildNickname?: string };
+type RankUser = UserStatsModel & { guildNickname?: string };
 
 export class RankCommand implements Command {
     public names = ['rank'];
@@ -26,29 +26,24 @@ export class RankCommand implements Command {
         const stat: string = intr.options.getString('stat') || UserStatsFields.TimeConnected;
 
         // Get the users stats in the guild by the specified stat
-        const userStatsController = new UserStatsController();
-        const usersStats = await userStatsController.getUsersInGuildByStat(guildId, stat);
-        if (!usersStats.length) {
-            Logger.debug(`RankCommand - No user stats found for the stat ${stat}`);
-            await InteractionUtils.editReply(intr, `No data found for the stat ${stat}.`);
-            return;
-        }
+        const rowsUserStats = await UserStatsController.getUsersInGuildByStat(guildId, stat);
+        const usersStats = rowsUserStats.map(row => UserStatsModel.fromUserStats(row));
 
         // Get the object keys for the specified stats inside the objects
-        const userStatKey = UserStats.getStatKey(stat);
-        const startStat: string | null = StartTimestamps.getColNameFromUserStat(stat);
-        const startStatKey: StatKey | null = startStat ? StartTimestamps.getStatKey(startStat) : null;
+        const userStatKey = UserStatsModel.getStatKey(stat);
+        const startStat: string | null = StartTimestampsModel.getColNameFromUserStat(stat);
+        const startStatKey: StatKey | null = startStat ? StartTimestampsModel.getStatKey(startStat) : null;
 
         Logger.debug(`Calculating ranks for stat: ${userStatKey}`);
 
         // Get the users live stats in the guild by the specified stat
-        const startTsController = new StartTimestampsController();
-        const usersLiveStatsArray: StartTimestamps[] = await startTsController.getUsersInGuildByStat(guildId, startStatKey);
+        const rowsStartTs = await StartTimestampsController.getUsersInGuildByStat(guildId, startStatKey);
 
         // Convert the live stats array to a map for faster lookup
-        const usersLiveStats = new Map<string, StartTimestamps>();
-        usersLiveStatsArray.forEach(item => {
-            usersLiveStats.set(item.user_id, new StartTimestamps(item));
+        const usersLiveStats = new Map<string, StartTimestampsModel>();
+        rowsStartTs.forEach(item => {
+            if (!item.user_id) return;
+            usersLiveStats.set(item.user_id, StartTimestampsModel.fromStartTimestamps(item));
         });
 
         // Process the stats : combine with live stats + retrieve user nickname
@@ -56,14 +51,12 @@ export class RankCommand implements Command {
         const now = Date.now();
         for (const row of usersStats) {
 
-            // Retrieve the live stat for the user
-            const liveStat = usersLiveStats.get(row.user_id) as StartTimestamps;
-
-            // Combine the user stats with his live stats
+            // Combine the user stats with his live stats (if any)
+            const liveStat = usersLiveStats.get(row.user_id!);
             liveStat?.combineWithUserStats(row, userStatKey, startStatKey, now);
 
             // Retrieve the user's nickname in the guild
-            const guildNickname = await InteractionUtils.fetchGuildMemberNickname(intr.guild as Guild, row.user_id);
+            const guildNickname = await InteractionUtils.fetchGuildMemberNickname(intr.guild as Guild, row.user_id!);
             if (!guildNickname) {
                 // TODO : on user quit or user ban -> remove user from guild related tables
                 continue;
@@ -74,6 +67,12 @@ export class RankCommand implements Command {
                 ...row,
                 guildNickname: guildNickname
             });
+        }
+
+        if (!rankUsers.length) {
+            Logger.debug(`RankCommand - No user stats found for the stat ${stat}`);
+            await InteractionUtils.editReply(intr, `No data found for the stat ${stat}.`);
+            return;
         }
 
         // Sort the rows by the stat in descending order
@@ -90,9 +89,9 @@ export class RankCommand implements Command {
         await InteractionUtils.editReply(intr, reply);
     }
 
-    private formatRow(row: RankUser, index: number, stat: string, userStatKey: string): string {
+    private formatRow(row: RankUser, index: number, stat: string, userStatKey: UserStatsKey): string {
         // If the stat is a time-based stat, format the value as a duration
-        if (stat.includes('time') && stat !== UserStatsFields.TimeConnected) {
+        if (stat !== UserStatsFields.TimeConnected && StatTimeRelated.includes(stat as UserStatsFields)) {
             const value = TimeUtils.formatDuration(row[userStatKey]);
             const percentage = NumberUtils.getPercentageString(row[userStatKey], row.time_connected);
             return `\`${index + 1}. ${row.guildNickname}\` ${value} **(${percentage})**`;

@@ -3,12 +3,14 @@ import {AttachmentBuilder, ChatInputCommandInteraction, PermissionsString} from 
 import {Heatmap, HeatmapData} from "@models/heatmap";
 import {TimeUtils} from "@utils/time";
 import {InteractionUtils} from "@utils/interaction";
-import {StartTimestamps, StatKey} from "@models/database/start_timestamps";
+import {StartTimestampsModel, StatKey} from "@models/database/start_timestamps";
 import {DailyStatsController} from "@controllers/daily-stats";
 import {StartTimestampsController} from "@controllers/start-timestamps";
-import {DailyStats, DailyStatsMap} from "@models/database/daily_stats";
+import {DailyStatsModel, DailyStatsMap} from "@models/database/daily_stats";
 import puppeteer from "puppeteer";
 import {UserStatsFields} from "@models/database/user_stats";
+import {Logger} from "@services/logger";
+import Logs from "../../../lang/logs.json";
 
 export class HeatmapCommand implements Command {
     public names = ['heatmap'];
@@ -17,7 +19,7 @@ export class HeatmapCommand implements Command {
 
     public async execute(intr: ChatInputCommandInteraction): Promise<void> {
         // Can target either all guild users or a specific user
-        const targetAll = intr.options.getBoolean('target-all');
+        const targetAll = intr.options.getBoolean('target-all') ?? false;
         const target = intr.options.getMember('target');
         if (targetAll && target) {
             await InteractionUtils.editReply(intr, 'You can only use one of the options: target, target-all');
@@ -25,8 +27,9 @@ export class HeatmapCommand implements Command {
         }
 
         // Get the guild id
-        const guildId: string = InteractionUtils.getGuildId(intr);
+        const guildId = InteractionUtils.getGuildId(intr);
         if (!guildId) {
+            await Logger.error(Logs.error.intrMissingGuildID);
             await InteractionUtils.editReply(intr, 'This command can only be used in a server.');
             return;
         }
@@ -34,8 +37,8 @@ export class HeatmapCommand implements Command {
         // Get the remaining options
         const format: string = intr.options.getString('format') || 'png';
         const stat: string = intr.options.getString('stat') || UserStatsFields.TimeConnected;
-        const startStat: string | null = StartTimestamps.getColNameFromUserStat(stat);
-        const startStatKey: StatKey | null = startStat ? StartTimestamps.getStatKey(startStat) : null;
+        const startStat: string | null = StartTimestampsModel.getColNameFromUserStat(stat);
+        const startStatKey: StatKey | null = startStat ? StartTimestampsModel.getStatKey(startStat) : null;
 
         // Prepare heatmap
         const heatmap = new Heatmap();
@@ -45,20 +48,18 @@ export class HeatmapCommand implements Command {
         heatmap.setGuildIcon(intr.guild?.iconURL() ?? undefined);
 
         // Heatmap data
-        let dailyStats: DailyStats[];
-        let startTimestamps: StartTimestamps[];
+        let dailyStats: DailyStatsModel[];
+        let startTimestamps: StartTimestampsModel[];
 
         // Check if the heatmap should be generated for all users
         if (targetAll) {
             // Get the daily_stats heatmap data for all users
-            const dailyStatsController = new DailyStatsController();
-            const rowsDailyStats = await dailyStatsController.getTotalForUsersInGuildByStat(guildId, stat);
-            dailyStats = rowsDailyStats ?? [];
+            const rowsDailyStats = await DailyStatsController.getTotalForUsersInGuildByStat(guildId, stat);
+            dailyStats = rowsDailyStats.map(row => DailyStatsModel.fromDailyStats(row));
 
             // Get the start timestamps for the active users
-            const startTimestampController = new StartTimestampsController();
-            const rows = await startTimestampController.getUsersInGuildByStat(guildId, startStatKey);
-            startTimestamps = rows ? rows : [];
+            const rows = await StartTimestampsController.getUsersInGuildByStat(guildId, startStatKey);
+            startTimestamps = rows.map(row => StartTimestampsModel.fromStartTimestamps(row));
         }
         else {
             const interactionUser = InteractionUtils.getInteractionUser(intr);
@@ -66,14 +67,12 @@ export class HeatmapCommand implements Command {
             heatmap.setUserAvatar(interactionUser.avatar);
 
             // Get the daily_stats heatmap data for the user
-            const dailyStatsController = new DailyStatsController();
-            const rowsDailyStats = await dailyStatsController.getUserInGuildByStat(guildId, interactionUser.id, stat);
-            dailyStats = rowsDailyStats ?? [];
+            const rowsDailyStats = await DailyStatsController.getUserInGuildByStat(guildId, interactionUser.id, stat);
+            dailyStats = rowsDailyStats.map(row => DailyStatsModel.fromDailyStats(row));
 
             // Get the start timestamps for the user
-            const startTimestampController = new StartTimestampsController();
-            const startTimestamp = await startTimestampController.getUserByGuild(guildId, interactionUser.id);
-            startTimestamps = startTimestamp ? [startTimestamp] : [];
+            const row = await StartTimestampsController.getUserByGuild(guildId, interactionUser.id);
+            startTimestamps = row ? [StartTimestampsModel.fromStartTimestamps(row)] : [];
         }
 
         // Calculate the live daily stats for all users
@@ -81,14 +80,14 @@ export class HeatmapCommand implements Command {
         const now = Date.now();
         startTimestamps.forEach(row => {
             // Retrieve user live daily stats as a map
-            const local = DailyStats.fromStartTimestamps(row, startStatKey, now);
+            const local = DailyStatsModel.fromStartTimestamps(row, startStatKey, now);
             // Merge user live daily stats with global live daily stats
-            dailyStatsLive = DailyStats.mergeDailyStatsMaps(dailyStatsLive, local);
+            dailyStatsLive = DailyStatsModel.mergeDailyStatsMaps(dailyStatsLive, local);
         });
 
         // Convert the daily stats into a map for easier access
         let dailyStatsMap: DailyStatsMap = new Map(dailyStats.map(item => [item.day_timestamp, item]));
-        dailyStatsMap = DailyStats.mergeDailyStatsMaps(dailyStatsMap, dailyStatsLive);
+        dailyStatsMap = DailyStatsModel.mergeDailyStatsMaps(dailyStatsMap, dailyStatsLive);
 
         // Calculate the max time connected for the guild heatmap
         let max_time_connected = -1;
@@ -118,23 +117,23 @@ export class HeatmapCommand implements Command {
     }
 
     public formatHeatmapData(heatmap: Heatmap, dailyStatsMap: DailyStatsMap, max_time_connected: number): HeatmapData[] {
-        const dailyStatsStatKey = DailyStats.getStatKey(heatmap.getStat());
+        const dailyStatsStatKey = DailyStatsModel.getStatKey(heatmap.getStat());
 
         // Convert the rows into a format that cal-heatmap can consume
         const data: HeatmapData[] = [];
         dailyStatsMap.forEach(dailyStats => {
-
+            const duration = dailyStats[dailyStatsStatKey];
             let value = 0;
             let valueBis = 0;
 
             // Calculate the value as a percentage of the max time connected, tooltip display the value as time in minutes
             if (heatmap.getIsTargetAll() && heatmap.getStat() === UserStatsFields.TimeConnected) {
-                value = TimeUtils.durationAsPercentage(dailyStats[heatmap.getStat()], max_time_connected);
-                valueBis = TimeUtils.msToMinutes(dailyStats[heatmap.getStat()]);
+                value = TimeUtils.durationAsPercentage(duration, max_time_connected);
+                valueBis = TimeUtils.msToMinutes(duration);
             }
             // Display the value as time in minutes
             else if (heatmap.getStat() === UserStatsFields.TimeConnected) {
-                value = TimeUtils.msToMinutes(dailyStats[heatmap.getStat()]);
+                value = TimeUtils.msToMinutes(duration);
             }
             // Calculate the value as a percentage of the time connected, tooltip display the value as time in minutes
             else {

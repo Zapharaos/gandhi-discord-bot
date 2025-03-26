@@ -84,8 +84,8 @@ export class CommandHandler implements EventHandler {
                             .replaceAll('{USER_ID}', intr.user.id)
                             .replaceAll('{CHANNEL_NAME}', intr.channel.name)
                             .replaceAll('{CHANNEL_ID}', intr.channel.id)
-                            .replaceAll('{GUILD_NAME}', intr.guild?.name)
-                            .replaceAll('{GUILD_ID}', intr.guild?.id)
+                            .replaceAll('{GUILD_NAME}', intr.guild?.name ?? 'N/A')
+                            .replaceAll('{GUILD_ID}', intr.guild?.id ?? 'N/A')
                         : Logs.error.autocompleteOther
                             .replaceAll('{INTERACTION_ID}', intr.id)
                             .replaceAll('{OPTION_NAME}', commandName)
@@ -142,8 +142,8 @@ export class CommandHandler implements EventHandler {
                         .replaceAll('{USER_ID}', intr.user.id)
                         .replaceAll('{CHANNEL_NAME}', intr.channel.name)
                         .replaceAll('{CHANNEL_ID}', intr.channel.id)
-                        .replaceAll('{GUILD_NAME}', intr.guild?.name)
-                        .replaceAll('{GUILD_ID}', intr.guild?.id)
+                        .replaceAll('{GUILD_NAME}', intr.guild?.name ?? 'N/A')
+                        .replaceAll('{GUILD_ID}', intr.guild?.id ?? 'N/A')
                     : Logs.error.commandOther
                         .replaceAll('{INTERACTION_ID}', intr.id)
                         .replaceAll('{COMMAND_NAME}', commandName)

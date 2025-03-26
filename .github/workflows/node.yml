@@ -36,7 +36,8 @@ jobs:
       - name: Test with coverage
         run: npm run test
 
-      - name: Upload results to Codecov
+      - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          slug: Zapharaos/gandhi-discord-bot
