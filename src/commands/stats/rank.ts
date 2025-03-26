@@ -95,6 +95,12 @@ export class RankCommand implements Command {
     }
 
     private formatRow(row: RankUser, index: number, stat: string, userStatKey: UserStatsKey): string {
+        // If the stat is last_activity, format the value as a date
+        if (stat === UserStatsFields.LastActivity) {
+            const date = TimeUtils.formatDate(new Date(row.last_activity));
+            return `\`${index + 1}. ${row.guildNickname}\` ${date}`;
+        }
+
         // If the stat is a time-based stat, format the value as a duration
         if (stat !== UserStatsFields.TimeConnected && StatTimeRelated.includes(stat as UserStatsFields)) {
             const value = TimeUtils.formatDuration(row[userStatKey]);
