@@ -94,6 +94,7 @@ export const CommandMetadata: {
                     { name: 'Time Deafened', value: UserStatsFields.TimeDeafened },
                     { name: 'Time Screen Sharing', value: UserStatsFields.TimeScreenSharing },
                     { name: 'Time Camera', value: UserStatsFields.TimeCamera },
+                    { name: 'Last Activity', value: UserStatsFields.LastActivity },
                     { name: 'Daily Streak', value: UserStatsFields.DailyStreak },
                     { name: 'Total Joins', value: UserStatsFields.TotalJoins },
                 ],
