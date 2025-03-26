@@ -13,8 +13,6 @@ RUN npm ci
 # Copy the rest of the application code
 COPY . .
 
-RUN npm run migrate
-RUN npm run generate
 RUN npm run build
 
 # Command to run the start script

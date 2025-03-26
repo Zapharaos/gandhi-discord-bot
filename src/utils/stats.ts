@@ -6,15 +6,18 @@ import {DailyStatsController} from "@controllers/daily-stats";
 import {UserStatsController} from "@controllers/user-stats";
 
 export class StatsControllersUtils {
-    static async updateStat(props: VoiceProps, userStatsField: UserStatsFields, startTsField: StartTsFields, duration: number, now: number): Promise<void> {
+    static async updateStat(props: VoiceProps, userStatsField: UserStatsFields, dailyStatsField: StartTsFields, duration: number, now: number): Promise<void> {
         // Update user stats
-        await UserStatsController.updateUserStats(props.guildId, props.userId, userStatsField, duration);
-        await UserStatsController.updateLastActivityAndStreak(props.guildId, props.userId, now);
+        const userStatsController = new UserStatsController();
+        await userStatsController.updateUserStats(props.guildId, props.userId, userStatsField, duration);
+        await userStatsController.updateLastActivityAndStreak(props.guildId, props.userId, now);
 
         // Update user daily stats
-        await DailyStatsController.updateUserDailyStats(props.guildId, props.userId, userStatsField, duration, now);
+        const dailyStatsController = new DailyStatsController();
+        await dailyStatsController.updateUserDailyStats(props.guildId, props.userId, userStatsField, duration, now);
 
         // Stop camera timestamp for user
-        await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, startTsField, 0);
+        const startTsController = new StartTimestampsController();
+        await startTsController.setStartTimestamp(props.guildId, props.userId, dailyStatsField, 0);
     }
 }

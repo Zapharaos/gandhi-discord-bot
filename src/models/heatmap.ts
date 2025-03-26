@@ -10,13 +10,13 @@ type HmlHeader = {
 }
 
 export class Heatmap {
-    private data: HeatmapData[] = [];
-    private stat: string = "";
-    private userName: string = "";
-    private userAvatar: string = "";
+    private data: HeatmapData[];
+    private stat: string;
+    private userName: string;
+    private userAvatar: string;
     private guildName?: string;
     private guildIcon?: string;
-    private isTargetAll: boolean = false;
+    private isTargetAll: boolean;
 
     public getData(): HeatmapData[] {
         return this.data;

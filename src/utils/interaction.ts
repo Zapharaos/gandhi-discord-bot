@@ -17,7 +17,7 @@ import {
     Guild,
     MessageFlags,
     CommandInteractionOption,
-    CacheType, InteractionCallbackResponse,
+    CacheType,
 } from 'discord.js';
 
 const IGNORED_ERRORS = [
@@ -82,7 +82,7 @@ export class InteractionUtils {
         intr: CommandInteraction | MessageComponentInteraction | ModalSubmitInteraction,
         content: string | EmbedBuilder | InteractionReplyOptions,
         hidden: boolean = false
-    ): Promise<Message | void | InteractionCallbackResponse> {
+    ): Promise<Message | void> {
         try {
             const options: InteractionReplyOptions =
                 typeof content === 'string'
@@ -93,13 +93,13 @@ export class InteractionUtils {
             if (intr.deferred || intr.replied) {
                 return await intr.followUp({
                     ...options,
-                    flags: hidden ? MessageFlags.Ephemeral : undefined,
+                    flags: hidden ? MessageFlags.Ephemeral : null,
                 });
             } else {
                 return await intr.reply({
                     ...options,
-                    flags: hidden ? MessageFlags.Ephemeral : undefined,
-                    withResponse: true,
+                    flags: hidden ? MessageFlags.Ephemeral : null,
+                    fetchReply: true,
                 });
             }
         } catch (error) {
@@ -192,7 +192,7 @@ export class InteractionUtils {
     }
 
     private static getTargetRaw(interaction: ChatInputCommandInteraction): NonNullable<CommandInteractionOption<CacheType>["member"]> {
-        return interaction.options.getMember('target')!;
+        return interaction.options.getMember('target');
     }
 
     public static getInteractionUserRaw(interaction: ChatInputCommandInteraction): GuildMember | NonNullable<CommandInteractionOption<CacheType>["member"]>{
