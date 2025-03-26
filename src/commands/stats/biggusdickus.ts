@@ -5,42 +5,29 @@ import {UserStatsController} from "@controllers/user-stats";
 import {StartTimestampsController} from "@controllers/start-timestamps";
 import {TimeUtils} from "@utils/time";
 import {Logger} from "@services/logger";
-import Logs from "../../../lang/logs.json";
-import {StartTimestampsModel} from "@models/database/start_timestamps";
-import {UserStatsModel} from "@models/database/user_stats";
 
 export class BiggusdickusCommand implements Command {
     public names = ['biggusdickus'];
     public deferType = CommandDeferType.NONE;
-    public requireClientPerms: PermissionsString[] = [];
+    public requireClientPerms: PermissionsString[];
 
     public async execute(intr: ChatInputCommandInteraction): Promise<void> {
         const guildId = InteractionUtils.getGuildId(intr);
-        if (!guildId) {
-            await Logger.error(Logs.error.intrMissingGuildID);
-            await InteractionUtils.send(intr, 'This command can only be used in a server.');
-            return;
-        }
-
         const interactionUser: InteractionUser = InteractionUtils.getInteractionUser(intr);
         // intrUserRaw is the user mention in the reply
         const intrUserRaw = InteractionUtils.getInteractionUserRaw(intr);
 
         // Get the user stats
-        const rowUserStats = await UserStatsController.getUserInGuild(guildId, interactionUser.id);
-
-        // Get the user live stats
-        const rowStartTs = await StartTimestampsController.getUserByGuild(guildId, interactionUser.id);
-
-        // User has no stats yet
-        if(!rowUserStats && !rowStartTs){
+        const userStatsController = new UserStatsController();
+        const userStats = await userStatsController.getUserInGuild(guildId, interactionUser.id);
+        if(!userStats){
             await InteractionUtils.send(intr, `${intrUserRaw} has no stats yet!`);
             return;
         }
 
-        // Map from db generated types
-        const userStats = UserStatsModel.fromUserStats(rowUserStats ?? {});
-        const startTimestamps = StartTimestampsModel.fromStartTimestamps(rowStartTs ?? {});
+        // Get the user live stats
+        const startTimestampsController = new StartTimestampsController();
+        const startTimestamps = await startTimestampsController.getUserByGuild(guildId, interactionUser.id);
 
         let streak = userStats.daily_streak;
 

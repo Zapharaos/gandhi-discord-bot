@@ -30,10 +30,12 @@ export class MovementsVoice implements Voice {
 
             // Start connected timestamp for user
             const now = Date.now();
-            await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartConnected, now);
+            const startTsController = new StartTimestampsController();
+            await startTsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartConnected, now);
 
             // Increment total joins for user
-            await UserStatsController.incrementTotalJoins(props.guildId, props.userId);
+            const userStatsController = new UserStatsController();
+            await userStatsController.incrementTotalJoins(props.guildId, props.userId);
         }
     }
 
@@ -98,7 +100,7 @@ export class MovementsVoice implements Voice {
                 Logger.debug(`Camera stopped for user: ${props.userName} after ${duration} ms`);
 
                 // Update user stats and stop camera timestamp for user
-                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeCamera, StartTsFields.StartCamera, duration, now);
+                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeScreenSharing, StartTsFields.StartScreenSharing, duration, now);
             }
         }
     }

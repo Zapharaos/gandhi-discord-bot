@@ -17,20 +17,6 @@ export class ScreenSharingVoice implements Voice {
 
         const now = Date.now();
 
-        // Check if the user is joining a channel
-        if (VoiceStateUtils.isJoiningChannel(props.oldState, props.newState)) {
-
-            // While streaming
-            if (VoiceStateUtils.isStreaming(props.newState)) {
-                Logger.debug('User is joining a channel while streaming');
-
-                // Start screensharing timestamp for user
-                await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartScreenSharing, now);
-            }
-
-            return;
-        }
-
         // User is screen sharing
         if (VoiceStateUtils.startStreaming(props.oldState, props.newState)) {
             // Send message to log channel
@@ -38,7 +24,8 @@ export class ScreenSharingVoice implements Voice {
             Logger.debug(`Screen sharing started for user: ${props.userName}`);
 
             // Start screensharing timestamp for user
-            await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartScreenSharing, now);
+            const startTsController = new StartTimestampsController();
+            await startTsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartScreenSharing, now);
             return
         }
 

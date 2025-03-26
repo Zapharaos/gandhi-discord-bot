@@ -3,7 +3,6 @@ import {Command, CommandDeferType} from "@commands/commands";
 import {InteractionUtils} from "@utils/interaction";
 import {ServerController} from "@controllers/server";
 import {Logger} from "@services/logger";
-import Logs from "../../../lang/logs.json";
 
 export class SetLogChannelCommand implements Command {
     public names = ['setlogchannel'];
@@ -18,15 +17,9 @@ export class SetLogChannelCommand implements Command {
             return;
         }
 
-        const guildId = InteractionUtils.getGuildId(intr);
-        if (!guildId) {
-            await Logger.error(Logs.error.intrMissingGuildID);
-            await InteractionUtils.send(intr, 'This command can only be used in a server.');
-            return;
-        }
-
+        const serverController = new ServerController();
         try {
-            const success = await ServerController.setLogChannel(guildId, channel.id);
+            const success = await serverController.setLogChannel(InteractionUtils.getGuildId(intr), channel.id);
             if (success) {
                 await InteractionUtils.send(intr, `✅ Log channel set to <#${channel.id}>`);
             }
