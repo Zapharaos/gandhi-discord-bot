@@ -9,7 +9,7 @@ import {Logger} from "@services/logger";
 export class ClashCommand implements Command {
     public names = ['clash'];
     public deferType = CommandDeferType.NONE;
-    public requireClientPerms: PermissionsString[];
+    public requireClientPerms: PermissionsString[] = [];
 
     public async execute(intr: ChatInputCommandInteraction): Promise<void> {
         const user = intr.options.getMember('target');

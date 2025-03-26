@@ -31,7 +31,7 @@ It provides the following statistics:
 Click on [this link](https://discord.com/oauth2/authorize?client_id=1345799506217930876) to add the bot to your server. Enable the required permissions and you're good to go!
 
 The first step is to set the log channel for the bot to log user activities inside voice channels. Use the following command:
-- `/setlogchannel [channel]` - Set the log channel for the bot
+- `/setlogchannel [text-channel]` - Set the log channel for voice-channel activity tracking.
 
 Now every user's actions in voice channels will be logged in the specified channel.
 
@@ -56,8 +56,10 @@ docker compose up -d
 
 To run the bot without Docker, use the following command:
 ```bash
-npm run build # If you only want to build the project
-npm run start # If you want to build and run the project
+npm run migrate # To setup the database and run the migrations
+npm run generate # To generate the database models for TypeScript
+npm run build # To build the project
+npm run start # To build and run the project
 ```
 
 ## License
