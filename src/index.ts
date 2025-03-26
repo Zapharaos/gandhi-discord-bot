@@ -11,7 +11,6 @@ import {CommandMetadata} from "@commands/metadata";
 import {CommandRegistrationService} from "@services/command-registration-service";
 import {EventDataService} from "@services/event-data-service";
 import Logs from '../lang/logs.json';
-import {DatabaseMigrationService} from "@services/database-migration-service";
 import {SetLogChannelCommand} from "@commands/utility/setlogchannel";
 import {ClashCommand} from "@commands/fun/clash";
 import {BiggusdickusCommand} from "@commands/stats/biggusdickus";
@@ -28,8 +27,6 @@ import {CameraVoice} from "./voice/camera";
 
 dotenv.config();
 
-// TODO : v2.2.0 -> stats with rank associated
-
 async function start(): Promise<void> {
 
     Logger.info(Logs.info.appStarted);
@@ -45,19 +42,8 @@ async function start(): Promise<void> {
         // Skip the rest of the script if we're just deploying commands
         if(process.argv[2] === 'commands') return;
     } catch (error) {
-        Logger.error(Logs.error.commandAction, error);
+        await Logger.error(Logs.error.commandAction, error);
     }
-
-    // Apply migrations
-    try {
-        const databaseMigrationService = new DatabaseMigrationService();
-        await databaseMigrationService.process();
-    } catch (error) {
-        Logger.error(Logs.error.databaseMigration, error);
-        return process.exit(1);
-    }
-
-    Logger.info(Logs.info.databaseMigration);
 
     // Wait for any final logs to be written.
     await new Promise(resolve => setTimeout(resolve, 1000));

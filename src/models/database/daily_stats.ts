@@ -1,5 +1,7 @@
-import {StartTimestamps, StartTsFields, StatKey as StartStatKey} from "@models/database/start_timestamps";
+import {StartTimestampsModel, StartTsFields, StatKey as StartStatKey} from "@models/database/start_timestamps";
 import {TimeUtils} from "@utils/time";
+import { DailyStats } from "../../types/db";
+import {DatabaseUtils} from "@utils/database";
 
 export type StatKey =
     DailyStatsFields.DayTimestamp |
@@ -11,34 +13,38 @@ export type StatKey =
 
 export enum DailyStatsFields {
     DayTimestamp = 'day_timestamp',
-    TimeConnected = 'time_connected',
-    TimeMuted = 'time_muted',
-    TimeDeafened = 'time_deafened',
-    TimeScreenSharing = 'time_screen_sharing',
+    GuildId = 'guild_id',
     TimeCamera = 'time_camera',
+    TimeConnected = 'time_connected',
+    TimeDeafened = 'time_deafened',
+    TimeMuted = 'time_muted',
+    TimeScreenSharing = 'time_screen_sharing',
+    UserId = 'user_id',
 }
 
-export type DailyStatsMap = Map<number, DailyStats>;
+export type DailyStatsMap = Map<number, DailyStatsModel>;
 
-export class DailyStats {
-    public guild_id: string;
-    public user_id: string;
-    public day_timestamp: number;
-    public time_connected: number;
-    public time_muted: number;
-    public time_deafened: number;
-    public time_screen_sharing: number;
-    public time_camera: number;
+export class DailyStatsModel {
 
-    constructor(data: DailyStats) {
-        this.guild_id = data.guild_id;
-        this.user_id = data.user_id;
-        this.day_timestamp = data.day_timestamp;
-        this.time_connected = data.time_connected;
-        this.time_muted = data.time_muted;
-        this.time_deafened = data.time_deafened;
-        this.time_screen_sharing = data.time_screen_sharing;
-        this.time_camera = data.time_camera;
+    // Database fields
+    day_timestamp: number;
+    guild_id: string | null;
+    time_camera: number;
+    time_connected: number;
+    time_deafened: number;
+    time_muted: number;
+    time_screen_sharing: number;
+    user_id: string | null;
+
+    constructor(stats: Partial<DailyStatsModel> = {}) {
+        this.day_timestamp = stats.day_timestamp ?? 0
+        this.guild_id = stats.guild_id ?? null
+        this.time_camera = stats.time_camera ?? 0
+        this.time_connected = stats.time_connected ?? 0
+        this.time_deafened = stats.time_deafened ?? 0
+        this.time_muted = stats.time_muted ?? 0
+        this.time_screen_sharing = stats.time_screen_sharing ?? 0
+        this.user_id = stats.user_id ?? null
     }
 
     static getColNameFromStartTs(name: string): string | null {
@@ -62,11 +68,27 @@ export class DailyStats {
         return key as StatKey;
     }
 
-    static fromStartTimestamps(startTs: StartTimestamps, startStatKey: StartStatKey, now: number): DailyStatsMap {
+    static fromDailyStats(stats: Partial<DailyStats> = {}): DailyStatsModel {
+        return new DailyStatsModel({
+            day_timestamp: DatabaseUtils.unwrapGeneratedNumber(stats.day_timestamp),
+            guild_id: stats.guild_id ?? null,
+            time_camera: DatabaseUtils.unwrapGeneratedNumber(stats.time_camera),
+            time_connected: DatabaseUtils.unwrapGeneratedNumber(stats.time_connected),
+            time_deafened: DatabaseUtils.unwrapGeneratedNumber(stats.time_deafened),
+            time_muted: DatabaseUtils.unwrapGeneratedNumber(stats.time_muted),
+            time_screen_sharing: DatabaseUtils.unwrapGeneratedNumber(stats.time_screen_sharing),
+            user_id: stats.user_id ?? null,
+        })
+    }
+
+    static fromStartTimestamps(startTs: StartTimestampsModel, startStatKey: StartStatKey | null, now: number): DailyStatsMap {
         const dailyStats: DailyStatsMap = new Map();
 
         // If the user is not active, return an empty map
         if (!startTs.isActive()) return dailyStats;
+
+        // If the stat key is null, return an empty map
+        if (!startStatKey) return dailyStats;
 
         const stat: string | null = this.getColNameFromStartTs(startStatKey);
         const statKey: StatKey | null = stat ? this.getStatKey(stat) : null;
@@ -94,18 +116,12 @@ export class DailyStats {
 
             // Create day object and add it to the map
             const date = dayMin;
-            const obj = new DailyStats({
-                guild_id: "",
-                user_id: "",
+            const obj = new DailyStatsModel({
                 day_timestamp: date,
                 time_connected: durationConnected,
-                time_muted: 0,
-                time_deafened: 0,
-                time_screen_sharing: 0,
-                time_camera: 0
-            })
+            });
             obj[statKey] = duration;
-            dailyStats.set(date, obj);
+            dailyStats.set(date,obj);
 
             // Update the remaining durations to split
             remainingDuration -= duration;
@@ -125,17 +141,11 @@ export class DailyStats {
 
             // Create day object and add it to the map
             const date = dayMin;
-            const obj = new DailyStats({
-                guild_id: "",
-                user_id: "",
+            const obj = new DailyStatsModel({
                 day_timestamp: date,
                 time_connected: durationConnected,
-                time_muted: 0,
-                time_deafened: 0,
-                time_screen_sharing: 0,
-                time_camera: 0
-            })
-            dailyStats.set(date, obj);
+            });
+            dailyStats.set(date,obj);
 
             // Update the remaining durations to split
             remainingDurationConnected -= durationConnected;

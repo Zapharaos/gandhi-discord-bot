@@ -4,8 +4,9 @@ import {InteractionUser, InteractionUtils} from "@utils/interaction";
 import {UserStatsController} from "@controllers/user-stats";
 import {StartTimestampsController} from "@controllers/start-timestamps";
 import {TimeUtils} from "@utils/time";
-import {UserStats} from "@models/database/user_stats";
+import {UserStatsModel} from "@models/database/user_stats";
 import {NumberUtils} from "@utils/number";
+import {StartTimestampsModel} from "@models/database/start_timestamps";
 
 export class StatsCommand implements Command {
     public names = ['stats'];
@@ -20,30 +21,32 @@ export class StatsCommand implements Command {
         }
 
         const interactionUser: InteractionUser = InteractionUtils.getInteractionUser(intr);
-        // intrUserRaw is the user mention in the reply
-        const intrUserRaw = InteractionUtils.getInteractionUserRaw(intr);
 
         // Get the user stats
-        const userStatsController = new UserStatsController();
-        const userStats = await userStatsController.getUserInGuild(guildId, interactionUser.id);
-        if(!userStats){
-            await InteractionUtils.editReply(intr, `${intrUserRaw} has no stats yet!`);
+        const rowUserStats = await UserStatsController.getUserInGuild(guildId, interactionUser.id);
+
+        // Get the user live stats
+        const rowStartTs = await StartTimestampsController.getUserByGuild(guildId, interactionUser.id);
+
+        // User has no stats yet
+        if(!rowUserStats && !rowStartTs){
+            await InteractionUtils.send(intr, `${InteractionUtils.getInteractionUserRaw(intr)} has no stats yet!`);
             return;
         }
 
-        // Get the user live stats
-        const startTimestampsController = new StartTimestampsController();
-        const startTimestamps = await startTimestampsController.getUserByGuild(guildId, interactionUser.id);
+        // Map from db generated types
+        const userStats = UserStatsModel.fromUserStats(rowUserStats ?? {});
+        const startTimestamps = StartTimestampsModel.fromStartTimestamps(rowStartTs ?? {});
 
         // Combine the live stats with the user stats
-        const stats = startTimestamps.combineAllWithUserStats(userStats, Date.now());
+        const stats = startTimestamps?.combineAllWithUserStats(userStats, Date.now()) ?? {} as UserStatsModel;
 
         // Build the reply
         const reply = this.formatReply(stats, InteractionUtils.getInteractionUserRaw(intr));
         await InteractionUtils.editReply(intr, reply);
     }
 
-    private formatReply(userStats: UserStats, user: unknown): string {
+    private formatReply(userStats: UserStatsModel, user: unknown): string {
 
         // Time connected
         const timeConnected = TimeUtils.formatDuration(userStats.time_connected);

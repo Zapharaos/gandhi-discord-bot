@@ -1,5 +1,5 @@
 import {TextChannel, VoiceState} from "discord.js";
-import {StartTimestamps} from "@models/database/start_timestamps";
+import {StartTimestampsModel} from "@models/database/start_timestamps";
 
 export class VoiceProps {
     public readonly oldState: VoiceState;
@@ -7,10 +7,10 @@ export class VoiceProps {
     public readonly guildId: string;
     public readonly userId: string;
     public readonly userName: string;
-    public readonly userStartTs: StartTimestamps;
+    public readonly userStartTs: StartTimestampsModel;
     public readonly logChannel: TextChannel;
 
-    constructor(oldState: VoiceState, newState: VoiceState, guildId: string, userId: string, userName: string, userStartTs: StartTimestamps, logChannel: TextChannel) {
+    constructor(oldState: VoiceState, newState: VoiceState, guildId: string, userId: string, userName: string, userStartTs: StartTimestampsModel, logChannel: TextChannel) {
         this.oldState = oldState;
         this.newState = newState;
         this.guildId = guildId;

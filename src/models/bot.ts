@@ -46,7 +46,7 @@ export class Bot {
     }
 
     private async onReady(): Promise<void> {
-        const userTag = this.client.user?.tag;
+        const userTag = this.client.user?.tag  ?? 'N/A';
         Logger.info(Logs.info.clientLogin.replaceAll('{USER_TAG}', userTag));
 
         this.ready = true;
