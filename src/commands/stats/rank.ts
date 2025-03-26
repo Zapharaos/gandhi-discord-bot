@@ -55,6 +55,11 @@ export class RankCommand implements Command {
             const liveStat = usersLiveStats.get(row.user_id!);
             liveStat?.combineWithUserStats(row, userStatKey, startStatKey, now);
 
+            // Filter out those with a 0 value
+            if (row[userStatKey] === 0) {
+                continue;
+            }
+
             // Retrieve the user's nickname in the guild
             const guildNickname = await InteractionUtils.fetchGuildMemberNickname(intr.guild as Guild, row.user_id!);
             if (!guildNickname) {
