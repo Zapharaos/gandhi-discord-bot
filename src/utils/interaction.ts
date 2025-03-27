@@ -37,6 +37,12 @@ export type InteractionUser = {
     avatar: string;
 }
 
+export type ReplyTableRow = {
+    label: string;
+    main: string;
+    secondary?: string;
+}
+
 export class InteractionUtils {
     public static async deferReply(
         intr: CommandInteraction | MessageComponentInteraction | ModalSubmitInteraction,
@@ -229,5 +235,22 @@ export class InteractionUtils {
             console.error(`Failed to fetch member with id ${id}:`, error);
             return null;
         }
+    }
+
+    public static formatReplyAsTable(table: ReplyTableRow[]): string {
+        // Calculate the maximum length of the stats for alignment
+        const labelMaxLength = Math.max(...table.map(row => row.label.length));
+        const mainMaxLength = Math.max(...table.map(row => row.main.length));
+
+        // Helper function to pad the values for alignment
+        const padLength = (value: string, length: number) => value.padEnd(length);
+
+        // Build the formatted stats string
+        return table.map(row => {
+            const label = padLength(row.label, labelMaxLength);
+            const main = padLength(row.main, mainMaxLength);
+            const secondary = row.secondary ? `| ${row.secondary}` : '';
+            return `${label} \t | ${main} \t ${secondary}`;
+        }).join('\n');
     }
 }

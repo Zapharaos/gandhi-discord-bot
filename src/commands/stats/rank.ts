@@ -1,6 +1,6 @@
 import {Command, CommandDeferType} from "@commands/commands";
 import {ChatInputCommandInteraction, Guild, PermissionsString} from "discord.js";
-import {InteractionUtils} from "@utils/interaction";
+import {InteractionUtils, ReplyTableRow} from "@utils/interaction";
 import {UserStatsController} from "@controllers/user-stats";
 import {Logger} from "@services/logger";
 import {StartTimestampsController} from "@controllers/start-timestamps";
@@ -9,7 +9,7 @@ import {TimeUtils} from "@utils/time";
 import {StartTimestampsModel, StatKey} from "@models/database/start_timestamps";
 import {NumberUtils} from "@utils/number";
 
-type RankUser = UserStatsModel & { guildNickname?: string };
+type RankUser = UserStatsModel & { guildNickname: string };
 
 export class RankCommand implements Command {
     public names = ['rank'];
@@ -83,29 +83,39 @@ export class RankCommand implements Command {
         // Sort the rows by the stat in descending order
         rankUsers.sort((a, b) => b[userStatKey] - a[userStatKey]);
 
-        // Format the rank message for each user
-        const messages: string[] = [];
+        // Format the rank message for each user into a table
+        const stats: ReplyTableRow[] = [];
         rankUsers.forEach((row, index) => {
-            const message = this.formatRow(row, index, stat, userStatKey);
-            messages.push(message);
+            const data = this.formatRow(row, index, stat, userStatKey);
+            stats.push(data);
         });
 
-        const reply = `**Ranking for ${stat.replace('_', ' ')}:**\n${messages.join('\n')}`;
+        const reply = `
+            **Ranking for ${stat.replace('_', ' ')}**
+            \`\`\`${InteractionUtils.formatReplyAsTable(stats)}\`\`\`
+        `.replace(/^\s+/gm, ''); // Remove leading spaces from each line
         await InteractionUtils.editReply(intr, reply);
     }
 
-    private formatRow(row: RankUser, index: number, stat: string, userStatKey: UserStatsKey): string {
+    private formatRow(row: RankUser, index: number, stat: string, userStatKey: UserStatsKey): ReplyTableRow {
         // If the stat is last_activity, format the value as a date
         if (stat === UserStatsFields.LastActivity) {
             const date = TimeUtils.formatDate(new Date(row.last_activity));
-            return `\`${index + 1}. ${row.guildNickname}\` ${date}`;
+            return {
+                label: `${index + 1}. ${row.guildNickname}`,
+                main: date
+            };
         }
 
         // If the stat is a time-based stat, format the value as a duration
         if (stat !== UserStatsFields.TimeConnected && StatTimeRelated.includes(stat as UserStatsFields)) {
             const value = TimeUtils.formatDuration(row[userStatKey]);
             const percentage = NumberUtils.getPercentageString(row[userStatKey], row.time_connected);
-            return `\`${index + 1}. ${row.guildNickname}\` ${value} **(${percentage})**`;
+            return {
+                label: `${index + 1}. ${row.guildNickname}`,
+                main: value,
+                secondary: percentage
+            };
         }
 
         // Otherwise, just retrieve the value
@@ -116,6 +126,9 @@ export class RankCommand implements Command {
             value = TimeUtils.formatDuration(row[stat]);
         }
 
-        return `\`${index + 1}. ${row.guildNickname}\` ${value}`;
+        return {
+            label: `${index + 1}. ${row.guildNickname}`,
+            main: value.toString()
+        };
     }
 }
