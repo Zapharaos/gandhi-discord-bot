@@ -98,7 +98,7 @@ export class RankCommand implements Command {
             if (!fields[pageIndex]) {
                 fields[pageIndex] = [];
             }
-            const field = this.formatStatsAsAPIEmbedField(row, index, stat, userStatKey);
+            const field = this.mapStatsToAPIEmbedField(row, index, stat, userStatKey);
             fields[pageIndex].push(field);
         });
 
@@ -123,28 +123,24 @@ export class RankCommand implements Command {
         return ebs;
     }
 
-    private formatStatsAsAPIEmbedField(row: RankUser, index: number, stat: string, userStatKey: UserStatsKey): APIEmbedField {
+    private mapStatsToAPIEmbedField(row: RankUser, index: number, stat: string, userStatKey: UserStatsKey): APIEmbedField {
         // If the stat is last_activity, format the value as a date
         if (stat === UserStatsFields.LastActivity) {
-            const date = TimeUtils.formatDate(new Date(row.last_activity));
             return {
                 name: `**${index + 1}. ${row.guildNickname}**`,
-                value: date
+                value: TimeUtils.formatDate(new Date(row.last_activity))
             };
         }
 
         // If the stat is a time-based stat, format the value as a duration
         if (stat !== UserStatsFields.TimeConnected && StatTimeRelated.includes(stat as UserStatsFields)) {
-            let value = '';
+            let value = TimeUtils.formatDuration(row[userStatKey]);
 
             // Add the percentage if it exists
             if (row.time_connected !== 0) {
                 const percentage = NumberUtils.getPercentageString(row[userStatKey], row.time_connected);
-                value += `${percentage} **->** `;
+                value += ` **->** ${percentage}`;
             }
-
-            // Add the statistic value
-            value += TimeUtils.formatDuration(row[userStatKey]);
 
             return {
                 name: `**${index + 1}. ${row.guildNickname}**`,

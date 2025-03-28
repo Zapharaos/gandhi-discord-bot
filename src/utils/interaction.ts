@@ -19,8 +19,6 @@ import {
     CommandInteractionOption,
     CacheType,
     InteractionCallbackResponse,
-    User,
-    MessageReaction,
     ActionRowBuilder,
     ButtonBuilder,
     ButtonStyle,
@@ -42,12 +40,6 @@ export type InteractionUser = {
     id: string;
     name: string;
     avatar: string;
-}
-
-export type ReplyTableRow = {
-    label: string;
-    main: string;
-    secondary?: string;
 }
 
 export class InteractionUtils {
@@ -251,8 +243,12 @@ export class InteractionUtils {
             new ButtonBuilder().setCustomId('prev').setLabel('◀').setStyle(ButtonStyle.Primary).setDisabled(true),
             new ButtonBuilder().setCustomId('next').setLabel('▶').setStyle(ButtonStyle.Primary)
         );
+        const components = ebs.length > 1 ? [row] : undefined;
 
-        const msg = await intr.editReply({ embeds: [ebs[currentPage]], components: [row] });
+        const msg = await intr.editReply({
+            embeds: [ebs[currentPage]],
+            components: components
+        });
 
         const filter = (i: MessageComponentInteraction): i is ButtonInteraction =>
             i.isButton() && i.user.id === intr.user.id;
@@ -268,12 +264,15 @@ export class InteractionUtils {
             row.components[0].setDisabled(currentPage === 0);
             row.components[1].setDisabled(currentPage === ebs.length - 1);
 
-            await btnInteraction.update({ embeds: [ebs[currentPage]], components: [row] });
+            await btnInteraction.update({
+                embeds: [ebs[currentPage]],
+                components: components
+            });
         });
 
         collector.on('end', () => {
             row.components.forEach(button => button.setDisabled(true));
-            msg.edit({ components: [row] }).catch(() => {});
+            msg.edit({ components: components }).catch(() => {});
         });
     }
 }
