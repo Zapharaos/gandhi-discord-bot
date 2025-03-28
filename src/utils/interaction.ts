@@ -17,7 +17,12 @@ import {
     Guild,
     MessageFlags,
     CommandInteractionOption,
-    CacheType, InteractionCallbackResponse,
+    CacheType,
+    InteractionCallbackResponse,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    ButtonInteraction,
 } from 'discord.js';
 
 const IGNORED_ERRORS = [
@@ -35,12 +40,6 @@ export type InteractionUser = {
     id: string;
     name: string;
     avatar: string;
-}
-
-export type ReplyTableRow = {
-    label: string;
-    main: string;
-    secondary?: string;
 }
 
 export class InteractionUtils {
@@ -237,20 +236,43 @@ export class InteractionUtils {
         }
     }
 
-    public static formatReplyAsTable(table: ReplyTableRow[]): string {
-        // Calculate the maximum length of the stats for alignment
-        const labelMaxLength = Math.max(...table.map(row => row.label.length));
-        const mainMaxLength = Math.max(...table.map(row => row.main.length));
+    public static async replyWithPagination(intr: ChatInputCommandInteraction, ebs: EmbedBuilder[]): Promise<void> {
+        let currentPage = 0;
 
-        // Helper function to pad the values for alignment
-        const padLength = (value: string, length: number) => value.padEnd(length);
+        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder().setCustomId('prev').setLabel('◀').setStyle(ButtonStyle.Primary).setDisabled(true),
+            new ButtonBuilder().setCustomId('next').setLabel('▶').setStyle(ButtonStyle.Primary)
+        );
+        const components = ebs.length > 1 ? [row] : undefined;
 
-        // Build the formatted stats string
-        return table.map(row => {
-            const label = padLength(row.label, labelMaxLength);
-            const main = padLength(row.main, mainMaxLength);
-            const secondary = row.secondary ? `| ${row.secondary}` : '';
-            return `${label} \t | ${main} \t ${secondary}`;
-        }).join('\n');
+        const msg = await intr.editReply({
+            embeds: [ebs[currentPage]],
+            components: components
+        });
+
+        const filter = (i: MessageComponentInteraction): i is ButtonInteraction =>
+            i.isButton() && i.user.id === intr.user.id;
+        const collector = msg.createMessageComponentCollector({ filter, time: 60000 });
+
+        collector.on('collect', async (btnInteraction) => {
+            if (btnInteraction.customId === 'next' && currentPage < ebs.length - 1) {
+                currentPage++;
+            } else if (btnInteraction.customId === 'prev' && currentPage > 0) {
+                currentPage--;
+            }
+
+            row.components[0].setDisabled(currentPage === 0);
+            row.components[1].setDisabled(currentPage === ebs.length - 1);
+
+            await btnInteraction.update({
+                embeds: [ebs[currentPage]],
+                components: components
+            });
+        });
+
+        collector.on('end', () => {
+            row.components.forEach(button => button.setDisabled(true));
+            msg.edit({ components: components }).catch(() => {});
+        });
     }
 }

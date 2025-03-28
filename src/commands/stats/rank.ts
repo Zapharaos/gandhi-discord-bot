@@ -1,6 +1,11 @@
 import {Command, CommandDeferType} from "@commands/commands";
-import {ChatInputCommandInteraction, Guild, PermissionsString} from "discord.js";
-import {InteractionUtils, ReplyTableRow} from "@utils/interaction";
+import {
+    ChatInputCommandInteraction,
+    EmbedBuilder, EmbedField,
+    Guild,
+    PermissionsString,
+} from "discord.js";
+import {InteractionUtils} from "@utils/interaction";
 import {UserStatsController} from "@controllers/user-stats";
 import {Logger} from "@services/logger";
 import {StartTimestampsController} from "@controllers/start-timestamps";
@@ -15,6 +20,7 @@ export class RankCommand implements Command {
     public names = ['rank'];
     public deferType = CommandDeferType.PUBLIC;
     public requireClientPerms: PermissionsString[] = [];
+    private readonly pageSize = 10;
 
     public async execute(intr: ChatInputCommandInteraction): Promise<void> {
         const guildId = InteractionUtils.getGuildId(intr);
@@ -74,6 +80,7 @@ export class RankCommand implements Command {
             });
         }
 
+        // Return early if no user stats were found
         if (!rankUsers.length) {
             Logger.debug(`RankCommand - No user stats found for the stat ${stat}`);
             await InteractionUtils.editReply(intr, `No data found for the stat ${stat}.`);
@@ -83,39 +90,105 @@ export class RankCommand implements Command {
         // Sort the rows by the stat in descending order
         rankUsers.sort((a, b) => b[userStatKey] - a[userStatKey]);
 
-        // Format the rank message for each user into a table
-        const stats: ReplyTableRow[] = [];
+        // Format the ranks as embed fields
+        const pages: string[][][] = [];
         rankUsers.forEach((row, index) => {
-            const data = this.formatRow(row, index, stat, userStatKey);
-            stats.push(data);
+            const pageIndex = Math.floor(index / this.pageSize);
+            if (!pages[pageIndex]) {
+                pages[pageIndex] = [];
+            }
+            const page = this.mapStatsToTableRow(row, index, stat, userStatKey);
+            pages[pageIndex].push(page);
         });
 
-        const reply = `
-            **Ranking for ${stat.replace('_', ' ')}**
-            \`\`\`${InteractionUtils.formatReplyAsTable(stats)}\`\`\`
-        `.replace(/^\s+/gm, ''); // Remove leading spaces from each line
-        await InteractionUtils.editReply(intr, reply);
+        const ebs = this.buildEmbedBuilders(pages, stat.replace('_', ' '));
+        await InteractionUtils.replyWithPagination(intr, ebs);
     }
 
-    private formatRow(row: RankUser, index: number, stat: string, userStatKey: UserStatsKey): ReplyTableRow {
+    private buildFields(columns: string[][]): EmbedField {
+        let rankLength = 0, userLength = 0, valueLength = 0;
+
+        // Calculate the max length for each column
+        columns.forEach(column => {
+            rankLength = Math.max(rankLength, column[0].length);
+            userLength = Math.max(userLength, column[1].length);
+
+            // If the column has a percentage, calculate the max length for the value
+            if (column.length > 3) {
+                valueLength = Math.max(valueLength, column[2].length);
+            }
+        });
+
+        // Build the rows
+        const rows: string[] = columns.map(column => {
+            const rank = column[0].padEnd(rankLength, ' ');
+            const user = column[1].padEnd(userLength, ' ');
+
+            // If the column does not have a percentage, return the row
+            if (valueLength === 0) {
+                return `${rank}\t${user}\t| ${column[2]}`;
+            }
+
+            const value = column[2].padEnd(valueLength, ' ');
+            return `${rank}\t${user}\t| ${value}\t| ${column[3]}`;
+        });
+
+        // Build the title
+        const titles = ['Rank', 'User', 'Value'];
+        if (valueLength > 0) {
+            titles.push('Percentage');
+        }
+
+        return {
+            name: titles.join(' - '),
+            value: `\`\`\`${rows.join("\n")}\`\`\``, // Wrap in code block
+            inline: false
+        };
+    }
+
+    private buildEmbedBuilders(pages: string[][][], stat: string): EmbedBuilder[] {
+        const ebs: EmbedBuilder[] = [];
+
+        pages.forEach((page, index) => {
+            // const table = this.buildTable(page);
+            const fields = this.buildFields(page);
+            const eb = new EmbedBuilder()
+                .setTitle(`Ranking for ${stat}`)
+                .setFields(fields)
+                .setFooter({
+                    text: `Page ${index + 1}/${pages.length}`
+                })
+                .setTimestamp()
+            ebs.push(eb);
+        });
+
+        return ebs;
+    }
+
+    private mapStatsToTableRow(row: RankUser, index: number, stat: string, userStatKey: UserStatsKey): string[] {
         // If the stat is last_activity, format the value as a date
         if (stat === UserStatsFields.LastActivity) {
-            const date = TimeUtils.formatDate(new Date(row.last_activity));
-            return {
-                label: `${index + 1}. ${row.guildNickname}`,
-                main: date
-            };
+            return [
+                `${index + 1}.`,
+                row.guildNickname,
+                TimeUtils.formatDate(new Date(row.last_activity))
+            ];
         }
 
         // If the stat is a time-based stat, format the value as a duration
         if (stat !== UserStatsFields.TimeConnected && StatTimeRelated.includes(stat as UserStatsFields)) {
-            const value = TimeUtils.formatDuration(row[userStatKey]);
-            const percentage = NumberUtils.getPercentageString(row[userStatKey], row.time_connected);
-            return {
-                label: `${index + 1}. ${row.guildNickname}`,
-                main: value,
-                secondary: percentage
-            };
+            const columns = [
+                `${index + 1}.`,
+                row.guildNickname,
+                TimeUtils.formatDuration(row[userStatKey])
+            ];
+
+            // Add the percentage if it exists
+            if (row.time_connected !== 0) {
+                columns.push(NumberUtils.getPercentageString(row[userStatKey], row.time_connected));
+            }
+
+            return columns;
         }
 
         // Otherwise, just retrieve the value
@@ -126,9 +199,10 @@ export class RankCommand implements Command {
             value = TimeUtils.formatDuration(row[stat]);
         }
 
-        return {
-            label: `${index + 1}. ${row.guildNickname}`,
-            main: value.toString()
-        };
+        return [
+            `${index + 1}.`,
+            row.guildNickname,
+            value.toString()
+        ];
     }
 }
