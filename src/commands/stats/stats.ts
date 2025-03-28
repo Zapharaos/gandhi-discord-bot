@@ -75,7 +75,7 @@ export class StatsCommand implements Command {
         // Add the highscore if it exists
         if (stat.highscore && stat.total !== 0) {
             const value = TimeUtils.formatDuration(stat.highscore);
-            item += `\n*Highscore* **->** ${value}`;
+            item += `\n*Highscore **->** ${value}*`;
         }
 
         return {
@@ -137,7 +137,7 @@ export class StatsCommand implements Command {
         const maxDailyStreak = userStats.daily_streak.toString();
         stats.push({
             name: '**Daily Streak**',
-            value: dailyStreak + (userStats.daily_streak ? `; *Highscore* **->** ${maxDailyStreak}` : '')
+            value: dailyStreak + (userStats.daily_streak ? `; *Highscore **->** ${maxDailyStreak}*` : '')
         });
 
         // Last activity

@@ -1,6 +1,12 @@
 import {Command, CommandDeferType} from "@commands/commands";
-import {ChatInputCommandInteraction, Guild, PermissionsString} from "discord.js";
-import {InteractionUtils, ReplyTableRow} from "@utils/interaction";
+import {
+    APIEmbedField,
+    ChatInputCommandInteraction,
+    EmbedBuilder,
+    Guild,
+    PermissionsString,
+} from "discord.js";
+import {InteractionUtils} from "@utils/interaction";
 import {UserStatsController} from "@controllers/user-stats";
 import {Logger} from "@services/logger";
 import {StartTimestampsController} from "@controllers/start-timestamps";
@@ -75,6 +81,7 @@ export class RankCommand implements Command {
             });
         }
 
+        // Return early if no user stats were found
         if (!rankUsers.length) {
             Logger.debug(`RankCommand - No user stats found for the stat ${stat}`);
             await InteractionUtils.editReply(intr, `No data found for the stat ${stat}.`);
@@ -84,52 +91,64 @@ export class RankCommand implements Command {
         // Sort the rows by the stat in descending order
         rankUsers.sort((a, b) => b[userStatKey] - a[userStatKey]);
 
-        // Format the rank message for each user into a table
-        const rows: ReplyTableRow[] = [];
+        // Format the ranks as embed fields
+        const fields: APIEmbedField[][] = [];
         rankUsers.forEach((row, index) => {
-            const data = this.formatRow(row, index, stat, userStatKey);
-            rows.push(data);
+            const pageIndex = Math.floor(index / this.pageSize);
+            if (!fields[pageIndex]) {
+                fields[pageIndex] = [];
+            }
+            const field = this.formatStatsAsAPIEmbedField(row, index, stat, userStatKey);
+            fields[pageIndex].push(field);
         });
 
-        // Split the table rows into separate pages
-        const pagesRaw: ReplyTableRow[][] = [];
-        for (let i = 0; i < rows.length; i += this.pageSize) {
-            pagesRaw.push(rows.slice(i, i + this.pageSize));
-        }
-
-        // Format the pages
-        const pages: string[] = [];
-        pagesRaw.forEach((row, index) => {
-            const pageIndex = index % this.pageSize;
-            const page = `
-                **Ranking for ${stat.replace('_', ' ')}**
-                \`\`\`${InteractionUtils.formatReplyAsTable(row)}\`\`\`
-                Page ${pageIndex + 1}/${pagesRaw.length}
-            `.replace(/^\s+/gm, ''); // Remove leading spaces from each line
-            pages.push(page);
-        });
-
-        await InteractionUtils.replyWithPagination(intr, pages);
+        const ebs = this.buildEmbedBuilders(fields, stat.replace('_', ' '));
+        await InteractionUtils.replyWithPagination(intr, ebs);
     }
 
-    private formatRow(row: RankUser, index: number, stat: string, userStatKey: UserStatsKey): ReplyTableRow {
+    private buildEmbedBuilders(fields: APIEmbedField[][], stat: string): EmbedBuilder[] {
+        const ebs: EmbedBuilder[] = [];
+
+        fields.forEach((field, index) => {
+            ebs.push(new EmbedBuilder()
+                .setTitle(`Ranking for ${stat}`)
+                .addFields(field)
+                .setFooter({
+                    text: `Page ${index + 1}/${fields.length}`
+                })
+                .setTimestamp()
+            );
+        });
+
+        return ebs;
+    }
+
+    private formatStatsAsAPIEmbedField(row: RankUser, index: number, stat: string, userStatKey: UserStatsKey): APIEmbedField {
         // If the stat is last_activity, format the value as a date
         if (stat === UserStatsFields.LastActivity) {
             const date = TimeUtils.formatDate(new Date(row.last_activity));
             return {
-                label: `${index + 1}. ${row.guildNickname}`,
-                main: date
+                name: `**${index + 1}. ${row.guildNickname}**`,
+                value: date
             };
         }
 
         // If the stat is a time-based stat, format the value as a duration
         if (stat !== UserStatsFields.TimeConnected && StatTimeRelated.includes(stat as UserStatsFields)) {
-            const value = TimeUtils.formatDuration(row[userStatKey]);
-            const percentage = NumberUtils.getPercentageString(row[userStatKey], row.time_connected);
+            let value = '';
+
+            // Add the percentage if it exists
+            if (row.time_connected !== 0) {
+                const percentage = NumberUtils.getPercentageString(row[userStatKey], row.time_connected);
+                value += `${percentage} **->** `;
+            }
+
+            // Add the statistic value
+            value += TimeUtils.formatDuration(row[userStatKey]);
+
             return {
-                label: `${index + 1}. ${row.guildNickname}`,
-                main: value,
-                secondary: percentage
+                name: `**${index + 1}. ${row.guildNickname}**`,
+                value: value
             };
         }
 
@@ -142,8 +161,8 @@ export class RankCommand implements Command {
         }
 
         return {
-            label: `${index + 1}. ${row.guildNickname}`,
-            main: value.toString()
+            name: `**${index + 1}. ${row.guildNickname}**`,
+            value: value.toString()
         };
     }
 }
