@@ -46,6 +46,8 @@ export class UserStatsModel {
     total_joins: number;
     user_id: string | null;
 
+    isLive: boolean = false;
+
     constructor(data: Partial<UserStatsModel> = {}) {
         this.daily_streak = data.daily_streak ?? 0;
         this.guild_id = data.guild_id ?? null;

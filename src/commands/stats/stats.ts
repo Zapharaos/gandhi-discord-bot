@@ -45,7 +45,13 @@ export class StatsCommand implements Command {
         const startTimestamps = StartTimestampsModel.fromStartTimestamps(rowStartTs ?? {});
 
         // Combine the live stats with the user stats
-        const stats = startTimestamps?.combineAllWithUserStats(userStats, Date.now()) ?? {} as UserStatsModel;
+        const now = Date.now();
+        const stats = startTimestamps?.combineAllWithUserStats(userStats, now) ?? {} as UserStatsModel;
+
+        // Update the last activity timestamp
+        if (startTimestamps.isActive()) {
+            stats.isLive = true;
+        }
 
         // Reply
         const eb = new EmbedBuilder()
@@ -141,10 +147,13 @@ export class StatsCommand implements Command {
         });
 
         // Last activity
-        const lastActivity = userStats.last_activity ? TimeUtils.formatDate(new Date(userStats.last_activity)) : 'Never';
         stats.push({
             name: '**Last Activity**',
-            value: lastActivity
+            value: userStats.isLive ?
+                'Now' :
+                !userStats.last_activity ?
+                    'Never' :
+                    TimeUtils.formatDate(new Date(userStats.last_activity))
         });
 
         return stats;

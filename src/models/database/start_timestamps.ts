@@ -43,8 +43,6 @@ export class StartTimestampsModel {
 
     static getColNameFromUserStat(name: string): string | null {
         switch (name) {
-            case UserStatsFields.TimeConnected:
-                return StartTsFields.StartConnected;
             case UserStatsFields.TimeMuted:
                 return StartTsFields.StartMuted;
             case UserStatsFields.TimeDeafened:
@@ -53,8 +51,9 @@ export class StartTimestampsModel {
                 return StartTsFields.StartScreenSharing;
             case UserStatsFields.TimeCamera:
                 return StartTsFields.StartCamera;
+            case UserStatsFields.TimeConnected:
             default:
-                return null;
+                return StartTsFields.StartConnected;
         }
     }
 
