@@ -2,7 +2,7 @@ import {Command, CommandDeferType} from "@commands/commands";
 import {
     APIEmbedField,
     ChatInputCommandInteraction,
-    EmbedBuilder,
+    EmbedBuilder, EmbedField,
     Guild,
     PermissionsString,
 } from "discord.js";
@@ -14,7 +14,6 @@ import {UserStatsModel, StatKey as UserStatsKey, UserStatsFields, StatTimeRelate
 import {TimeUtils} from "@utils/time";
 import {StartTimestampsModel, StatKey} from "@models/database/start_timestamps";
 import {NumberUtils} from "@utils/number";
-import {Table} from "embed-table";
 
 type RankUser = UserStatsModel & { guildNickname: string };
 
@@ -107,8 +106,7 @@ export class RankCommand implements Command {
         await InteractionUtils.replyWithPagination(intr, ebs);
     }
 
-    private buildTable(columns: string[][]): Table {
-        const titles = ['Rank', 'User', 'Value'];
+    private buildFields(columns: string[][]): EmbedField {
         let rankLength = 0, userLength = 0, valueLength = 0;
 
         // Calculate the max length for each column
@@ -122,66 +120,42 @@ export class RankCommand implements Command {
             }
         });
 
-        // Build table indexes
-        rankLength = Math.max(rankLength, titles[0].length) + 1;
-        userLength = Math.max(userLength, titles[1].length) + 1;
-        const indexes = [ 0, rankLength, userLength + rankLength ];
+        // Build the rows
+        const rows: string[] = columns.map(column => {
+            const rank = column[0].padEnd(rankLength, ' ');
+            const user = column[1].padEnd(userLength, ' ');
 
-        // Process more if percentage exists
-        if (valueLength !== 0) {
+            // If the column does not have a percentage, return the row
+            if (valueLength === 0) {
+                return `${rank}\t${user}\t| ${column[2]}`;
+            }
+
+            const value = column[2].padEnd(valueLength, ' ');
+            return `${rank}\t${user}\t| ${value}\t| ${column[3]}`;
+        });
+
+        // Build the title
+        const titles = ['Rank', 'User', 'Value'];
+        if (valueLength > 0) {
             titles.push('Percentage');
-            valueLength = Math.max(valueLength, titles[2].length) + 1;
-            indexes.push(valueLength + userLength + rankLength);
         }
 
-        console.log(columns);
-        console.log(rankLength, userLength, valueLength);
-        console.log(indexes);
-
-        const table = new Table({
-            titles: titles,
-            titleIndexes: indexes,
-            columnIndexes: indexes,
-            whiteSpace: true,
-            start: '`',
-            end: '`',
-        });
-
-        columns.forEach(column => {
-            table.addRow(column);
-            column[0] = column[0].padEnd(rankLength, ' ');
-            column[1] = column[1].padEnd(userLength, ' ');
-            console.log(`${column[0]}${column[1]}${column[2]}`)
-            /*column[0] = column[0].padEnd(rankLength, ' ');
-            column[1] = column[1].padEnd(userLength, ' ');
-            console.log(column)
-
-            column[0] = column[0].padEnd(indexes[1], ' ');
-            column[1] = column[1].padEnd(indexes[2], ' ');
-            console.log(column)
-
-            table.addRow([
-                // `${column[0].padEnd(rankLength, '-')}`,
-                // `${column[1].padEnd(userLength, '-')}`,
-                `${column[0].padEnd(rankLength, ' ')}`,
-                `${column[1].padEnd(userLength, ' ')}`,
-                column[2]
-            ]);*/
-        });
-
-        console.log(table);
-
-        return table;
+        return {
+            name: titles.join(' - '),
+            value: `\`\`\`${rows.join("\n")}\`\`\``, // Wrap in code block
+            inline: false
+        };
     }
 
     private buildEmbedBuilders(pages: string[][][], stat: string): EmbedBuilder[] {
         const ebs: EmbedBuilder[] = [];
 
         pages.forEach((page, index) => {
-            const table = this.buildTable(page);
+            // const table = this.buildTable(page);
+            const fields = this.buildFields(page);
             const eb = new EmbedBuilder()
                 .setTitle(`Ranking for ${stat}`)
-                .setFields(table.toField())
+                .setFields(fields)
                 .setFooter({
                     text: `Page ${index + 1}/${pages.length}`
                 })
@@ -196,7 +170,7 @@ export class RankCommand implements Command {
         // If the stat is last_activity, format the value as a date
         if (stat === UserStatsFields.LastActivity) {
             return [
-                `${index + 1}`,
+                `${index + 1}.`,
                 row.guildNickname,
                 TimeUtils.formatDate(new Date(row.last_activity))
             ];
@@ -205,7 +179,7 @@ export class RankCommand implements Command {
         // If the stat is a time-based stat, format the value as a duration
         if (stat !== UserStatsFields.TimeConnected && StatTimeRelated.includes(stat as UserStatsFields)) {
             const columns = [
-                `${index + 1}`,
+                `${index + 1}.`,
                 row.guildNickname,
                 TimeUtils.formatDuration(row[userStatKey])
             ];
@@ -227,7 +201,7 @@ export class RankCommand implements Command {
         }
 
         return [
-            `${index + 1}`,
+            `${index + 1}.`,
             row.guildNickname,
             value.toString()
         ];
