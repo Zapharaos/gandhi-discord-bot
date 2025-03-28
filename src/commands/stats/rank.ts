@@ -15,6 +15,7 @@ export class RankCommand implements Command {
     public names = ['rank'];
     public deferType = CommandDeferType.PUBLIC;
     public requireClientPerms: PermissionsString[] = [];
+    private readonly pageSize = 10;
 
     public async execute(intr: ChatInputCommandInteraction): Promise<void> {
         const guildId = InteractionUtils.getGuildId(intr);
@@ -84,17 +85,31 @@ export class RankCommand implements Command {
         rankUsers.sort((a, b) => b[userStatKey] - a[userStatKey]);
 
         // Format the rank message for each user into a table
-        const stats: ReplyTableRow[] = [];
+        const rows: ReplyTableRow[] = [];
         rankUsers.forEach((row, index) => {
             const data = this.formatRow(row, index, stat, userStatKey);
-            stats.push(data);
+            rows.push(data);
         });
 
-        const reply = `
-            **Ranking for ${stat.replace('_', ' ')}**
-            \`\`\`${InteractionUtils.formatReplyAsTable(stats)}\`\`\`
-        `.replace(/^\s+/gm, ''); // Remove leading spaces from each line
-        await InteractionUtils.editReply(intr, reply);
+        // Split the table rows into separate pages
+        const pagesRaw: ReplyTableRow[][] = [];
+        for (let i = 0; i < rows.length; i += this.pageSize) {
+            pagesRaw.push(rows.slice(i, i + this.pageSize));
+        }
+
+        // Format the pages
+        const pages: string[] = [];
+        pagesRaw.forEach((row, index) => {
+            const pageIndex = index % this.pageSize;
+            const page = `
+                **Ranking for ${stat.replace('_', ' ')}**
+                \`\`\`${InteractionUtils.formatReplyAsTable(row)}\`\`\`
+                Page ${pageIndex + 1}/${pagesRaw.length}
+            `.replace(/^\s+/gm, ''); // Remove leading spaces from each line
+            pages.push(page);
+        });
+
+        await InteractionUtils.replyWithPagination(intr, pages);
     }
 
     private formatRow(row: RankUser, index: number, stat: string, userStatKey: UserStatsKey): ReplyTableRow {
