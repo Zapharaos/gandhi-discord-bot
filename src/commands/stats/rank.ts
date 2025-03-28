@@ -1,6 +1,5 @@
 import {Command, CommandDeferType} from "@commands/commands";
 import {
-    APIEmbedField,
     ChatInputCommandInteraction,
     EmbedBuilder, EmbedField,
     Guild,
