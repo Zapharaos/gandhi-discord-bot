@@ -137,8 +137,8 @@ export class StatsCommand implements Command {
         stats.push(this.formatTimeStat(timeCamera));
 
         // Daily streak
-        let dailyStreak = userStats.daily_streak;
-        let maxDailyStreak = userStats.daily_streak;
+        const dailyStreak = userStats.daily_streak;
+        const maxDailyStreak = userStats.daily_streak;
         stats.push({
             name: '**Daily Streak**',
             value: dailyStreak + (userStats.daily_streak ? `; *Highscore **->** ${maxDailyStreak}*` : '')
