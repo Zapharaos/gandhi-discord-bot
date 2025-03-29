@@ -45,8 +45,7 @@ export class VoiceHandler implements EventHandler {
         const row = await StartTimestampsController.getUserByGuild(guild.id, user.id);
         const startTimestamps = StartTimestampsModel.fromStartTimestamps(row ?? {});
 
-        // TODO : Share same 'now' timestamp for all voice channel events
-        const props = new VoiceProps(oldState, newState, guild.id, user.id, userName, startTimestamps, logChannel);
+        const props = new VoiceProps(oldState, newState, guild.id, user.id, userName, startTimestamps, logChannel, Date.now());
 
         for (const voice of this.voices) {
             try {

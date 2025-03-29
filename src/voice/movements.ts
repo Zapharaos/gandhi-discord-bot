@@ -29,8 +29,7 @@ export class MovementsVoice implements Voice {
             Logger.debug('User is joining a channel');
 
             // Start connected timestamp for user
-            const now = Date.now();
-            await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartConnected, now);
+            await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartConnected, props.now);
 
             // Increment total joins for user
             await UserStatsController.incrementTotalJoins(props.guildId, props.userId);
@@ -42,8 +41,6 @@ export class MovementsVoice implements Voice {
         // Check if the user is leaving a channel
         if (VoiceStateUtils.isLeavingChannel(props.oldState, props.newState)) {
 
-            const now = Date.now();
-
             // Time was not tracked, send default message
             if (!props.userStartTs || props.userStartTs.start_connected === 0) {
                 // Send message to log channel
@@ -52,14 +49,14 @@ export class MovementsVoice implements Voice {
             }
             // Time tracked: calculate duration and update database
             else {
-                const duration = TimeUtils.getDuration(props.userStartTs.start_connected, now);
+                const duration = TimeUtils.getDuration(props.userStartTs.start_connected, props.now);
 
                 // Send message to log channel
                 await props.logChannel.send(`⬅️ **${props.userName}** left **${props.oldState.channel?.name}** after **${TimeUtils.formatDuration(duration)}**`);
                 Logger.debug(`User is leaving a channel after ${duration} ms`);
 
                 // Update user stats and stop connected timestamp for user
-                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeConnected, StartTsFields.StartConnected, duration, now);
+                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeConnected, StartTsFields.StartConnected, duration, props.now);
             }
 
             // If user has no live stats, do nothing
@@ -67,38 +64,38 @@ export class MovementsVoice implements Voice {
 
             // Stop mute if user was muted
             if (props.userStartTs.start_muted !== 0) {
-                const duration = TimeUtils.getDuration(props.userStartTs.start_muted, now);
+                const duration = TimeUtils.getDuration(props.userStartTs.start_muted, props.now);
                 Logger.debug(`Mute stopped for user: ${props.userName} after ${duration} ms`);
 
                 // Update user stats and stop mute timestamp for user
-                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeMuted, StartTsFields.StartMuted, duration, now);
+                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeMuted, StartTsFields.StartMuted, duration, props.now);
             }
 
             // Stop deafen if user was deafened
             if (props.userStartTs.start_deafened !== 0) {
-                const duration = TimeUtils.getDuration(props.userStartTs.start_deafened, now);
+                const duration = TimeUtils.getDuration(props.userStartTs.start_deafened, props.now);
                 Logger.debug(`Deafen stopped for user: ${props.userName} after ${duration} ms`);
 
                 // Update user stats and stop deaf timestamp for user
-                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeDeafened, StartTsFields.StartDeafened, duration, now);
+                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeDeafened, StartTsFields.StartDeafened, duration, props.now);
             }
 
             // Stop screen sharing if user was sharing screen
             if (props.userStartTs.start_screen_sharing !== 0) {
-                const duration = TimeUtils.getDuration(props.userStartTs.start_screen_sharing, now);
+                const duration = TimeUtils.getDuration(props.userStartTs.start_screen_sharing, props.now);
                 Logger.debug(`Screen sharing stopped for user: ${props.userName} after ${duration} ms`);
 
                 // Update user stats and stop screensharing timestamp for user
-                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeScreenSharing, StartTsFields.StartScreenSharing, duration, now);
+                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeScreenSharing, StartTsFields.StartScreenSharing, duration, props.now);
             }
 
             // Stop camera if user was using camera
             if (props.userStartTs.start_camera !== 0) {
-                const duration = TimeUtils.getDuration(props.userStartTs.start_camera, now);
+                const duration = TimeUtils.getDuration(props.userStartTs.start_camera, props.now);
                 Logger.debug(`Camera stopped for user: ${props.userName} after ${duration} ms`);
 
                 // Update user stats and stop camera timestamp for user
-                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeCamera, StartTsFields.StartCamera, duration, now);
+                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeCamera, StartTsFields.StartCamera, duration, props.now);
             }
         }
     }
