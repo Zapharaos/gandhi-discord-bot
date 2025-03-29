@@ -30,8 +30,6 @@ export class StatsCommand implements Command {
 
         // Get the user stats
         const rowUserStats = await UserStatsController.getUserInGuild(guildId, interactionUser.id);
-
-        // Get the user live stats
         const rowStartTs = await StartTimestampsController.getUserByGuild(guildId, interactionUser.id);
 
         // User has no stats yet
@@ -139,8 +137,8 @@ export class StatsCommand implements Command {
         stats.push(this.formatTimeStat(timeCamera));
 
         // Daily streak
-        const dailyStreak = userStats.daily_streak.toString();
-        const maxDailyStreak = userStats.daily_streak.toString();
+        let dailyStreak = userStats.daily_streak;
+        let maxDailyStreak = userStats.daily_streak;
         stats.push({
             name: '**Daily Streak**',
             value: dailyStreak + (userStats.daily_streak ? `; *Highscore **->** ${maxDailyStreak}*` : '')

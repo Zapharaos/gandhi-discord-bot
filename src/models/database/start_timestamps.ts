@@ -97,6 +97,16 @@ export class StartTimestampsModel {
             const liveDurationConnected = TimeUtils.getDuration(this.start_connected, now);
             userStats.time_connected += liveDurationConnected;
         }
+
+        if (userStatKey === UserStatsFields.DailyStreak) {
+            // Calculate the difference in days between the last activity and now (could be 0)
+            userStats.daily_streak += TimeUtils.getDaysDifference(userStats.last_activity, now);
+        }
+
+        // Update the last activity to now
+        if (userStatKey === UserStatsFields.LastActivity) {
+            userStats.last_activity = now;
+        }
     }
 
     public combineAllWithUserStats(userStats: UserStatsModel, now: number): UserStatsModel {
@@ -118,6 +128,9 @@ export class StartTimestampsModel {
         if (this.start_camera && this.start_camera > 0) {
             userStats.time_camera += TimeUtils.getDuration(this.start_camera, now);
         }
+
+        userStats.daily_streak += TimeUtils.getDaysDifference(userStats.last_activity, now);
+        userStats.last_activity = now;
 
         return userStats;
     }

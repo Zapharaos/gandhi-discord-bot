@@ -64,11 +64,6 @@ export class RankCommand implements Command {
             const liveStat = usersLiveStats.get(row.user_id!);
             liveStat?.combineWithUserStats(row, userStatKey, startStatKey, now);
 
-            // Update the last activity if the user is active
-            if(liveStat?.isActive() && userStatKey === UserStatsFields.LastActivity) {
-                row[userStatKey] = now;
-            }
-
             // Filter out those with a 0 value
             if (row[userStatKey] === 0) {
                 continue;
@@ -115,6 +110,7 @@ export class RankCommand implements Command {
     }
 
     private buildFields(columns: string[][]): EmbedField {
+        // TODO : set max length for user name ?
         let rankLength = 0, userLength = 0, valueLength = 0;
 
         // Calculate the max length for each column
