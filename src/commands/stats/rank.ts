@@ -14,7 +14,10 @@ import {TimeUtils} from "@utils/time";
 import {StartTimestampsModel, StatKey} from "@models/database/start_timestamps";
 import {NumberUtils} from "@utils/number";
 
-type RankUser = UserStatsModel & { guildNickname: string };
+type RankUser = UserStatsModel & {
+    guildNickname: string,
+    isLive: boolean
+};
 
 export class RankCommand implements Command {
     public names = ['rank'];
@@ -76,7 +79,8 @@ export class RankCommand implements Command {
             // Filter out those without a nickname
             rankUsers.push({
                 ...row,
-                guildNickname: guildNickname
+                guildNickname: guildNickname,
+                isLive: liveStat?.isActive() ?? false
             });
         }
 
@@ -106,6 +110,7 @@ export class RankCommand implements Command {
     }
 
     private buildFields(columns: string[][]): EmbedField {
+        // TODO : set max length for user name ?
         let rankLength = 0, userLength = 0, valueLength = 0;
 
         // Calculate the max length for each column
@@ -171,7 +176,7 @@ export class RankCommand implements Command {
             return [
                 `${index + 1}.`,
                 row.guildNickname,
-                TimeUtils.formatDate(new Date(row.last_activity))
+                row.isLive ? 'Now' : TimeUtils.formatDate(new Date(row.last_activity))
             ];
         }
 

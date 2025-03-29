@@ -159,6 +159,12 @@ export class TimeUtils {
         return `${day}/${month}/${year}, ${hours}h${minutes}m${seconds}s`;
     }
 
+    static getDaysDifference(start: number | undefined, end: number | undefined): number {
+        const startDate = TimeUtils.tsRoundDownToDay(start);
+        const endDate = TimeUtils.tsRoundDownToDay(end);
+        return TimeUtils.msToDays(TimeUtils.getDuration(startDate, endDate));
+    }
+
     private static pad = (num: number) => String(num).padStart(2, '0');
 }
 

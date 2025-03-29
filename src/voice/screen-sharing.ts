@@ -15,8 +15,6 @@ export class ScreenSharingVoice implements Voice {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async execute(props: VoiceProps, data: EventData): Promise<void> {
 
-        const now = Date.now();
-
         // Check if the user is joining a channel
         if (VoiceStateUtils.isJoiningChannel(props.oldState, props.newState)) {
 
@@ -25,7 +23,7 @@ export class ScreenSharingVoice implements Voice {
                 Logger.debug('User is joining a channel while streaming');
 
                 // Start screensharing timestamp for user
-                await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartScreenSharing, now);
+                await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartScreenSharing, props.now);
             }
 
             return;
@@ -38,7 +36,7 @@ export class ScreenSharingVoice implements Voice {
             Logger.debug(`Screen sharing started for user: ${props.userName}`);
 
             // Start screensharing timestamp for user
-            await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartScreenSharing, now);
+            await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartScreenSharing, props.now);
             return
         }
 
@@ -47,14 +45,14 @@ export class ScreenSharingVoice implements Voice {
 
             // Time tracked : calculate duration and update database
             if (props.userStartTs && props.userStartTs.start_screen_sharing !== 0) {
-                const duration = TimeUtils.getDuration(props.userStartTs.start_screen_sharing, now);
+                const duration = TimeUtils.getDuration(props.userStartTs.start_screen_sharing, props.now);
 
                 // Send message to log channel
                 await props.logChannel.send(`🛑 **${props.userName}** stopped screen sharing after **${TimeUtils.formatDuration(duration)}**`);
                 Logger.debug(`Screen sharing stopped for user: ${props.userName} after ${duration} ms`);
 
                 // Update user stats and stop screensharing timestamp for user
-                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeScreenSharing, StartTsFields.StartScreenSharing, duration, now);
+                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeScreenSharing, StartTsFields.StartScreenSharing, duration, props.now);
                 return;
             }
 

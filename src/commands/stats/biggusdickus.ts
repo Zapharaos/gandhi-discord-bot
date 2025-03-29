@@ -46,11 +46,8 @@ export class BiggusdickusCommand implements Command {
 
         // Check if the user has any live start timestamps
         if (startTimestamps.isActive()) {
-            const todayDate = TimeUtils.tsRoundDownToDay();
-            // Compare with last activity date -> every user action updates the last activity date and the daily streak
-            const lastActivityDate = TimeUtils.tsRoundDownToDay(userStats.last_activity);
-            // Calculate the difference in days between the last activity and today = live streak
-            const daysDifference = TimeUtils.msToDays(TimeUtils.getDuration(lastActivityDate, todayDate));
+            // Calculate the difference in days between the last activity and now = live streak
+            const daysDifference = TimeUtils.getDaysDifference(userStats.last_activity, Date.now());
             if (daysDifference > 0) {
                 streak += daysDifference;
                 Logger.debug(`Biggusdickus - User ${interactionUser.id} has a live streak of ${daysDifference}`);

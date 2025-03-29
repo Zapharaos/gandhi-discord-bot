@@ -15,8 +15,6 @@ export class CameraVoice implements Voice {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async execute(props: VoiceProps, data: EventData): Promise<void> {
 
-        const now = Date.now();
-
         // Check if the user is joining a channel
         if (VoiceStateUtils.isJoiningChannel(props.oldState, props.newState)) {
 
@@ -25,7 +23,7 @@ export class CameraVoice implements Voice {
                 Logger.debug('User is joining a channel with their camera on');
 
                 // Start camera timestamp for user
-                await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartCamera, now);
+                await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartCamera, props.now);
             }
 
             return;
@@ -38,7 +36,7 @@ export class CameraVoice implements Voice {
             Logger.debug(`Camera started for user: ${props.userName}`);
 
             // Start camera timestamp for user
-            await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartCamera, now);
+            await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartCamera, props.now);
             return
         }
 
@@ -47,14 +45,14 @@ export class CameraVoice implements Voice {
 
             // Time tracked: calculate duration and update database
             if (props.userStartTs && props.userStartTs.start_camera !== 0) {
-                const duration = TimeUtils.getDuration(props.userStartTs.start_camera, now);
+                const duration = TimeUtils.getDuration(props.userStartTs.start_camera, props.now);
 
                 // Send message to log channel
                 await props.logChannel.send(`🙈 **${props.userName}** turned off their camera after **${TimeUtils.formatDuration(duration)}**`);
                 Logger.debug(`Camera stopped for user: ${props.userName} after ${duration} ms`);
 
                 // Update user stats and stop camera timestamp for user
-                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeCamera, StartTsFields.StartCamera, duration, now);
+                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeCamera, StartTsFields.StartCamera, duration, props.now);
                 return;
             }
 

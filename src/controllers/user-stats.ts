@@ -5,6 +5,7 @@ import {DB, UserStats} from "../types/db";
 import {ExpressionBuilder} from "kysely";
 import {StatKey} from "@models/database/user_stats";
 import {DatabaseUtils} from "@utils/database";
+import {TimeUtils} from "@utils/time";
 
 export class UserStatsController {
 
@@ -110,14 +111,13 @@ export class UserStatsController {
             );
 
             let newStreak = 1;
+            // If the user already has stats
             if (userStats && last_activity !== 0) {
-                const lastActivityDate = new Date(last_activity).setUTCHours(0, 0, 0, 0);
-                const currentDate = new Date(timestamp).setUTCHours(0, 0, 0, 0);
-                const oneDay = 24 * 60 * 60 * 1000;
+                const days = TimeUtils.getDaysDifference(last_activity, timestamp);
 
-                if (currentDate - lastActivityDate === oneDay) {
+                if (days === 1) {
                     newStreak = daily_streak + 1;
-                } else if (currentDate - lastActivityDate > oneDay) {
+                } else if (days > 1) {
                     newStreak = 1;
                 } else {
                     newStreak = daily_streak;

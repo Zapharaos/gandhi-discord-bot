@@ -30,8 +30,6 @@ export class StatsCommand implements Command {
 
         // Get the user stats
         const rowUserStats = await UserStatsController.getUserInGuild(guildId, interactionUser.id);
-
-        // Get the user live stats
         const rowStartTs = await StartTimestampsController.getUserByGuild(guildId, interactionUser.id);
 
         // User has no stats yet
@@ -45,7 +43,13 @@ export class StatsCommand implements Command {
         const startTimestamps = StartTimestampsModel.fromStartTimestamps(rowStartTs ?? {});
 
         // Combine the live stats with the user stats
-        const stats = startTimestamps?.combineAllWithUserStats(userStats, Date.now()) ?? {} as UserStatsModel;
+        const now = Date.now();
+        const stats = startTimestamps?.combineAllWithUserStats(userStats, now) ?? {} as UserStatsModel;
+
+        // Update the last activity timestamp
+        if (startTimestamps.isActive()) {
+            stats.isLive = true;
+        }
 
         // Reply
         const eb = new EmbedBuilder()
@@ -133,18 +137,21 @@ export class StatsCommand implements Command {
         stats.push(this.formatTimeStat(timeCamera));
 
         // Daily streak
-        const dailyStreak = userStats.daily_streak.toString();
-        const maxDailyStreak = userStats.daily_streak.toString();
+        const dailyStreak = userStats.daily_streak;
+        const maxDailyStreak = userStats.daily_streak;
         stats.push({
             name: '**Daily Streak**',
             value: dailyStreak + (userStats.daily_streak ? `; *Highscore **->** ${maxDailyStreak}*` : '')
         });
 
         // Last activity
-        const lastActivity = userStats.last_activity ? TimeUtils.formatDate(new Date(userStats.last_activity)) : 'Never';
         stats.push({
             name: '**Last Activity**',
-            value: lastActivity
+            value: userStats.isLive ?
+                'Now' :
+                !userStats.last_activity ?
+                    'Never' :
+                    TimeUtils.formatDate(new Date(userStats.last_activity))
         });
 
         return stats;

@@ -12,6 +12,7 @@ import {StartTimestampsController} from "@controllers/start-timestamps";
 import {Logger} from "@services/logger";
 import Logs from "../../lang/logs.json";
 import {StartTimestampsModel} from "@models/database/start_timestamps";
+import {UserStatsController} from "@controllers/user-stats";
 
 export class VoiceHandler implements EventHandler {
 
@@ -37,11 +38,14 @@ export class VoiceHandler implements EventHandler {
         const logChannel = guild.channels.cache.get(server.log_channel_id);
         if (!logChannel || logChannel.type !== ChannelType.GuildText || !(logChannel instanceof TextChannel)) return;
 
+        // Update the user last activity and streak
+        await UserStatsController.updateLastActivityAndStreak(guild.id, user.id, Date.now());
+
         // Retrieve the user start timestamps
         const row = await StartTimestampsController.getUserByGuild(guild.id, user.id);
         const startTimestamps = StartTimestampsModel.fromStartTimestamps(row ?? {});
 
-        const props = new VoiceProps(oldState, newState, guild.id, user.id, userName, startTimestamps, logChannel);
+        const props = new VoiceProps(oldState, newState, guild.id, user.id, userName, startTimestamps, logChannel, Date.now());
 
         for (const voice of this.voices) {
             try {
