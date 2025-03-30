@@ -1,4 +1,9 @@
-import {UserStatsModel, StatKey as UserStatsStatKey, UserStatsFields} from "@models/database/user_stats";
+import {
+    UserStatsModel,
+    StatKey as UserStatsStatKey,
+    UserStatsFields,
+    StatMaxRelated,
+} from "@models/database/user_stats";
 import {TimeUtils} from "@utils/time";
 import {StartTimestamps} from "../../types/db";
 import {DatabaseUtils} from "@utils/database";
@@ -44,12 +49,16 @@ export class StartTimestampsModel {
     static getColNameFromUserStat(name: string): string | null {
         switch (name) {
             case UserStatsFields.TimeMuted:
+            case UserStatsFields.MaxMuted:
                 return StartTsFields.StartMuted;
             case UserStatsFields.TimeDeafened:
+            case UserStatsFields.MaxDeafened:
                 return StartTsFields.StartDeafened;
             case UserStatsFields.TimeScreenSharing:
+            case UserStatsFields.MaxScreenSharing:
                 return StartTsFields.StartScreenSharing;
             case UserStatsFields.TimeCamera:
+            case UserStatsFields.MaxCamera:
                 return StartTsFields.StartCamera;
             case UserStatsFields.TimeConnected:
             default:
@@ -86,7 +95,31 @@ export class StartTimestampsModel {
 
         // Retrieve the start timestamp
         const start = this[statKey];
+
+        // If the stat is a max stat, process it differently
+        if (StatMaxRelated.includes(userStatKey)) {
+            // Retrieve the time stat key
+            const userStatTime: string | null = UserStatsModel.getColNameFromMaxStat(userStatKey);
+            const userStatKeyTime = userStatTime ? UserStatsModel.getStatKey(userStatTime) : null;
+            if (!userStatKeyTime) return;
+
+            // Calculate stat total duration = saved + live
+            const duration = TimeUtils.getDuration(start, now);
+            const totalDuration = userStats[userStatKeyTime] + duration;
+
+            // Update the max stat if the total duration is greater
+            if (totalDuration > userStats[userStatKey]) {
+                userStats[userStatKey] = totalDuration;
+            }
+
+            // TODO : max daily streak live
+
+            return;
+        }
+
+        // Default processing
         if (start && start !== 0) {
+            // TODO : only do if time related?
             // Calculate live duration
             const duration = TimeUtils.getDuration(start, now);
             userStats[userStatKey] += duration;
@@ -132,6 +165,7 @@ export class StartTimestampsModel {
         userStats.daily_streak += TimeUtils.getDaysDifference(userStats.last_activity, now);
         userStats.last_activity = now;
 
+        // TODO : max stats
         return userStats;
     }
 }

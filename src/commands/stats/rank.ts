@@ -9,7 +9,13 @@ import {InteractionUtils} from "@utils/interaction";
 import {UserStatsController} from "@controllers/user-stats";
 import {Logger} from "@services/logger";
 import {StartTimestampsController} from "@controllers/start-timestamps";
-import {UserStatsModel, StatKey as UserStatsKey, UserStatsFields, StatTimeRelated} from "@models/database/user_stats";
+import {
+    UserStatsModel,
+    StatKey as UserStatsKey,
+    UserStatsFields,
+    StatTimeRelated,
+    StatMaxRelated
+} from "@models/database/user_stats";
 import {TimeUtils} from "@utils/time";
 import {StartTimestampsModel, StatKey} from "@models/database/start_timestamps";
 import {NumberUtils} from "@utils/number";
@@ -201,7 +207,12 @@ export class RankCommand implements Command {
 
         // If the stat is time_connected, format the value as a duration
         if (stat === UserStatsFields.TimeConnected) {
-            value = TimeUtils.formatDuration(row[stat]);
+            value = TimeUtils.formatDuration(row[userStatKey]);
+        }
+
+        // If the stat is a max-related stat, format the value as a duration
+        if (stat !== UserStatsFields.MaxDailyStreak && StatMaxRelated.includes(stat as UserStatsFields)) {
+            value = TimeUtils.formatDuration(row[userStatKey]);
         }
 
         return [

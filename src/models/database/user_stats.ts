@@ -28,6 +28,15 @@ export const StatTimeRelated = [
     UserStatsFields.TimeCamera
 ];
 
+export const StatMaxRelated = [
+    UserStatsFields.MaxConnected,
+    UserStatsFields.MaxMuted,
+    UserStatsFields.MaxDeafened,
+    UserStatsFields.MaxScreenSharing,
+    UserStatsFields.MaxCamera,
+    UserStatsFields.MaxDailyStreak
+];
+
 export type StatKey =
     UserStatsFields.TimeConnected |
     UserStatsFields.TimeMuted |
@@ -35,6 +44,12 @@ export type StatKey =
     UserStatsFields.TimeScreenSharing |
     UserStatsFields.TimeCamera |
     UserStatsFields.DailyStreak |
+    UserStatsFields.MaxConnected |
+    UserStatsFields.MaxMuted |
+    UserStatsFields.MaxDeafened |
+    UserStatsFields.MaxScreenSharing |
+    UserStatsFields.MaxCamera |
+    UserStatsFields.MaxDailyStreak |
     UserStatsFields.TotalJoins |
     UserStatsFields.LastActivity;
 
@@ -79,6 +94,25 @@ export class UserStatsModel {
         this.user_id = data.user_id ?? null;
     }
 
+    static getColNameFromMaxStat(name: string): string | null {
+        switch (name) {
+            case UserStatsFields.MaxConnected:
+                return UserStatsFields.TimeConnected;
+            case UserStatsFields.MaxMuted:
+                return UserStatsFields.TimeMuted;
+            case UserStatsFields.MaxDeafened:
+                return UserStatsFields.TimeDeafened;
+            case UserStatsFields.MaxScreenSharing:
+                return UserStatsFields.TimeScreenSharing;
+            case UserStatsFields.MaxCamera:
+                return UserStatsFields.TimeCamera;
+            case UserStatsFields.MaxDailyStreak:
+                return UserStatsFields.DailyStreak;
+            default:
+                return null;
+        }
+    }
+
     static getStatKey(key: string): StatKey {
         return key as StatKey;
     }
@@ -93,6 +127,12 @@ export class UserStatsModel {
             time_deafened: DatabaseUtils.unwrapGeneratedNumber(stats.time_deafened),
             time_muted: DatabaseUtils.unwrapGeneratedNumber(stats.time_muted),
             time_screen_sharing: DatabaseUtils.unwrapGeneratedNumber(stats.time_screen_sharing),
+            max_camera: DatabaseUtils.unwrapGeneratedNumber(stats.max_camera),
+            max_connected: DatabaseUtils.unwrapGeneratedNumber(stats.max_connected),
+            max_daily_streak: DatabaseUtils.unwrapGeneratedNumber(stats.max_daily_streak),
+            max_deafened: DatabaseUtils.unwrapGeneratedNumber(stats.max_deafened),
+            max_muted: DatabaseUtils.unwrapGeneratedNumber(stats.max_muted),
+            max_screen_sharing: DatabaseUtils.unwrapGeneratedNumber(stats.max_screen_sharing),
             total_joins: DatabaseUtils.unwrapGeneratedNumber(stats.total_joins),
             user_id: stats.user_id ?? null,
         })
