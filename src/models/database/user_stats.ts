@@ -10,6 +10,12 @@ export enum UserStatsFields {
     TimeDeafened = 'time_deafened',
     TimeMuted = 'time_muted',
     TimeScreenSharing = 'time_screen_sharing',
+    MaxCamera = 'max_camera',
+    MaxConnected = 'max_connected',
+    MaxDailyStreak = 'max_daily_streak',
+    MaxDeafened = 'max_deafened',
+    MaxMuted = 'max_muted',
+    MaxScreenSharing = 'max_screen_sharing',
     TotalJoins = 'total_joins',
     UserId = 'user_id',
 }
@@ -38,6 +44,12 @@ export class UserStatsModel {
     daily_streak: number;
     guild_id: string | null;
     last_activity: number;
+    max_camera: number;
+    max_connected: number;
+    max_daily_streak: number;
+    max_deafened: number;
+    max_muted: number;
+    max_screen_sharing: number;
     time_camera: number;
     time_connected: number;
     time_deafened: number;
@@ -52,6 +64,12 @@ export class UserStatsModel {
         this.daily_streak = data.daily_streak ?? 0;
         this.guild_id = data.guild_id ?? null;
         this.last_activity = data.last_activity ?? 0;
+        this.max_camera = data.max_camera ?? 0;
+        this.max_connected = data.max_connected ?? 0;
+        this.max_daily_streak = data.daily_streak ?? 0;
+        this.max_deafened = data.max_deafened ?? 0;
+        this.max_muted = data.max_muted ?? 0;
+        this.max_screen_sharing = data.max_screen_sharing ?? 0;
         this.time_camera = data.time_camera ?? 0;
         this.time_connected = data.time_connected ?? 0;
         this.time_deafened = data.time_deafened ?? 0;
