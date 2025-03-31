@@ -39,12 +39,6 @@ export interface UserStats {
   daily_streak: Generated<number | null>;
   guild_id: string | null;
   last_activity: Generated<number | null>;
-  max_camera: Generated<number | null>;
-  max_connected: Generated<number | null>;
-  max_daily_streak: Generated<number | null>;
-  max_deafened: Generated<number | null>;
-  max_muted: Generated<number | null>;
-  max_screen_sharing: Generated<number | null>;
   time_camera: Generated<number | null>;
   time_connected: Generated<number | null>;
   time_deafened: Generated<number | null>;

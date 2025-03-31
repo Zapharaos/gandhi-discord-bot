@@ -92,37 +92,6 @@ export class UserStatsController {
         }
     }
 
-    static async updateUserMaxStats(guildID: string, userID: string, stat: string, value: number): Promise<void> {
-        try {
-            await db
-                .insertInto('user_stats')
-                .values({ guild_id: guildID, user_id: userID, [stat]: value })
-                .onConflict((oc) => oc
-                    .columns(['guild_id', 'user_id'])
-                    .doUpdateSet({
-                        [stat]: value,
-                    })
-                    .where((eb) => eb(db.dynamic.ref(stat), '<', value))
-                )
-                .execute();
-
-            Logger.debug(Logs.debug.queryStatsUserUpdateStat
-                .replaceAll('{GUILD_ID}', guildID)
-                .replaceAll('{USER_ID}', userID)
-                .replaceAll('{STAT_KEY}', stat)
-                .replaceAll('{STAT_VALUE}', value.toString())
-            );
-        } catch (err) {
-            await Logger.error(
-                Logs.error.queryStatsUserUpdateStat
-                    .replaceAll('{GUILD_ID}', guildID)
-                    .replaceAll('{USER_ID}', userID)
-                    .replaceAll('{STAT_KEY}', stat)
-                    .replaceAll('{STAT_VALUE}', value.toString())
-                , err);
-        }
-    }
-
     static async updateLastActivityAndStreak(guildID: string, userID: string, timestamp: number): Promise<void> {
         try {
 
@@ -155,11 +124,6 @@ export class UserStatsController {
                 }
             }
 
-            let maxStreak = row?.max_daily_streak ?? 0;
-            if (newStreak > maxStreak) {
-                maxStreak = newStreak;
-            }
-
             await db
                 .insertInto('user_stats')
                 .values({ guild_id: guildID, user_id: userID, daily_streak: newStreak, last_activity: timestamp })
@@ -167,8 +131,7 @@ export class UserStatsController {
                     .columns(['guild_id', 'user_id'])
                     .doUpdateSet({
                         daily_streak: newStreak,
-                        max_daily_streak: maxStreak,
-                        last_activity: timestamp,
+                        last_activity: timestamp
                     })
                 )
                 .execute();
