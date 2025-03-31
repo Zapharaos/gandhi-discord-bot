@@ -1,20 +1,39 @@
 import {Command, CommandDeferType} from "@commands/commands";
-import {ChatInputCommandInteraction, Guild, PermissionsString} from "discord.js";
+import {
+    ChatInputCommandInteraction,
+    EmbedBuilder, EmbedField,
+    Guild,
+    PermissionsString,
+} from "discord.js";
 import {InteractionUtils} from "@utils/interaction";
 import {UserStatsController} from "@controllers/user-stats";
 import {Logger} from "@services/logger";
 import {StartTimestampsController} from "@controllers/start-timestamps";
-import {UserStatsModel, StatKey as UserStatsKey, UserStatsFields, StatTimeRelated} from "@models/database/user_stats";
-import {TimeUtils} from "@utils/time";
+import {
+    UserStatsModel,
+    StatKey as UserStatsKey,
+    UserStatsFields,
+    StatTimeRelated,
+    StatMaxRelated
+} from "@models/database/user_stats";
 import {StartTimestampsModel, StatKey} from "@models/database/start_timestamps";
-import {NumberUtils} from "@utils/number";
 
-type RankUser = UserStatsModel & { guildNickname?: string };
+class RankUser extends UserStatsModel{
+    guildNickname: string
+    isLive: boolean
+
+    constructor(userStats: UserStatsModel, guildNickname: string, isLive: boolean) {
+        super(userStats);
+        this.guildNickname = guildNickname;
+        this.isLive = isLive;
+    }
+};
 
 export class RankCommand implements Command {
     public names = ['rank'];
     public deferType = CommandDeferType.PUBLIC;
     public requireClientPerms: PermissionsString[] = [];
+    private readonly pageSize = 10;
 
     public async execute(intr: ChatInputCommandInteraction): Promise<void> {
         const guildId = InteractionUtils.getGuildId(intr);
@@ -55,6 +74,11 @@ export class RankCommand implements Command {
             const liveStat = usersLiveStats.get(row.user_id!);
             liveStat?.combineWithUserStats(row, userStatKey, startStatKey, now);
 
+            // Filter out those with a 0 value
+            if (row[userStatKey] === 0) {
+                continue;
+            }
+
             // Retrieve the user's nickname in the guild
             const guildNickname = await InteractionUtils.fetchGuildMemberNickname(intr.guild as Guild, row.user_id!);
             if (!guildNickname) {
@@ -63,12 +87,12 @@ export class RankCommand implements Command {
             }
 
             // Filter out those without a nickname
-            rankUsers.push({
-                ...row,
-                guildNickname: guildNickname
-            });
+            rankUsers.push(
+                new RankUser(row, guildNickname, liveStat?.isActive() ?? false)
+            );
         }
 
+        // Return early if no user stats were found
         if (!rankUsers.length) {
             Logger.debug(`RankCommand - No user stats found for the stat ${stat}`);
             await InteractionUtils.editReply(intr, `No data found for the stat ${stat}.`);
@@ -78,23 +102,108 @@ export class RankCommand implements Command {
         // Sort the rows by the stat in descending order
         rankUsers.sort((a, b) => b[userStatKey] - a[userStatKey]);
 
-        // Format the rank message for each user
-        const messages: string[] = [];
+        // Format the ranks as embed fields
+        const pages: string[][][] = [];
         rankUsers.forEach((row, index) => {
-            const message = this.formatRow(row, index, stat, userStatKey);
-            messages.push(message);
+            const pageIndex = Math.floor(index / this.pageSize);
+            if (!pages[pageIndex]) {
+                pages[pageIndex] = [];
+            }
+            const page = this.mapStatsToTableRow(row, index, stat, userStatKey);
+            pages[pageIndex].push(page);
         });
 
-        const reply = `**Ranking for ${stat.replace('_', ' ')}:**\n${messages.join('\n')}`;
-        await InteractionUtils.editReply(intr, reply);
+        const ebs = this.buildEmbedBuilders(pages, stat.replace('_', ' '));
+        await InteractionUtils.replyWithPagination(intr, ebs);
     }
 
-    private formatRow(row: RankUser, index: number, stat: string, userStatKey: UserStatsKey): string {
+    private buildFields(columns: string[][]): EmbedField {
+        // TODO : set max length for user name ?
+        let rankLength = 0, userLength = 0, valueLength = 0;
+
+        // Calculate the max length for each column
+        columns.forEach(column => {
+            rankLength = Math.max(rankLength, column[0].length);
+            userLength = Math.max(userLength, column[1].length);
+
+            // If the column has a percentage, calculate the max length for the value
+            if (column.length > 3) {
+                valueLength = Math.max(valueLength, column[2].length);
+            }
+        });
+
+        // Build the rows
+        const rows: string[] = columns.map(column => {
+            const rank = column[0].padEnd(rankLength, ' ');
+            const user = column[1].padEnd(userLength, ' ');
+
+            // If the column does not have a percentage, return the row
+            if (valueLength === 0) {
+                return `${rank}\t${user}\t| ${column[2]}`;
+            }
+
+            const value = column[2].padEnd(valueLength, ' ');
+            return `${rank}\t${user}\t| ${value}\t| ${column[3]}`;
+        });
+
+        // Build the title
+        const titles = ['Rank', 'User', 'Value'];
+        if (valueLength > 0) {
+            titles.push('Percentage');
+        }
+
+        return {
+            name: titles.join(' - '),
+            value: `\`\`\`${rows.join("\n")}\`\`\``, // Wrap in code block
+            inline: false
+        };
+    }
+
+    private buildEmbedBuilders(pages: string[][][], stat: string): EmbedBuilder[] {
+        const ebs: EmbedBuilder[] = [];
+
+        pages.forEach((page, index) => {
+            // const table = this.buildTable(page);
+            const fields = this.buildFields(page);
+            const eb = new EmbedBuilder()
+                .setTitle(`Ranking for ${stat}`)
+                .setFields(fields)
+                .setFooter({
+                    text: `Page ${index + 1}/${pages.length}`
+                })
+                .setTimestamp()
+            ebs.push(eb);
+        });
+
+        return ebs;
+    }
+
+    private mapStatsToTableRow(row: RankUser, index: number, stat: string, userStatKey: UserStatsKey): string[] {
+        // If the stat is last_activity, format the value as a date
+        if (stat === UserStatsFields.LastActivity) {
+            return [
+                `${index + 1}.`,
+                row.guildNickname,
+                row.isLive ?
+                    'Now' :
+                    row.formatStatAsDate(UserStatsFields.LastActivity) ?? 'Never'
+            ];
+        }
+
         // If the stat is a time-based stat, format the value as a duration
         if (stat !== UserStatsFields.TimeConnected && StatTimeRelated.includes(stat as UserStatsFields)) {
-            const value = TimeUtils.formatDuration(row[userStatKey]);
-            const percentage = NumberUtils.getPercentageString(row[userStatKey], row.time_connected);
-            return `\`${index + 1}. ${row.guildNickname}\` ${value} **(${percentage})**`;
+            const columns = [
+                `${index + 1}.`,
+                row.guildNickname,
+                row.formatStatAsDuration(userStatKey) ?? ''
+            ];
+
+            // Add the percentage if it exists
+            if (row.time_connected !== 0) {
+                columns.push(row.formatStatAsPercentage(userStatKey) ?? '');
+            }
+
+            return columns;
         }
 
         // Otherwise, just retrieve the value
@@ -102,9 +211,18 @@ export class RankCommand implements Command {
 
         // If the stat is time_connected, format the value as a duration
         if (stat === UserStatsFields.TimeConnected) {
-            value = TimeUtils.formatDuration(row[stat]);
+            value = row.formatStatAsDuration(userStatKey) ?? '';
         }
 
-        return `\`${index + 1}. ${row.guildNickname}\` ${value}`;
+        // If the stat is a max-related stat, format the value as a duration
+        if (stat !== UserStatsFields.MaxDailyStreak && StatMaxRelated.includes(stat as UserStatsFields)) {
+            value = row.formatStatAsDuration(userStatKey) ?? '';
+        }
+
+        return [
+            `${index + 1}.`,
+            row.guildNickname,
+            value.toString()
+        ];
     }
 }

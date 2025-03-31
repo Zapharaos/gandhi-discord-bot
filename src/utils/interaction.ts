@@ -17,7 +17,12 @@ import {
     Guild,
     MessageFlags,
     CommandInteractionOption,
-    CacheType, InteractionCallbackResponse,
+    CacheType,
+    InteractionCallbackResponse,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    ButtonInteraction,
 } from 'discord.js';
 
 const IGNORED_ERRORS = [
@@ -229,5 +234,45 @@ export class InteractionUtils {
             console.error(`Failed to fetch member with id ${id}:`, error);
             return null;
         }
+    }
+
+    public static async replyWithPagination(intr: ChatInputCommandInteraction, ebs: EmbedBuilder[]): Promise<void> {
+        let currentPage = 0;
+
+        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder().setCustomId('prev').setLabel('◀').setStyle(ButtonStyle.Primary).setDisabled(true),
+            new ButtonBuilder().setCustomId('next').setLabel('▶').setStyle(ButtonStyle.Primary)
+        );
+        const components = ebs.length > 1 ? [row] : undefined;
+
+        const msg = await intr.editReply({
+            embeds: [ebs[currentPage]],
+            components: components
+        });
+
+        const filter = (i: MessageComponentInteraction): i is ButtonInteraction =>
+            i.isButton() && i.user.id === intr.user.id;
+        const collector = msg.createMessageComponentCollector({ filter, time: 60000 });
+
+        collector.on('collect', async (btnInteraction) => {
+            if (btnInteraction.customId === 'next' && currentPage < ebs.length - 1) {
+                currentPage++;
+            } else if (btnInteraction.customId === 'prev' && currentPage > 0) {
+                currentPage--;
+            }
+
+            row.components[0].setDisabled(currentPage === 0);
+            row.components[1].setDisabled(currentPage === ebs.length - 1);
+
+            await btnInteraction.update({
+                embeds: [ebs[currentPage]],
+                components: components
+            });
+        });
+
+        collector.on('end', () => {
+            row.components.forEach(button => button.setDisabled(true));
+            msg.edit({ components: components }).catch(() => {});
+        });
     }
 }

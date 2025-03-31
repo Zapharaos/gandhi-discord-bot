@@ -1,4 +1,13 @@
 export class TimeUtils {
+
+    static MsInSecond = 1000;
+    static SecondsInMinute = 60;
+    static MinutesInHour = 60;
+    static HoursInDay = 24;
+    static DaysInWeek = 7;
+    static WeeksInMonth = 4.345;
+    static MonthsInYear = 12;
+
     /**
      * Rounds a timestamp down to the nearest day.
      * @param ts - The timestamp to round down. If not provided, the current time is used.
@@ -37,7 +46,7 @@ export class TimeUtils {
      * @returns {number} The duration in minutes.
      */
     static msToMinutes(ms: number): number {
-        return Math.round(ms / 1000 / 60);
+        return Math.round(ms / this.MsInSecond / this.SecondsInMinute);
     }
 
     /**
@@ -47,7 +56,7 @@ export class TimeUtils {
      * @returns {number} The duration in days.
      */
     static msToDays(ms: number): number {
-        return Math.round(ms / 1000 / 60 / 60 / 24);
+        return Math.round(ms / this.MsInSecond / this.SecondsInMinute / this.MinutesInHour / this.HoursInDay);
     }
 
     /**
@@ -68,23 +77,67 @@ export class TimeUtils {
      * @returns {string} The formatted duration string.
      */
     static formatDuration(ms: number): string {
-        if (!ms || ms === 0) return `0s`;
-        if (ms < 1000*60) return `${(ms / 1000).toFixed(3)}s`;
+        // If the duration is non-existent => zeros
+        if (!ms || ms === 0) {
+            return `${this.pad(0)}s`;
+        }
 
-        const seconds = Math.floor(ms / 1000);
-        const minutes = Math.floor(seconds / 60);
-        const hours = Math.floor(minutes / 60);
-        const days = Math.floor(hours / 24);
-        const weeks = Math.floor(days / 7);
-        const months = Math.floor(weeks / 4.345);
-        const years = Math.floor(months / 12);
+        // If the duration is less than a minute => seconds.milliseconds
+        if (ms < this.MsInSecond * this.SecondsInMinute) {
+            return `${(ms / this.MsInSecond).toFixed(3)}s`;
+        }
 
-        if (years > 0) return `${years}y:${months % 12}m:${weeks % 4.345}w:${days % 7}d:${hours % 24}h:${minutes % 60}m:${seconds % 60}s`;
-        if (months > 0) return `${months}m:${weeks % 4.345}w:${days % 7}d:${hours % 24}h:${minutes % 60}m:${seconds % 60}s`;
-        if (weeks > 0) return `${weeks}w:${days % 7}d:${hours % 24}h:${minutes % 60}m:${seconds % 60}s`;
-        if (days > 0) return `${days}d:${hours % 24}h:${minutes % 60}m:${seconds % 60}s`;
-        if (hours > 0) return `${hours}h:${minutes % 60}m:${seconds % 60}s`;
-        return `${minutes}m:${seconds % 60}s`;
+        // Calculate the duration in seconds, minutes, hours, days, weeks, months, and years
+        const seconds = Math.floor(ms / this.MsInSecond);
+        const minutes = Math.floor(seconds / this.SecondsInMinute);
+        const hours = Math.floor(minutes / this.MinutesInHour);
+        const days = Math.floor(hours / this.HoursInDay);
+        const weeks = Math.floor(days / this.DaysInWeek);
+        const months = Math.floor(weeks / this.WeeksInMonth);
+        const years = Math.floor(months / this.MonthsInYear);
+
+        let s, mi, h, d, w, mo, y;
+
+        // Format the durations into strings
+        if (seconds > 0) {
+            s = `${this.pad(seconds)}s`;
+        }
+        if (minutes > 0) {
+            s = `${this.pad(seconds % this.SecondsInMinute)}s`;
+            mi = `${this.pad(minutes)}m`;
+        }
+        if (hours > 0) {
+            mi = `${this.pad(minutes % this.MinutesInHour)}m`;
+            h = `${this.pad(hours)}h`;
+        }
+        if (days > 0) {
+            h = `${this.pad(hours % this.HoursInDay)}h`;
+            d = `${this.pad(days)}d`;
+        }
+        if (weeks > 0) {
+            d = `${this.pad(days % this.DaysInWeek)}d`;
+            w = `${this.pad(weeks)}w`;
+        }
+        if (months > 0) {
+            w = `${this.pad(weeks % this.WeeksInMonth)}w`;
+            mo = `${this.pad(months)}m`;
+        }
+        if (years > 0) {
+            mo = `${this.pad(months % this.MonthsInYear)}m`;
+            y = `${this.pad(years)}y`;
+        }
+
+        // Combine the formatted durations into a single string
+        let duration = '';
+        if (y) duration += `${y} `;
+        if (mo) duration += `${mo} `;
+        if (w) duration += `${w} `;
+        if (d) duration += `${d} `;
+        if (h) duration += `${h} `;
+        if (mi) duration += `${mi} `;
+        if (s) duration += `${s}`;
+
+        return duration;
     }
 
     /**
@@ -95,14 +148,23 @@ export class TimeUtils {
      */
     static formatDate(date: Date): string {
         // Get day, month, year, hours, minutes, and seconds
-        const day = String(date.getDate()).padStart(2, '0');  // Ensure 2 digits for the day
-        const month = String(date.getMonth() + 1).padStart(2, '0');  // Months are 0-indexed, so add 1
+        const day = this.pad(date.getDate());  // Ensure 2 digits for the day
+        const month = this.pad(date.getMonth() + 1);  // Months are 0-indexed, so add 1
         const year = date.getFullYear();
-        const hours = String(date.getHours()).padStart(2, '0');  // Ensure 2 digits for hours
-        const minutes = String(date.getMinutes()).padStart(2, '0');  // Ensure 2 digits for minutes
-        const seconds = String(date.getSeconds()).padStart(2, '0');  // Ensure 2 digits for seconds
+        const hours = this.pad(date.getHours());  // Ensure 2 digits for hours
+        const minutes = this.pad(date.getMinutes());  // Ensure 2 digits for minutes
+        const seconds = this.pad(date.getSeconds());  // Ensure 2 digits for seconds
 
         // Combine all into the desired format
         return `${day}/${month}/${year}, ${hours}h${minutes}m${seconds}s`;
     }
+
+    static getDaysDifference(start: number | undefined, end: number | undefined): number {
+        const startDate = TimeUtils.tsRoundDownToDay(start);
+        const endDate = TimeUtils.tsRoundDownToDay(end);
+        return TimeUtils.msToDays(TimeUtils.getDuration(startDate, endDate));
+    }
+
+    private static pad = (num: number) => String(num).padStart(2, '0');
 }
+

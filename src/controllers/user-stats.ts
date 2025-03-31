@@ -5,6 +5,7 @@ import {DB, UserStats} from "../types/db";
 import {ExpressionBuilder} from "kysely";
 import {StatKey} from "@models/database/user_stats";
 import {DatabaseUtils} from "@utils/database";
+import {TimeUtils} from "@utils/time";
 
 export class UserStatsController {
 
@@ -91,6 +92,37 @@ export class UserStatsController {
         }
     }
 
+    static async updateUserMaxStats(guildID: string, userID: string, stat: string, value: number): Promise<void> {
+        try {
+            await db
+                .insertInto('user_stats')
+                .values({ guild_id: guildID, user_id: userID, [stat]: value })
+                .onConflict((oc) => oc
+                    .columns(['guild_id', 'user_id'])
+                    .doUpdateSet({
+                        [stat]: value,
+                    })
+                    .where((eb) => eb(db.dynamic.ref(stat), '<', value))
+                )
+                .execute();
+
+            Logger.debug(Logs.debug.queryStatsUserUpdateStat
+                .replaceAll('{GUILD_ID}', guildID)
+                .replaceAll('{USER_ID}', userID)
+                .replaceAll('{STAT_KEY}', stat)
+                .replaceAll('{STAT_VALUE}', value.toString())
+            );
+        } catch (err) {
+            await Logger.error(
+                Logs.error.queryStatsUserUpdateStat
+                    .replaceAll('{GUILD_ID}', guildID)
+                    .replaceAll('{USER_ID}', userID)
+                    .replaceAll('{STAT_KEY}', stat)
+                    .replaceAll('{STAT_VALUE}', value.toString())
+                , err);
+        }
+    }
+
     static async updateLastActivityAndStreak(guildID: string, userID: string, timestamp: number): Promise<void> {
         try {
 
@@ -110,18 +142,22 @@ export class UserStatsController {
             );
 
             let newStreak = 1;
+            // If the user already has stats
             if (userStats && last_activity !== 0) {
-                const lastActivityDate = new Date(last_activity).setUTCHours(0, 0, 0, 0);
-                const currentDate = new Date(timestamp).setUTCHours(0, 0, 0, 0);
-                const oneDay = 24 * 60 * 60 * 1000;
+                const days = TimeUtils.getDaysDifference(last_activity, timestamp);
 
-                if (currentDate - lastActivityDate === oneDay) {
+                if (days === 1) {
                     newStreak = daily_streak + 1;
-                } else if (currentDate - lastActivityDate > oneDay) {
+                } else if (days > 1) {
                     newStreak = 1;
                 } else {
                     newStreak = daily_streak;
                 }
+            }
+
+            let maxStreak = row?.max_daily_streak ?? 0;
+            if (newStreak > maxStreak) {
+                maxStreak = newStreak;
             }
 
             await db
@@ -131,7 +167,8 @@ export class UserStatsController {
                     .columns(['guild_id', 'user_id'])
                     .doUpdateSet({
                         daily_streak: newStreak,
-                        last_activity: timestamp
+                        max_daily_streak: maxStreak,
+                        last_activity: timestamp,
                     })
                 )
                 .execute();

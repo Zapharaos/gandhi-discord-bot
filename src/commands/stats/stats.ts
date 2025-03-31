@@ -1,12 +1,15 @@
 import {Command, CommandDeferType} from "@commands/commands";
-import {ChatInputCommandInteraction, PermissionsString} from "discord.js";
+import {APIEmbedField, ChatInputCommandInteraction, EmbedBuilder, PermissionsString} from "discord.js";
 import {InteractionUser, InteractionUtils} from "@utils/interaction";
 import {UserStatsController} from "@controllers/user-stats";
 import {StartTimestampsController} from "@controllers/start-timestamps";
 import {TimeUtils} from "@utils/time";
-import {UserStatsModel} from "@models/database/user_stats";
-import {NumberUtils} from "@utils/number";
-import {StartTimestampsModel} from "@models/database/start_timestamps";
+import {
+    StatKey as UserStatsKey,
+    UserStatsFields,
+    UserStatsModel
+} from "@models/database/user_stats";
+import {StartTimestampsModel, StartTsFields, StatKey} from "@models/database/start_timestamps";
 
 export class StatsCommand implements Command {
     public names = ['stats'];
@@ -24,12 +27,10 @@ export class StatsCommand implements Command {
 
         // Get the user stats
         const rowUserStats = await UserStatsController.getUserInGuild(guildId, interactionUser.id);
-
-        // Get the user live stats
         const rowStartTs = await StartTimestampsController.getUserByGuild(guildId, interactionUser.id);
 
         // User has no stats yet
-        if(!rowUserStats && !rowStartTs){
+        if (!rowUserStats && !rowStartTs) {
             await InteractionUtils.send(intr, `${InteractionUtils.getInteractionUserRaw(intr)} has no stats yet!`);
             return;
         }
@@ -39,47 +40,174 @@ export class StatsCommand implements Command {
         const startTimestamps = StartTimestampsModel.fromStartTimestamps(rowStartTs ?? {});
 
         // Combine the live stats with the user stats
-        const stats = startTimestamps?.combineAllWithUserStats(userStats, Date.now()) ?? {} as UserStatsModel;
+        const now = Date.now();
+        const stats = startTimestamps?.combineAllWithUserStats(userStats, now) ?? {} as UserStatsModel;
 
-        // Build the reply
-        const reply = this.formatReply(stats, InteractionUtils.getInteractionUserRaw(intr));
-        await InteractionUtils.editReply(intr, reply);
+        // Update the last activity timestamp
+        if (startTimestamps.isActive()) {
+            stats.isLive = true;
+        }
+
+        // Build the embed builder fields
+        const fields = [
+            this.buildTotalFields(stats),
+            this.buildMaxFields(stats),
+        ]
+        if (stats.isLive) {
+            fields.push(this.buildLiveFields(startTimestamps, now));
+        }
+        const ebs = this.buildEmbedBuilders(fields, interactionUser);
+
+        await InteractionUtils.replyWithPagination(intr, ebs);
     }
 
-    private formatReply(userStats: UserStatsModel, user: unknown): string {
+    private buildTotalFields(stats: UserStatsModel): APIEmbedField[] {
+        return [
+            {
+                name: '**Total Connected**',
+                value: this.formatTimeUserStat(stats, UserStatsFields.TimeConnected)
+            },
+            {
+                name: '**Total Muted**',
+                value: this.formatTimeUserStat(stats, UserStatsFields.TimeMuted)
+            },
+            {
+                name: '**Total Deafened**',
+                value: this.formatTimeUserStat(stats, UserStatsFields.TimeDeafened)
+            },
+            {
+                name: '**Total Screen Sharing**',
+                value: this.formatTimeUserStat(stats, UserStatsFields.TimeScreenSharing)
+            },
+            {
+                name: '**Total Camera**',
+                value: this.formatTimeUserStat(stats, UserStatsFields.TimeCamera)
+            },
+            {
+                name: '**Daily Streak**',
+                value: stats.formatStatAsString(UserStatsFields.DailyStreak)
+            },
+            {
+                name: '**Last Activity**',
+                value: stats.isLive ?
+                    'Now' :
+                    !stats.last_activity ?
+                        'Never' :
+                        stats.formatStatAsDate(UserStatsFields.LastActivity) ?? ''
+            }
+        ];
+    }
 
-        // Time connected
-        const timeConnected = TimeUtils.formatDuration(userStats.time_connected);
+    private buildMaxFields(stats: UserStatsModel): APIEmbedField[] {
+        return [
+            {
+                name: '**Max Connected**',
+                value: this.formatTimeUserStat(stats, UserStatsFields.MaxConnected)
+            },
+            {
+                name: '**Max Muted**',
+                value: this.formatTimeUserStat(stats, UserStatsFields.MaxMuted)
+            },
+            {
+                name: '**Max Deafened**',
+                value: this.formatTimeUserStat(stats, UserStatsFields.MaxDeafened)
+            },
+            {
+                name: '**Max Screen Sharing**',
+                value: this.formatTimeUserStat(stats, UserStatsFields.MaxScreenSharing)
+            },
+            {
+                name: '**Max Camera**',
+                value: this.formatTimeUserStat(stats, UserStatsFields.MaxCamera)
+            },
+            {
+                name: '**Max Daily Streak**',
+                value: stats.formatStatAsString(UserStatsFields.MaxDailyStreak)
+            }
+        ]
+    }
 
-        // Time muted
-        const timeMuted = TimeUtils.formatDuration(userStats.time_muted);
-        const timeMutedPercentage = NumberUtils.getPercentageString(userStats.time_muted, userStats.time_connected);
+    private buildLiveFields(stats: StartTimestampsModel, now: number): APIEmbedField[] {
+        const fields: APIEmbedField[] = [];
 
-        // Time deafened
-        const timeDeafened = TimeUtils.formatDuration(userStats.time_deafened);
-        const timeDeafenedPercentage = NumberUtils.getPercentageString(userStats.time_deafened, userStats.time_connected);
+        const connected = this.formatTimeStartStat(stats, StartTsFields.StartConnected, now);
+        if (connected) {
+            fields.push({
+                name: '**Live Connected**',
+                value: connected
+            });
+        }
 
-        // Time screen sharing
-        const timeScreenSharing = TimeUtils.formatDuration(userStats.time_screen_sharing);
-        const timeScreenSharingPercentage = NumberUtils.getPercentageString(userStats.time_screen_sharing, userStats.time_connected);
+        const muted = this.formatTimeStartStat(stats, StartTsFields.StartMuted, now);
+        if (muted) {
+            fields.push({
+                name: '**Live Muted**',
+                value: muted
+            });
+        }
 
-        // Time camera
-        const timeCamera = TimeUtils.formatDuration(userStats.time_camera);
-        const timeCameraPercentage = NumberUtils.getPercentageString(userStats.time_camera, userStats.time_connected);
+        const deafened = this.formatTimeStartStat(stats, StartTsFields.StartDeafened, now);
+        if (deafened) {
+            fields.push({
+                name: '**Live Deafened**',
+                value: deafened
+            });
+        }
 
-        // Last activity
-        const lastActivity = userStats.last_activity ? TimeUtils.formatDate(new Date(userStats.last_activity)) : 'Never';
+        const screenSharing = this.formatTimeStartStat(stats, StartTsFields.StartScreenSharing, now);
+        if (screenSharing) {
+            fields.push({
+                name: '**Live Screen Sharing**',
+                value: screenSharing
+            });
+        }
 
-        return `
-            **Stats for ${user}**
-            \`Time Connected\` ${timeConnected}
-            \`Time Muted\` ${timeMuted} **(${timeMutedPercentage})**
-            \`Time Deafened\` ${timeDeafened} **(${timeDeafenedPercentage})**
-            \`Time Screen Sharing\` ${timeScreenSharing} **(${timeScreenSharingPercentage})**
-            \`Time Camera\` ${timeCamera} **(${timeCameraPercentage})**
-            \`Last Activity\` ${lastActivity}
-            \`Daily Streak\` ${userStats.daily_streak}
-            \`Total Joins\` ${userStats.total_joins}
-        `.replace(/^\s+/gm, ''); // Remove leading spaces from each line
+        const camera = this.formatTimeStartStat(stats, StartTsFields.StartCamera, now);
+        if (camera) {
+            fields.push({
+                name: '**Live Camera**',
+                value: camera
+            });
+        }
+
+        return fields;
+    }
+
+    private buildEmbedBuilders(items: APIEmbedField[][], user: InteractionUser): EmbedBuilder[] {
+        const ebs: EmbedBuilder[] = [];
+
+        items.forEach(fields => {
+            const eb = new EmbedBuilder()
+                .setTitle(`Statistics for ${user.name}`)
+                .setFields(fields)
+                .setFooter({
+                    text: user.name,
+                    iconURL: user.avatar
+                })
+                .setTimestamp()
+            ebs.push(eb);
+        });
+
+        return ebs;
+    }
+
+    private formatTimeUserStat(stats: UserStatsModel, key : UserStatsKey): string {
+        let value = stats.formatStatAsDuration(key)
+        if (!value) return '';
+        const percentage = stats.formatStatAsPercentage(key);
+        if (percentage) {
+            value += `\n${percentage}`;
+        }
+        return value;
+    }
+
+    private formatTimeStartStat(stats: StartTimestampsModel, key : StatKey, now: number): string | null{
+        const value = stats[key];
+        if (!value) return null;
+
+        const date = TimeUtils.formatDate(new Date(value));
+        const duration = TimeUtils.getDuration(value, now);
+
+        return `${date}\n${TimeUtils.formatDuration(duration)}`;
     }
 }

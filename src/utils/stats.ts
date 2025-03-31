@@ -9,12 +9,12 @@ export class StatsControllersUtils {
     static async updateStat(props: VoiceProps, userStatsField: UserStatsFields, startTsField: StartTsFields, duration: number, now: number): Promise<void> {
         // Update user stats
         await UserStatsController.updateUserStats(props.guildId, props.userId, userStatsField, duration);
-        await UserStatsController.updateLastActivityAndStreak(props.guildId, props.userId, now);
+        await UserStatsController.updateUserMaxStats(props.guildId, props.userId, userStatsField.replace('time_', 'max_'), duration);
 
         // Update user daily stats
         await DailyStatsController.updateUserDailyStats(props.guildId, props.userId, userStatsField, duration, now);
 
-        // Stop camera timestamp for user
+        // Stop live timestamp for user
         await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, startTsField, 0);
     }
 }

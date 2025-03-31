@@ -15,8 +15,6 @@ export class DeafenVoice implements Voice {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async execute(props: VoiceProps, data: EventData): Promise<void> {
 
-        const now = Date.now();
-
         // Check if the user is joining a channel
         if (VoiceStateUtils.isJoiningChannel(props.oldState, props.newState)) {
 
@@ -25,7 +23,7 @@ export class DeafenVoice implements Voice {
                 Logger.debug('User is joining a channel while deafened');
 
                 // Start deaf timestamp for user
-                await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartDeafened, now);
+                await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartDeafened, props.now);
             }
 
             return;
@@ -38,7 +36,7 @@ export class DeafenVoice implements Voice {
             Logger.debug(`Deafen for user: ${props.userName}`);
 
             // Start deaf timestamp for user
-            await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartDeafened, now);
+            await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartDeafened, props.now);
             return
         }
 
@@ -47,14 +45,14 @@ export class DeafenVoice implements Voice {
 
             // Time tracked : calculate duration and update database
             if (props.userStartTs && props.userStartTs.start_deafened !== 0) {
-                const duration = TimeUtils.getDuration(props.userStartTs.start_deafened, now);
+                const duration = TimeUtils.getDuration(props.userStartTs.start_deafened, props.now);
 
                 // Send message to log channel
                 await props.logChannel.send(`🔊 **${props.userName}** undeafened themselves after **${TimeUtils.formatDuration(duration)}**`);
                 Logger.debug(`Deafen stopped for user: ${props.userName} after ${duration} ms`);
 
                 // Update user stats and stop deaf timestamp for user
-                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeDeafened, StartTsFields.StartDeafened, duration, now);
+                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeDeafened, StartTsFields.StartDeafened, duration, props.now);
                 return;
             }
 

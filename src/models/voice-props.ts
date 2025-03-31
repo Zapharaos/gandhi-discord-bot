@@ -9,8 +9,9 @@ export class VoiceProps {
     public readonly userName: string;
     public readonly userStartTs: StartTimestampsModel;
     public readonly logChannel: TextChannel;
+    public readonly now: number;
 
-    constructor(oldState: VoiceState, newState: VoiceState, guildId: string, userId: string, userName: string, userStartTs: StartTimestampsModel, logChannel: TextChannel) {
+    constructor(oldState: VoiceState, newState: VoiceState, guildId: string, userId: string, userName: string, userStartTs: StartTimestampsModel, logChannel: TextChannel, now: number) {
         this.oldState = oldState;
         this.newState = newState;
         this.guildId = guildId;
@@ -18,5 +19,6 @@ export class VoiceProps {
         this.userName = userName;
         this.userStartTs = userStartTs;
         this.logChannel = logChannel;
+        this.now = now;
     }
 }

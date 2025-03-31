@@ -15,8 +15,6 @@ export class MuteVoice implements Voice {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async execute(props: VoiceProps, data: EventData): Promise<void> {
 
-        const now = Date.now();
-
         // Check if the user is joining a channel
         if (VoiceStateUtils.isJoiningChannel(props.oldState, props.newState)) {
 
@@ -28,7 +26,7 @@ export class MuteVoice implements Voice {
                 Logger.debug('User is joining a channel while muted');
 
                 // Start mute timestamp for user
-                await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartMuted, now);
+                await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartMuted, props.now);
             }
 
             return;
@@ -45,11 +43,11 @@ export class MuteVoice implements Voice {
 
             // User start deafen while already being muted -> stop mute
             if (VoiceStateUtils.startDeafen(props.oldState, props.newState) && props.userStartTs && props.userStartTs.start_muted !== 0) {
-                const duration = TimeUtils.getDuration(props.userStartTs.start_muted, now);
+                const duration = TimeUtils.getDuration(props.userStartTs.start_muted, props.now);
                 Logger.debug(`User ${props.userName} was muted before deafen event = stop mute timers after ${duration} ms`);
 
                 // Update user stats and stop mute timestamp for user
-                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeMuted, StartTsFields.StartMuted, duration, now);
+                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeMuted, StartTsFields.StartMuted, duration, props.now);
                 return
             }
 
@@ -58,7 +56,7 @@ export class MuteVoice implements Voice {
                 Logger.debug('User still muted after deafen event = restart mute timers');
 
                 // Start mute timestamp for user
-                await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartMuted, now);
+                await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartMuted, props.now);
                 return
             }
 
@@ -73,7 +71,7 @@ export class MuteVoice implements Voice {
             Logger.debug(`Mute for user: ${props.userName}`);
 
             // Start mute timestamp for user
-            await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartMuted, now);
+            await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartMuted, props.now);
             return
         }
 
@@ -82,14 +80,14 @@ export class MuteVoice implements Voice {
 
             // Time tracked: calculate duration and update database
             if (props.userStartTs && props.userStartTs.start_muted !== 0) {
-                const duration = TimeUtils.getDuration(props.userStartTs.start_muted, now);
+                const duration = TimeUtils.getDuration(props.userStartTs.start_muted, props.now);
 
                 // Send message to log channel
                 await props.logChannel.send(`🎙️ **${props.userName}** unmuted their microphone after **${TimeUtils.formatDuration(duration)}**`);
                 Logger.debug(`Mute stopped for user: ${props.userName} after ${duration} ms`);
 
                 // Update user stats and stop mute timestamp for user
-                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeMuted, StartTsFields.StartMuted, duration, now);
+                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeMuted, StartTsFields.StartMuted, duration, props.now);
                 return;
             }
 
