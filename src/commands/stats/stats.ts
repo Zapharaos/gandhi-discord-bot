@@ -96,7 +96,7 @@ export class StatsCommand implements Command {
         const timeConnected: TimeRelatedStat = {
             label: '**Time Connected**',
             total: userStats.time_connected,
-            highscore: userStats.time_connected
+            highscore: userStats.max_connected
         }
         stats.push(this.formatTimeStat(timeConnected));
 
@@ -105,7 +105,7 @@ export class StatsCommand implements Command {
             label: '**Time Muted**',
             total: userStats.time_muted,
             totalConnected: userStats.time_connected,
-            highscore: userStats.time_muted
+            highscore: userStats.max_muted
         }
         stats.push(this.formatTimeStat(timeMuted));
 
@@ -114,7 +114,7 @@ export class StatsCommand implements Command {
             label: '**Time Deafened**',
             total: userStats.time_deafened,
             totalConnected: userStats.time_connected,
-            highscore: userStats.time_deafened
+            highscore: userStats.max_deafened
         }
         stats.push(this.formatTimeStat(timeDeafened));
 
@@ -123,7 +123,7 @@ export class StatsCommand implements Command {
             label: '**Time Screen Sharing**',
             total: userStats.time_screen_sharing,
             totalConnected: userStats.time_connected,
-            highscore: userStats.time_screen_sharing
+            highscore: userStats.max_screen_sharing
         }
         stats.push(this.formatTimeStat(timeScreenSharing));
 
@@ -132,13 +132,13 @@ export class StatsCommand implements Command {
             label: '**Time Camera**',
             total: userStats.time_camera,
             totalConnected: userStats.time_connected,
-            highscore: userStats.time_camera
+            highscore: userStats.max_camera
         }
         stats.push(this.formatTimeStat(timeCamera));
 
         // Daily streak
         const dailyStreak = userStats.daily_streak;
-        const maxDailyStreak = userStats.daily_streak;
+        const maxDailyStreak = userStats.max_daily_streak;
         stats.push({
             name: '**Daily Streak**',
             value: dailyStreak + (userStats.daily_streak ? `; *Highscore **->** ${maxDailyStreak}*` : '')

@@ -146,25 +146,39 @@ export class StartTimestampsModel {
         if (!this || !this.isActive()) return userStats;
 
         if (this.start_connected && this.start_connected > 0) {
-            userStats.time_connected += TimeUtils.getDuration(this.start_connected, now);
+            const duration = TimeUtils.getDuration(this.start_connected, now);
+            userStats.time_connected += duration;
+            userStats.max_connected = Math.max(userStats.max_connected, duration);
         }
         if (this.start_muted && this.start_muted > 0) {
-            userStats.time_muted += TimeUtils.getDuration(this.start_muted, now);
+            const duration = TimeUtils.getDuration(this.start_muted, now);
+            userStats.time_muted += duration;
+            userStats.max_muted = Math.max(userStats.max_muted, duration);
         }
         if (this.start_deafened && this.start_deafened > 0) {
-            userStats.time_deafened += TimeUtils.getDuration(this.start_deafened, now);
+            const duration = TimeUtils.getDuration(this.start_deafened, now);
+            userStats.time_deafened += duration;
+            userStats.max_deafened = Math.max(userStats.max_deafened, duration);
         }
         if (this.start_screen_sharing && this.start_screen_sharing > 0) {
-            userStats.time_screen_sharing += TimeUtils.getDuration(this.start_screen_sharing, now);
+            const duration = TimeUtils.getDuration(this.start_screen_sharing, now);
+            userStats.time_screen_sharing += duration;
+            userStats.max_screen_sharing = Math.max(userStats.max_screen_sharing, duration);
         }
         if (this.start_camera && this.start_camera > 0) {
-            userStats.time_camera += TimeUtils.getDuration(this.start_camera, now);
+            const duration = TimeUtils.getDuration(this.start_camera, now);
+            userStats.time_camera += duration;
+            userStats.max_camera = Math.max(userStats.max_camera, duration);
         }
 
-        userStats.daily_streak += TimeUtils.getDaysDifference(userStats.last_activity, now);
+        // Process daily streak stats
+        const liveStreak = TimeUtils.getDaysDifference(userStats.last_activity, now)
+        userStats.daily_streak += liveStreak;
+        userStats.max_daily_streak = Math.max(userStats.max_daily_streak, userStats.daily_streak);
+
+        // Overwrite the last activity to now
         userStats.last_activity = now;
 
-        // TODO : max stats
         return userStats;
     }
 }
