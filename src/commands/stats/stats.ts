@@ -1,19 +1,16 @@
 import {Command, CommandDeferType} from "@commands/commands";
-import {ChatInputCommandInteraction, EmbedBuilder, PermissionsString, APIEmbedField} from "discord.js";
+import {APIEmbedField, ChatInputCommandInteraction, EmbedBuilder, PermissionsString} from "discord.js";
 import {InteractionUser, InteractionUtils} from "@utils/interaction";
 import {UserStatsController} from "@controllers/user-stats";
 import {StartTimestampsController} from "@controllers/start-timestamps";
 import {TimeUtils} from "@utils/time";
-import {UserStatsModel} from "@models/database/user_stats";
-import {NumberUtils} from "@utils/number";
-import {StartTimestampsModel} from "@models/database/start_timestamps";
+import {
+    StatKey as UserStatsKey,
+    UserStatsFields,
+    UserStatsModel
+} from "@models/database/user_stats";
+import {StartTimestampsModel, StartTsFields, StatKey} from "@models/database/start_timestamps";
 
-type TimeRelatedStat = {
-    label: string;
-    total: number;
-    totalConnected?: number;
-    highscore: number;
-}
 export class StatsCommand implements Command {
     public names = ['stats'];
     public deferType = CommandDeferType.PUBLIC;
@@ -51,109 +48,166 @@ export class StatsCommand implements Command {
             stats.isLive = true;
         }
 
-        // Reply
-        const eb = new EmbedBuilder()
-            .setTitle(`Statistics for ${interactionUser.name}`)
-            .addFields(this.formatStatsAsAPIEmbedField(stats))
-            .setFooter({
-                text: interactionUser.name,
-                iconURL: interactionUser.avatar
-            })
-            .setTimestamp();
+        // Build the embed builder fields
+        const fields = [
+            this.buildTotalFields(stats),
+            this.buildMaxFields(stats),
+        ]
+        if (stats.isLive) {
+            fields.push(this.buildLiveFields(startTimestamps, now));
+        }
+        const ebs = this.buildEmbedBuilders(fields, interactionUser);
 
-        await InteractionUtils.editReply(intr, eb);
+        await InteractionUtils.replyWithPagination(intr, ebs);
     }
 
-    private formatTimeStat(stat: TimeRelatedStat): APIEmbedField {
-        let item = '';
-
-        // Add the percentage if it exists
-        if (stat.totalConnected && stat.total !== 0) {
-            const value = NumberUtils.getPercentageString(stat.total, stat.totalConnected);
-            item += `${value} **->** `;
-        }
-
-        // Add the value
-        item += TimeUtils.formatDuration(stat.total);
-
-        // Add the highscore if it exists
-        if (stat.highscore && stat.total !== 0) {
-            const value = TimeUtils.formatDuration(stat.highscore);
-            item += `\n*Highscore **->** ${value}*`;
-        }
-
-        return {
-            name: stat.label,
-            value: item,
-        };
+    private buildTotalFields(stats: UserStatsModel): APIEmbedField[] {
+        return [
+            {
+                name: '**Total Connected**',
+                value: this.formatTimeUserStat(stats, UserStatsFields.TimeConnected)
+            },
+            {
+                name: '**Total Muted**',
+                value: this.formatTimeUserStat(stats, UserStatsFields.TimeMuted)
+            },
+            {
+                name: '**Total Deafened**',
+                value: this.formatTimeUserStat(stats, UserStatsFields.TimeDeafened)
+            },
+            {
+                name: '**Total Screen Sharing**',
+                value: this.formatTimeUserStat(stats, UserStatsFields.TimeScreenSharing)
+            },
+            {
+                name: '**Total Camera**',
+                value: this.formatTimeUserStat(stats, UserStatsFields.TimeCamera)
+            },
+            {
+                name: '**Daily Streak**',
+                value: stats.formatStatAsString(UserStatsFields.DailyStreak)
+            },
+            {
+                name: '**Last Activity**',
+                value: stats.isLive ?
+                    'Now' :
+                    !stats.last_activity ?
+                        'Never' :
+                        stats.formatStatAsDate(UserStatsFields.LastActivity) ?? ''
+            }
+        ];
     }
 
-    private formatStatsAsAPIEmbedField(userStats: UserStatsModel): APIEmbedField[] {
+    private buildMaxFields(stats: UserStatsModel): APIEmbedField[] {
+        return [
+            {
+                name: '**Max Connected**',
+                value: this.formatTimeUserStat(stats, UserStatsFields.MaxConnected)
+            },
+            {
+                name: '**Max Muted**',
+                value: this.formatTimeUserStat(stats, UserStatsFields.MaxMuted)
+            },
+            {
+                name: '**Max Deafened**',
+                value: this.formatTimeUserStat(stats, UserStatsFields.MaxDeafened)
+            },
+            {
+                name: '**Max Screen Sharing**',
+                value: this.formatTimeUserStat(stats, UserStatsFields.MaxScreenSharing)
+            },
+            {
+                name: '**Max Camera**',
+                value: this.formatTimeUserStat(stats, UserStatsFields.MaxCamera)
+            },
+            {
+                name: '**Max Daily Streak**',
+                value: stats.formatStatAsString(UserStatsFields.MaxDailyStreak)
+            }
+        ]
+    }
 
-        const stats: APIEmbedField[] = [];
+    private buildLiveFields(stats: StartTimestampsModel, now: number): APIEmbedField[] {
+        const fields: APIEmbedField[] = [];
 
-        // Time connected
-        const timeConnected: TimeRelatedStat = {
-            label: '**Time Connected**',
-            total: userStats.time_connected,
-            highscore: userStats.max_connected
+        const connected = this.formatTimeStartStat(stats, StartTsFields.StartConnected, now);
+        if (connected) {
+            fields.push({
+                name: '**Live Connected**',
+                value: connected
+            });
         }
-        stats.push(this.formatTimeStat(timeConnected));
 
-        // Time muted
-        const timeMuted: TimeRelatedStat = {
-            label: '**Time Muted**',
-            total: userStats.time_muted,
-            totalConnected: userStats.time_connected,
-            highscore: userStats.max_muted
+        const muted = this.formatTimeStartStat(stats, StartTsFields.StartMuted, now);
+        if (muted) {
+            fields.push({
+                name: '**Live Muted**',
+                value: muted
+            });
         }
-        stats.push(this.formatTimeStat(timeMuted));
 
-        // Time deafened
-        const timeDeafened: TimeRelatedStat = {
-            label: '**Time Deafened**',
-            total: userStats.time_deafened,
-            totalConnected: userStats.time_connected,
-            highscore: userStats.max_deafened
+        const deafened = this.formatTimeStartStat(stats, StartTsFields.StartDeafened, now);
+        if (deafened) {
+            fields.push({
+                name: '**Live Deafened**',
+                value: deafened
+            });
         }
-        stats.push(this.formatTimeStat(timeDeafened));
 
-        // Time screen sharing
-        const timeScreenSharing: TimeRelatedStat = {
-            label: '**Time Screen Sharing**',
-            total: userStats.time_screen_sharing,
-            totalConnected: userStats.time_connected,
-            highscore: userStats.max_screen_sharing
+        const screenSharing = this.formatTimeStartStat(stats, StartTsFields.StartScreenSharing, now);
+        if (screenSharing) {
+            fields.push({
+                name: '**Live Screen Sharing**',
+                value: screenSharing
+            });
         }
-        stats.push(this.formatTimeStat(timeScreenSharing));
 
-        // Time camera
-        const timeCamera: TimeRelatedStat = {
-            label: '**Time Camera**',
-            total: userStats.time_camera,
-            totalConnected: userStats.time_connected,
-            highscore: userStats.max_camera
+        const camera = this.formatTimeStartStat(stats, StartTsFields.StartCamera, now);
+        if (camera) {
+            fields.push({
+                name: '**Live Camera**',
+                value: camera
+            });
         }
-        stats.push(this.formatTimeStat(timeCamera));
 
-        // Daily streak
-        const dailyStreak = userStats.daily_streak;
-        const maxDailyStreak = userStats.max_daily_streak;
-        stats.push({
-            name: '**Daily Streak**',
-            value: dailyStreak + (userStats.daily_streak ? `; *Highscore **->** ${maxDailyStreak}*` : '')
+        return fields;
+    }
+
+    private buildEmbedBuilders(items: APIEmbedField[][], user: InteractionUser): EmbedBuilder[] {
+        const ebs: EmbedBuilder[] = [];
+
+        items.forEach(fields => {
+            const eb = new EmbedBuilder()
+                .setTitle(`Statistics for ${user.name}`)
+                .setFields(fields)
+                .setFooter({
+                    text: user.name,
+                    iconURL: user.avatar
+                })
+                .setTimestamp()
+            ebs.push(eb);
         });
 
-        // Last activity
-        stats.push({
-            name: '**Last Activity**',
-            value: userStats.isLive ?
-                'Now' :
-                !userStats.last_activity ?
-                    'Never' :
-                    TimeUtils.formatDate(new Date(userStats.last_activity))
-        });
+        return ebs;
+    }
 
-        return stats;
+    private formatTimeUserStat(stats: UserStatsModel, key : UserStatsKey): string {
+        let value = stats.formatStatAsDuration(key)
+        if (!value) return '';
+        const percentage = stats.formatStatAsPercentage(key);
+        if (percentage) {
+            value += `\n${percentage}`;
+        }
+        return value;
+    }
+
+    private formatTimeStartStat(stats: StartTimestampsModel, key : StatKey, now: number): string | null{
+        const value = stats[key];
+        if (!value) return null;
+
+        const date = TimeUtils.formatDate(new Date(value));
+        const duration = TimeUtils.getDuration(value, now);
+
+        return `${date}\n${TimeUtils.formatDuration(duration)}`;
     }
 }

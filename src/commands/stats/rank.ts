@@ -16,13 +16,17 @@ import {
     StatTimeRelated,
     StatMaxRelated
 } from "@models/database/user_stats";
-import {TimeUtils} from "@utils/time";
 import {StartTimestampsModel, StatKey} from "@models/database/start_timestamps";
-import {NumberUtils} from "@utils/number";
 
-type RankUser = UserStatsModel & {
-    guildNickname: string,
+class RankUser extends UserStatsModel{
+    guildNickname: string
     isLive: boolean
+
+    constructor(userStats: UserStatsModel, guildNickname: string, isLive: boolean) {
+        super(userStats);
+        this.guildNickname = guildNickname;
+        this.isLive = isLive;
+    }
 };
 
 export class RankCommand implements Command {
@@ -83,11 +87,9 @@ export class RankCommand implements Command {
             }
 
             // Filter out those without a nickname
-            rankUsers.push({
-                ...row,
-                guildNickname: guildNickname,
-                isLive: liveStat?.isActive() ?? false
-            });
+            rankUsers.push(
+                new RankUser(row, guildNickname, liveStat?.isActive() ?? false)
+            );
         }
 
         // Return early if no user stats were found
@@ -182,7 +184,9 @@ export class RankCommand implements Command {
             return [
                 `${index + 1}.`,
                 row.guildNickname,
-                row.isLive ? 'Now' : TimeUtils.formatDate(new Date(row.last_activity))
+                row.isLive ?
+                    'Now' :
+                    row.formatStatAsDate(UserStatsFields.LastActivity) ?? 'Never'
             ];
         }
 
@@ -191,12 +195,12 @@ export class RankCommand implements Command {
             const columns = [
                 `${index + 1}.`,
                 row.guildNickname,
-                TimeUtils.formatDuration(row[userStatKey])
+                row.formatStatAsDuration(userStatKey) ?? ''
             ];
 
             // Add the percentage if it exists
             if (row.time_connected !== 0) {
-                columns.push(NumberUtils.getPercentageString(row[userStatKey], row.time_connected));
+                columns.push(row.formatStatAsPercentage(userStatKey) ?? '');
             }
 
             return columns;
@@ -207,12 +211,12 @@ export class RankCommand implements Command {
 
         // If the stat is time_connected, format the value as a duration
         if (stat === UserStatsFields.TimeConnected) {
-            value = TimeUtils.formatDuration(row[userStatKey]);
+            value = row.formatStatAsDuration(userStatKey) ?? '';
         }
 
         // If the stat is a max-related stat, format the value as a duration
         if (stat !== UserStatsFields.MaxDailyStreak && StatMaxRelated.includes(stat as UserStatsFields)) {
-            value = TimeUtils.formatDuration(row[userStatKey]);
+            value = row.formatStatAsDuration(userStatKey) ?? '';
         }
 
         return [

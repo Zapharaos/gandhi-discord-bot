@@ -1,5 +1,7 @@
 import {UserStats} from "../../types/db";
 import {DatabaseUtils} from "@utils/database";
+import {NumberUtils} from "@utils/number";
+import {TimeUtils} from "@utils/time";
 
 export enum UserStatsFields {
     DailyStreak = 'daily_streak',
@@ -117,5 +119,56 @@ export class UserStatsModel {
             total_joins: DatabaseUtils.unwrapGeneratedNumber(stats.total_joins),
             user_id: stats.user_id ?? null,
         })
+    }
+
+    formatStatAsDuration(key: StatKey): string | null{
+        switch (key) {
+            case UserStatsFields.TimeMuted:
+            case UserStatsFields.MaxMuted:
+            case UserStatsFields.TimeDeafened:
+            case UserStatsFields.MaxDeafened:
+            case UserStatsFields.TimeScreenSharing:
+            case UserStatsFields.MaxScreenSharing:
+            case UserStatsFields.TimeCamera:
+            case UserStatsFields.MaxCamera:
+            case UserStatsFields.TimeConnected:
+            case UserStatsFields.MaxConnected:
+                return TimeUtils.formatDuration(this[key]);
+            default:
+                break;
+        }
+        return null;
+    }
+
+    formatStatAsPercentage(key: StatKey): string | null {
+        const value = this[key];
+
+        switch (key) {
+            case UserStatsFields.TimeMuted:
+            case UserStatsFields.TimeDeafened:
+            case UserStatsFields.TimeScreenSharing:
+            case UserStatsFields.TimeCamera:
+                if (value === 0) {
+                    return null;
+                }
+                return NumberUtils.getPercentageString(value, this.time_connected);
+            default:
+                break;
+        }
+        return null
+    }
+
+    formatStatAsDate(key: StatKey): string | null {
+        switch (key) {
+            case UserStatsFields.LastActivity:
+                return TimeUtils.formatDate(new Date(this.last_activity));
+            default:
+                break;
+        }
+        return null;
+    }
+
+    formatStatAsString(key: StatKey): string {
+        return this[key].toString();
     }
 }
