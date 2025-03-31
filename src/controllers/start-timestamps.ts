@@ -100,4 +100,38 @@ export class StartTimestampsController {
                 , err);
         }
     }
+
+    static async clearTable(): Promise<void> {
+        try {
+            await db
+                .deleteFrom('start_timestamps')
+                .execute();
+
+            Logger.debug(Logs.debug.queryStartTsClear);
+        } catch (err) {
+            await Logger.error(Logs.error.queryStartTsClear, err);
+        }
+    }
+
+    static async deleteUserStartTimestamps(guildID: string, userID: string): Promise<void> {
+        try {
+            await db
+                .deleteFrom('start_timestamps')
+                .where('guild_id', '=', guildID)
+                .where('user_id', '=', userID)
+                .execute();
+
+            Logger.debug(
+                Logs.debug.queryStartTsDeleteUser
+                    .replaceAll('{GUILD_ID}', guildID)
+                    .replaceAll('{USER_ID}', userID)
+            );
+        } catch (err) {
+            await Logger.error(
+                Logs.error.queryStartTsDeleteUser
+                    .replaceAll('{GUILD_ID}', guildID)
+                    .replaceAll('{USER_ID}', userID)
+                , err);
+        }
+    }
 }

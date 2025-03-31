@@ -122,4 +122,25 @@ export class DailyStatsController {
 
         }
     }
+
+    static async deleteUserDailyStats(guildID: string, userID: string): Promise<void> {
+        try {
+            await db
+                .deleteFrom('daily_stats')
+                .where('guild_id', '=', guildID)
+                .where('user_id', '=', userID)
+                .execute();
+
+            Logger.debug(Logs.debug.queryDailyStatsDeleteUser
+                .replaceAll('{GUILD_ID}', guildID)
+                .replaceAll('{USER_ID}', userID)
+            );
+        } catch (err) {
+            await Logger.error(
+                Logs.error.queryDailyStatsDeleteUser
+                    .replaceAll('{GUILD_ID}', guildID)
+                    .replaceAll('{USER_ID}', userID)
+                , err);
+        }
+    }
 }
