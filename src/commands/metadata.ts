@@ -156,5 +156,23 @@ export const CommandMetadata: {
                 ],
             }
         ],
-    }
+    },
+    LIST_INACTIVES: {
+        type: ApplicationCommandType.ChatInput,
+        name: 'list-inactives',
+        description: 'Lists inactive users in the server',
+        dm_permission: false,
+        default_member_permissions: PermissionsBitField.resolve([
+            PermissionFlagsBits.Administrator,
+            PermissionFlagsBits.ManageChannels,
+        ]).toString(),
+        options: [
+            {
+                type: 4,
+                name: 'days',
+                description: 'Number of days since last activity to be considered inactive (default: 100)',
+                required: false,
+            },
+        ],
+    },
 };

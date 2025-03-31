@@ -275,4 +275,14 @@ export class InteractionUtils {
             msg.edit({ components: components }).catch(() => {});
         });
     }
+
+    public static async fetchAllGuildMembers(guild: Guild): Promise<GuildMember[]> {
+        const members: GuildMember[] = [];
+        await guild.members.fetch()
+            .then(m => {
+                members.push(...m.values());
+            })
+            .catch(console.error);
+        return members;
+    }
 }
