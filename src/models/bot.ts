@@ -2,8 +2,8 @@ import {
     AutocompleteInteraction,
     Client,
     CommandInteraction,
-    Events,
-    Interaction, VoiceState,
+    Events, GuildMember,
+    Interaction, PartialGuildMember, VoiceState,
 } from 'discord.js';
 
 import {
@@ -14,6 +14,8 @@ import {Logger} from "@services/logger";
 import Logs from '../../lang/logs.json';
 import {VoiceHandler} from "@events/voice-handler";
 import {StartTimestampsController} from "@controllers/start-timestamps";
+import {DailyStatsController} from "@controllers/daily-stats";
+import {UserStatsController} from "@controllers/user-stats";
 
 export class Bot {
     private ready = false;
@@ -40,13 +42,14 @@ export class Bot {
         this.client.on(Events.ClientReady, () => this.onReady());
         this.client.on(Events.InteractionCreate, (intr: Interaction) => this.onInteraction(intr));
         this.client.on(Events.VoiceStateUpdate, (oldState: VoiceState, newState: VoiceState) => this.onVoiceState(oldState, newState));
+        this.client.on(Events.GuildMemberRemove, (member: GuildMember | PartialGuildMember) => this.onGuildMemberRemove(member));
     }
 
     private async login(token: string): Promise<void> {
         try {
             await this.client.login(token);
         } catch (error) {
-            Logger.error(Logs.error.clientLogin, error);
+            await Logger.error(Logs.error.clientLogin, error);
             return;
         }
     }
@@ -66,7 +69,7 @@ export class Bot {
             try {
                 await this.commandHandler.process(intr);
             } catch (error) {
-                Logger.error(Logs.error.command, error);
+                await Logger.error(Logs.error.command, error);
             }
         }
     }
@@ -77,7 +80,34 @@ export class Bot {
         try {
             await this.voiceHandler.process(oldState, newState);
         } catch (error) {
-            Logger.error(Logs.error.voice, error);
+            await Logger.error(Logs.error.voice, error);
+        }
+    }
+
+    private async onGuildMemberRemove(member: GuildMember | PartialGuildMember): Promise<void> {
+        if (!this.ready) return;
+
+        const guildID = member.guild.id;
+        const userID = member.user.id;
+
+        try {
+            // Delete user stats when a user leaves a guild
+            await UserStatsController.deleteUserStats(guildID, userID);
+            await StartTimestampsController.deleteUserStartTimestamps(guildID, userID);
+            await DailyStatsController.deleteUserDailyStats(guildID, userID);
+
+            Logger.info(
+                Logs.info.memberDeleteFromGuild
+                    .replaceAll('{GUILD_ID}', guildID)
+                    .replaceAll('{USER_ID}', userID)
+            );
+        } catch (error) {
+            await Logger.error(
+                Logs.error.memberDeleteFromGuild
+                    .replaceAll('{GUILD_ID}', guildID)
+                    .replaceAll('{USER_ID}', userID)
+
+            , error);
         }
     }
 }

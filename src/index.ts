@@ -55,7 +55,8 @@ async function start(): Promise<void> {
     const client = new Client({
         intents: [
             GatewayIntentBits.Guilds,
-            GatewayIntentBits.GuildVoiceStates
+            GatewayIntentBits.GuildVoiceStates,
+            GatewayIntentBits.GuildMembers,
         ]
     });
 

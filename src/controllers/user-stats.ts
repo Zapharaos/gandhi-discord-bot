@@ -211,4 +211,25 @@ export class UserStatsController {
                 , err);
         }
     }
+
+    static async deleteUserStats(guildID: string, userID: string): Promise<void> {
+        try {
+            await db
+                .deleteFrom('user_stats')
+                .where('guild_id', '=', guildID)
+                .where('user_id', '=', userID)
+                .execute();
+
+            Logger.debug(Logs.debug.queryStatsUserDelete
+                .replaceAll('{GUILD_ID}', guildID)
+                .replaceAll('{USER_ID}', userID)
+            );
+        } catch (err) {
+            await Logger.error(
+                Logs.error.queryStatsUserDelete
+                    .replaceAll('{GUILD_ID}', guildID)
+                    .replaceAll('{USER_ID}', userID)
+                , err);
+        }
+    }
 }
