@@ -1,5 +1,5 @@
 import {Command, CommandDeferType} from "@commands/commands";
-import {ChatInputCommandInteraction, GuildMember, PermissionsString} from "discord.js";
+import {ChatInputCommandInteraction, EmbedBuilder, EmbedField, GuildMember, PermissionsString} from "discord.js";
 import {InteractionUtils} from "@utils/interaction";
 import {Logger} from "@services/logger";
 import Logs from "../../../lang/logs.json";
@@ -18,6 +18,7 @@ export class ListInactivesCommand implements Command {
     public names = ['list-inactives'];
     public deferType = CommandDeferType.PUBLIC;
     public requireClientPerms: PermissionsString[] = ["Administrator", "ManageChannels"];
+    private readonly pageSize = 10;
 
     public async execute(intr: ChatInputCommandInteraction): Promise<void> {
         const guildId = InteractionUtils.getGuildId(intr);
@@ -41,13 +42,25 @@ export class ListInactivesCommand implements Command {
         this.processGuildUsers(guildUsers, inactivesMap, safeUsers);
 
         // Sort the inactives by last activity : the oldest first
-        const sortedInactives = Array.from(inactivesMap.values()).sort((a, b) => a.lastActivity - b.lastActivity);
+        const sortedInactives = Array.from(inactivesMap.values()).sort((a, b) => b.lastActivity - a.lastActivity);
 
-        // TODO : Format the inactives as embed fields
-        console.log(sortedInactives);
-        console.log(safeUsers);
+        // Format the ranks as embed fields
+        const pages: string[][][] = [];
+        sortedInactives.forEach((row, index) => {
+            const pageIndex = Math.floor(index / this.pageSize);
+            if (!pages[pageIndex]) {
+                pages[pageIndex] = [];
+            }
+            const page = [
+                `${index + 1}.`,
+                row.guildNickname,
+                row.lastActivityString
+            ];
+            pages[pageIndex].push(page);
+        });
 
-        await InteractionUtils.editReply(intr, 'List of inactive users');
+        const ebs = this.buildEmbedBuilders(pages);
+        await InteractionUtils.replyWithPagination(intr, ebs);
     }
 
     private processUserStats(usersStats: UserStatsModel[], now: number, days: number) {
@@ -102,5 +115,52 @@ export class ListInactivesCommand implements Command {
                 });
             }
         });
+    }
+
+    private buildFields(columns: string[][]): EmbedField {
+        // TODO : move as utils function
+        // TODO : set max length for user name ?
+        let rankLength = 0, userLength = 0
+
+        // Calculate the max length for each column
+        columns.forEach(column => {
+            rankLength = Math.max(rankLength, column[0].length);
+            userLength = Math.max(userLength, column[1].length);
+        });
+
+        // Build the rows
+        const rows: string[] = columns.map(column => {
+            const rank = column[0].padEnd(rankLength, ' ');
+            const user = column[1].padEnd(userLength, ' ');
+
+            return `${rank}\t${user}\t| ${column[2]}`;
+        });
+
+        // Build the title
+        const titles = ['Rank', 'User', 'Last Activity'];
+
+        return {
+            name: titles.join(' - '),
+            value: `\`\`\`${rows.join("\n")}\`\`\``, // Wrap in code block
+            inline: false
+        };
+    }
+
+    private buildEmbedBuilders(pages: string[][][]): EmbedBuilder[] {
+        const ebs: EmbedBuilder[] = [];
+
+        pages.forEach((page, index) => {
+            const fields = this.buildFields(page);
+            const eb = new EmbedBuilder()
+                .setTitle(`Inactive Users`)
+                .setFields(fields)
+                .setFooter({
+                    text: `Page ${index + 1}/${pages.length}`
+                })
+                .setTimestamp()
+            ebs.push(eb);
+        });
+
+        return ebs;
     }
 }

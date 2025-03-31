@@ -163,7 +163,6 @@ export class RankCommand implements Command {
         const ebs: EmbedBuilder[] = [];
 
         pages.forEach((page, index) => {
-            // const table = this.buildTable(page);
             const fields = this.buildFields(page);
             const eb = new EmbedBuilder()
                 .setTitle(`Ranking for ${stat}`)
