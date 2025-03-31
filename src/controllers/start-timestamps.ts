@@ -100,4 +100,16 @@ export class StartTimestampsController {
                 , err);
         }
     }
+
+    static async clearTable(): Promise<void> {
+        try {
+            await db
+                .deleteFrom('start_timestamps')
+                .execute();
+
+            Logger.debug(Logs.debug.queryStartTsClear);
+        } catch (err) {
+            await Logger.error(Logs.error.queryStartTsClear, err);
+        }
+    }
 }

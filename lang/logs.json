@@ -81,6 +81,7 @@
     "queryStartTsUserInGuild": "An error occurred while querying user {USER_ID} start timestamp in guild {GUILD_ID}.",
     "queryStartTsUserInGuildByStat": "An error occurred while querying users start timestamp in guild {GUILD_ID}.",
     "queryStartTsSetTimestamp": "An error occurred while setting timestamp {TIMESTAMP} for stat {STAT} and user {USER_ID} in guild {GUILD_ID}.",
+    "queryStartTsClear": "An error occurred while clearing start timestamps table.",
     "queryDailyStatsTotalUsersInGuildByStat": "An error occurred while querying total users daily stats in guild {GUILD_ID} by stat {STAT_KEY}.",
     "queryDailyStatsUserInGuildByStat": "An error occurred while querying user {USER_ID} daily stats in guild {GUILD_ID} by stat {STAT_KEY}.",
     "queryDailyStatsUpdateUser": "An error occurred while updating user {USER_ID} daily stats in guild {GUILD_ID} by stat {STAT_KEY}."
@@ -98,6 +99,7 @@
     "queryStartTsUserInGuild": "Successfully queried user {USER_ID} start timestamp in guild {GUILD_ID}.",
     "queryStartTsUserInGuildByStat": "Successfully queried users start timestamp in guild {GUILD_ID}.",
     "queryStartTsSetTimestamp": "Successfully set timestamp {TIMESTAMP} for stat {STAT} and user {USER_ID} in guild {GUILD_ID}.",
+    "queryStartTsClear": "Successfully cleared start timestamps table.",
     "queryDailyStatsTotalUsersInGuildByStat": "Successfully queried total users daily stats in guild {GUILD_ID} by stat {STAT_KEY}.",
     "queryDailyStatsUserInGuildByStat": "Successfully queried user {USER_ID} daily stats in guild {GUILD_ID} by stat {STAT_KEY}."
   }

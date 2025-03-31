@@ -13,6 +13,7 @@ import {Logger} from "@services/logger";
 
 import Logs from '../../lang/logs.json';
 import {VoiceHandler} from "@events/voice-handler";
+import {StartTimestampsController} from "@controllers/start-timestamps";
 
 export class Bot {
     private ready = false;
@@ -28,6 +29,11 @@ export class Bot {
     public async start(): Promise<void> {
         this.registerListeners();
         await this.login(this.token);
+
+        // Clear the start_timestamps table on startup
+        if (process.env.NODE_ENV !== 'development') {
+            await StartTimestampsController.clearTable();
+        }
     }
 
     private registerListeners(): void {
