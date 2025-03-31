@@ -94,25 +94,6 @@ export class UserStatsModel {
         this.user_id = data.user_id ?? null;
     }
 
-    static getColNameFromMaxStat(name: string): string | null {
-        switch (name) {
-            case UserStatsFields.MaxConnected:
-                return UserStatsFields.TimeConnected;
-            case UserStatsFields.MaxMuted:
-                return UserStatsFields.TimeMuted;
-            case UserStatsFields.MaxDeafened:
-                return UserStatsFields.TimeDeafened;
-            case UserStatsFields.MaxScreenSharing:
-                return UserStatsFields.TimeScreenSharing;
-            case UserStatsFields.MaxCamera:
-                return UserStatsFields.TimeCamera;
-            case UserStatsFields.MaxDailyStreak:
-                return UserStatsFields.DailyStreak;
-            default:
-                return null;
-        }
-    }
-
     static getStatKey(key: string): StatKey {
         return key as StatKey;
     }

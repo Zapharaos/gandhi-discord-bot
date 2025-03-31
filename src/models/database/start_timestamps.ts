@@ -2,7 +2,7 @@ import {
     UserStatsModel,
     StatKey as UserStatsStatKey,
     UserStatsFields,
-    StatMaxRelated,
+    StatMaxRelated, StatTimeRelated,
 } from "@models/database/user_stats";
 import {TimeUtils} from "@utils/time";
 import {StartTimestamps} from "../../types/db";
@@ -98,28 +98,27 @@ export class StartTimestampsModel {
 
         // If the stat is a max stat, process it differently
         if (StatMaxRelated.includes(userStatKey)) {
-            // Retrieve the time stat key
-            const userStatTime: string | null = UserStatsModel.getColNameFromMaxStat(userStatKey);
-            const userStatKeyTime = userStatTime ? UserStatsModel.getStatKey(userStatTime) : null;
-            if (!userStatKeyTime) return;
 
-            // Calculate stat total duration = saved + live
-            const duration = TimeUtils.getDuration(start, now);
-            const totalDuration = userStats[userStatKeyTime] + duration;
-
-            // Update the max stat if the total duration is greater
-            if (totalDuration > userStats[userStatKey]) {
-                userStats[userStatKey] = totalDuration;
+            // If the stat is a max daily streak
+            if (userStatKey === UserStatsFields.MaxDailyStreak) {
+                // Calculate the difference in days between the last activity and now (could be 0)
+                const liveStreak = TimeUtils.getDaysDifference(userStats.last_activity, now);
+                userStats.daily_streak += liveStreak;
+                // Update the max daily streak if the daily_streak is greater
+                userStats.max_daily_streak = Math.max(userStats.max_daily_streak, userStats.daily_streak);
             }
-
-            // TODO : max daily streak live
+            else if (start !== 0) {
+                // Calculate stat live duration
+                const duration = TimeUtils.getDuration(start, now);
+                // Update the max stat if the live duration is greater
+                userStats[userStatKey] = Math.max(userStats[userStatKey], duration);
+            }
 
             return;
         }
 
-        // Default processing
-        if (start && start !== 0) {
-            // TODO : only do if time related?
+        // Default processing as time related stat
+        if (StatTimeRelated.includes(userStatKey) && start !== 0) {
             // Calculate live duration
             const duration = TimeUtils.getDuration(start, now);
             userStats[userStatKey] += duration;
