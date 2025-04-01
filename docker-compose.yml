@@ -5,6 +5,7 @@ services:
       - "${PORT}:${PORT}"
     volumes:
       - sqlite_data:/app/data
+      - ./var:/app/var
     restart: unless-stopped
 
 volumes:

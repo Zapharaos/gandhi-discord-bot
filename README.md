@@ -24,6 +24,7 @@ It provides the following statistics:
 - time spent with camera on
 - a yearly calendar heatmap for each time statistic mentioned above (per user or per guild)
 - daily streaks (how many days in a row the user has been active)
+- maximum stats (the longest/highest value for each statistic)
 - total joins (how many times the user has joined a voice channel)
 
 ## Download
@@ -42,6 +43,7 @@ The following commands are available:
 - `/stats [user]` - Returns the stats for a specific user (default: yourself).
 - `/rank [stat]` - Returns the server ranking for a specific stat (default: time connected).
 - `/heatmap [target] [target-all] [stat] [format]` - Returns the yearly calendar heatmap (default: yourself, time connected, png).
+- `/list-inactive [days]` - Returns the list of inactive users (default: 100 days).
 
 ## Development
 
@@ -51,7 +53,8 @@ This project uses Node and optionally Docker.
 
 To run the bot with Docker (recommended), use the following command:
 ```bash
-docker compose up -d
+docker compose build --progress=plain
+docker compose up
 ```
 
 To run the bot without Docker, use the following command:
@@ -61,6 +64,29 @@ npm run generate # To generate the database models for TypeScript
 npm run build # To build the project
 npm run start # To build and run the project
 ```
+
+## Database Backups
+
+If you want, you can setup a cron job to run the backup script periodically.
+```bash
+chmod +x scripts/docker-db-backup.sh # Make the script executable
+realpath scripts/docker-db-backup.sh # Get the full path to the script
+```
+
+Use the output of the last command to setup a cron job. For example, to run the script every week at 5 AM:
+```bash
+crontab -e # This will open the crontab file in your default editor
+0 5 * * 1 /realpath/to/docker-db-backup.sh # Add this line to the file and save it
+```
+
+If you want to watch the logs of the cron job, you can update the previous commands:
+```bash
+crontab -e # This will open the crontab file in your default editor
+0 5 * * 1 /realpath/to/docker-db-backup.sh 2>&1 | logger -t gandhi-bot-docker-db-backup # Add this line to the file and save it
+grep 'gandhi-bot-docker-db-backup' /var/log/syslog # To watch the related logs
+```
+
+Now the database will be backed up every week on Monday at 5 AM. The backups will be stored inside the project's `var/db-backups` directory where you can also find the script's execution logs.
 
 ## License
 
