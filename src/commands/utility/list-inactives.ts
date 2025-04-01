@@ -1,5 +1,5 @@
 import {Command, CommandDeferType} from "@commands/commands";
-import {ChatInputCommandInteraction, EmbedBuilder, EmbedField, GuildMember, PermissionsString} from "discord.js";
+import {ChatInputCommandInteraction, EmbedBuilder, GuildMember, PermissionsString} from "discord.js";
 import {InteractionUtils} from "@utils/interaction";
 import {Logger} from "@services/logger";
 import Logs from "../../../lang/logs.json";

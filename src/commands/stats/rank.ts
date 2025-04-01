@@ -1,7 +1,7 @@
 import {Command, CommandDeferType} from "@commands/commands";
 import {
     ChatInputCommandInteraction,
-    EmbedBuilder, EmbedField,
+    EmbedBuilder,
     Guild,
     PermissionsString,
 } from "discord.js";
