@@ -6,6 +6,7 @@ import Logs from "../../../lang/logs.json";
 import {UserStatsController} from "@controllers/user-stats";
 import {UserStatsFields, UserStatsModel} from "@models/database/user_stats";
 import {TimeUtils} from "@utils/time";
+import {EmbedBuilderUtils} from "@utils/embed-builder";
 
 type InactiveUser = {
     userId: string;
@@ -52,8 +53,7 @@ export class ListInactivesCommand implements Command {
                 pages[pageIndex] = [];
             }
             const page = [
-                `${index + 1}.`,
-                row.guildNickname,
+                `${index + 1}. ${row.guildNickname}`,
                 row.lastActivityString
             ];
             pages[pageIndex].push(page);
@@ -117,40 +117,11 @@ export class ListInactivesCommand implements Command {
         });
     }
 
-    private buildFields(columns: string[][]): EmbedField {
-        // TODO : move as utils function
-        // TODO : set max length for user name ?
-        let rankLength = 0, userLength = 0
-
-        // Calculate the max length for each column
-        columns.forEach(column => {
-            rankLength = Math.max(rankLength, column[0].length);
-            userLength = Math.max(userLength, column[1].length);
-        });
-
-        // Build the rows
-        const rows: string[] = columns.map(column => {
-            const rank = column[0].padEnd(rankLength, ' ');
-            const user = column[1].padEnd(userLength, ' ');
-
-            return `${rank}\t${user}\t| ${column[2]}`;
-        });
-
-        // Build the title
-        const titles = ['Rank', 'User', 'Last Activity'];
-
-        return {
-            name: titles.join(' - '),
-            value: `\`\`\`${rows.join("\n")}\`\`\``, // Wrap in code block
-            inline: false
-        };
-    }
-
     private buildEmbedBuilders(pages: string[][][]): EmbedBuilder[] {
         const ebs: EmbedBuilder[] = [];
 
         pages.forEach((page, index) => {
-            const fields = this.buildFields(page);
+            const fields = EmbedBuilderUtils.buildFields(page, ['Rank', 'User', 'Last Activity']);
             const eb = new EmbedBuilder()
                 .setTitle(`Inactive Users`)
                 .setFields(fields)

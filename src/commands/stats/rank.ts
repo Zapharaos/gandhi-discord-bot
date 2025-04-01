@@ -17,6 +17,7 @@ import {
     StatMaxRelated
 } from "@models/database/user_stats";
 import {StartTimestampsModel, StatKey} from "@models/database/start_timestamps";
+import {EmbedBuilderUtils} from "@utils/embed-builder";
 
 class RankUser extends UserStatsModel{
     guildNickname: string
@@ -117,53 +118,16 @@ export class RankCommand implements Command {
         await InteractionUtils.replyWithPagination(intr, ebs);
     }
 
-    private buildFields(columns: string[][]): EmbedField {
-        // TODO : set max length for user name ?
-        let rankLength = 0, userLength = 0, valueLength = 0;
-
-        // Calculate the max length for each column
-        columns.forEach(column => {
-            rankLength = Math.max(rankLength, column[0].length);
-            userLength = Math.max(userLength, column[1].length);
-
-            // If the column has a percentage, calculate the max length for the value
-            if (column.length > 3) {
-                valueLength = Math.max(valueLength, column[2].length);
-            }
-        });
-
-        // Build the rows
-        const rows: string[] = columns.map(column => {
-            const rank = column[0].padEnd(rankLength, ' ');
-            const user = column[1].padEnd(userLength, ' ');
-
-            // If the column does not have a percentage, return the row
-            if (valueLength === 0) {
-                return `${rank}\t${user}\t| ${column[2]}`;
-            }
-
-            const value = column[2].padEnd(valueLength, ' ');
-            return `${rank}\t${user}\t| ${value}\t| ${column[3]}`;
-        });
-
-        // Build the title
-        const titles = ['Rank', 'User', 'Value'];
-        if (valueLength > 0) {
-            titles.push('Percentage');
-        }
-
-        return {
-            name: titles.join(' - '),
-            value: `\`\`\`${rows.join("\n")}\`\`\``, // Wrap in code block
-            inline: false
-        };
-    }
-
     private buildEmbedBuilders(pages: string[][][], stat: string): EmbedBuilder[] {
         const ebs: EmbedBuilder[] = [];
 
+        const titles = ['Rank', 'User', 'Value'];
+
         pages.forEach((page, index) => {
-            const fields = this.buildFields(page);
+            if (page.some(row => row.length === 3)) {
+                titles.push('Percentage');
+            }
+            const fields = EmbedBuilderUtils.buildFields(page, titles);
             const eb = new EmbedBuilder()
                 .setTitle(`Ranking for ${stat}`)
                 .setFields(fields)
@@ -172,6 +136,7 @@ export class RankCommand implements Command {
                 })
                 .setTimestamp()
             ebs.push(eb);
+            titles.splice(3, 1);
         });
 
         return ebs;
@@ -181,8 +146,7 @@ export class RankCommand implements Command {
         // If the stat is last_activity, format the value as a date
         if (stat === UserStatsFields.LastActivity) {
             return [
-                `${index + 1}.`,
-                row.guildNickname,
+                `${index + 1}. ${row.guildNickname}`,
                 row.isLive ?
                     'Now' :
                     row.formatStatAsDate(UserStatsFields.LastActivity) ?? 'Never'
@@ -192,8 +156,7 @@ export class RankCommand implements Command {
         // If the stat is a time-based stat, format the value as a duration
         if (stat !== UserStatsFields.TimeConnected && StatTimeRelated.includes(stat as UserStatsFields)) {
             const columns = [
-                `${index + 1}.`,
-                row.guildNickname,
+                `${index + 1}. ${row.guildNickname}`,
                 row.formatStatAsDuration(userStatKey) ?? ''
             ];
 
@@ -219,8 +182,7 @@ export class RankCommand implements Command {
         }
 
         return [
-            `${index + 1}.`,
-            row.guildNickname,
+            `${index + 1}. ${row.guildNickname}`,
             value.toString()
         ];
     }
