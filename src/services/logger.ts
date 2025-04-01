@@ -7,11 +7,12 @@ dotenv.config();
 
 // Detect environment
 const isProduction = process.env.NODE_ENV === "production";
+const logsDir = process.env.LOGS_DIR || "./var/log";
 
 const transportProd = pino.transport({
     target: 'pino/file',
     options: {
-        destination: "./var/log/gandhi-prod_" + Date.now() + ".log",
+        destination: logsDir + "/gandhi-prod_" + Date.now() + ".log",
         mkdir: true
     }
 });

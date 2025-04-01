@@ -6,6 +6,7 @@ import {
 } from 'kysely'
 import SQLite from "better-sqlite3";
 import Logs from "../lang/logs.json";
+import process from "node:process";
 
 async function migrateToLatest() {
     // Create db folder if not exists
