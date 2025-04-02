@@ -7,6 +7,12 @@ services:
       - sqlite_data:/app/data
       - ./var:/app/var
     restart: unless-stopped
+    command:
+        - /bin/sh
+        - -c
+        - |
+            npm run migrate
+            node --enable-source-maps /app/dist/src/index.js
 
 volumes:
   sqlite_data:

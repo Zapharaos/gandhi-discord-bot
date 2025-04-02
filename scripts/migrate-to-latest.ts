@@ -43,12 +43,12 @@ async function migrateToLatest() {
         }
     })
 
+    await db.destroy()
+
     if (error) {
         console.error(Logs.error.databaseMigration, error);
         process.exit(1)
     }
-
-    await db.destroy()
 }
 
 migrateToLatest()
