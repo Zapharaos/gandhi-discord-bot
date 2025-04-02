@@ -8,6 +8,7 @@ import {StartTimestampsController} from "@controllers/start-timestamps";
 import {StartTsFields} from "@models/database/start_timestamps";
 import {UserStatsFields} from "@models/database/user_stats";
 import {StatsControllersUtils} from "@utils/stats";
+import {UserStatsController} from "@controllers/user-stats";
 
 export class ScreenSharingVoice implements Voice {
     public name = 'ScreenSharingVoice';
@@ -24,6 +25,9 @@ export class ScreenSharingVoice implements Voice {
 
                 // Start screensharing timestamp for user
                 await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartScreenSharing, props.now);
+
+                // Increment count stat
+                await UserStatsController.incrementCountStat(props.guildId, props.userId, UserStatsFields.CountScreenSharing);
             }
 
             return;
@@ -37,6 +41,9 @@ export class ScreenSharingVoice implements Voice {
 
             // Start screensharing timestamp for user
             await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartScreenSharing, props.now);
+
+            // Increment count stat
+            await UserStatsController.incrementCountStat(props.guildId, props.userId, UserStatsFields.CountScreenSharing);
             return
         }
 
