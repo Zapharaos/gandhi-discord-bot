@@ -102,7 +102,12 @@ export const CommandMetadata: {
                     { name: 'Max Screen Sharing', value: UserStatsFields.MaxScreenSharing },
                     { name: 'Max Camera', value: UserStatsFields.MaxCamera },
                     { name: 'Max Daily Streak', value: UserStatsFields.MaxDailyStreak },
-                    /*{ name: 'Total Joins', value: UserStatsFields.TotalJoins },*/
+                    { name: 'Count Connected', value: UserStatsFields.CountConnected },
+                    { name: 'Count Switch', value: UserStatsFields.CountSwitch },
+                    { name: 'Count Muted', value: UserStatsFields.CountMuted },
+                    { name: 'Count Deafened', value: UserStatsFields.CountDeafened },
+                    { name: 'Count Screen Sharing', value: UserStatsFields.CountScreenSharing },
+                    { name: 'Count Camera', value: UserStatsFields.CountCamera },
                 ],
             },
         ],

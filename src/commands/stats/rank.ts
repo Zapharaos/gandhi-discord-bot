@@ -83,7 +83,6 @@ export class RankCommand implements Command {
             // Retrieve the user's nickname in the guild
             const guildNickname = await InteractionUtils.fetchGuildMemberNickname(intr.guild as Guild, row.user_id!);
             if (!guildNickname) {
-                // TODO : on user quit or user ban -> remove user from guild related tables
                 continue;
             }
 
