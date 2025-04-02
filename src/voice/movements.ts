@@ -32,7 +32,7 @@ export class MovementsVoice implements Voice {
             await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartConnected, props.now);
 
             // Increment total joins for user
-            await UserStatsController.incrementTotalJoins(props.guildId, props.userId);
+            // await UserStatsController.incrementTotalJoins(props.guildId, props.userId);
         }
     }
 

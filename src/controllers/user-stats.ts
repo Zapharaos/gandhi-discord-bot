@@ -1,6 +1,6 @@
 import {Logger} from "@services/logger";
 import Logs from '../../lang/logs.json';
-import {db} from '@services/database'
+import {getDb} from '@services/database'
 import {DB, UserStats} from "../types/db";
 import {ExpressionBuilder} from "kysely";
 import {StatKey} from "@models/database/user_stats";
@@ -10,6 +10,13 @@ import {TimeUtils} from "@utils/time";
 export class UserStatsController {
 
     static async getUserInGuild(guildID: string, userID: string): Promise<UserStats | null> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return null;
+        }
+
         try {
             const userStats = await db
                 .selectFrom('user_stats')
@@ -39,6 +46,13 @@ export class UserStatsController {
     }
 
     static async getUsersInGuildByStat(guildID: string, stat: string): Promise<UserStats[]> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return [];
+        }
+
         try {
             const usersStats = await db
                 .selectFrom('user_stats')
@@ -63,6 +77,13 @@ export class UserStatsController {
     }
 
     static async updateUserStats(guildID: string, userID: string, stat: string, value: number): Promise<void> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return;
+        }
+
         try {
             await db
                 .insertInto('user_stats')
@@ -93,6 +114,13 @@ export class UserStatsController {
     }
 
     static async updateUserMaxStats(guildID: string, userID: string, stat: string, value: number): Promise<void> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return;
+        }
+
         try {
             await db
                 .insertInto('user_stats')
@@ -124,6 +152,13 @@ export class UserStatsController {
     }
 
     static async updateLastActivityAndStreak(guildID: string, userID: string, timestamp: number): Promise<void> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return;
+        }
+
         try {
 
             const row = await db
@@ -186,7 +221,14 @@ export class UserStatsController {
         }
     }
 
-    static async incrementTotalJoins(guildID: string, userID: string): Promise<void> {
+    /*static async incrementTotalJoins(guildID: string, userID: string): Promise<void> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return;
+        }
+
         try {
             await db
                 .insertInto('user_stats')
@@ -210,9 +252,16 @@ export class UserStatsController {
                     .replaceAll('{USER_ID}', userID)
                 , err);
         }
-    }
+    }*/
 
     static async deleteUserStats(guildID: string, userID: string): Promise<void> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return;
+        }
+
         try {
             await db
                 .deleteFrom('user_stats')

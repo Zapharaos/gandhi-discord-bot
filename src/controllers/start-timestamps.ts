@@ -1,12 +1,19 @@
 import {Logger} from "@services/logger";
 import Logs from '../../lang/logs.json';
 import {StatKey, StartTsFields} from "@models/database/start_timestamps";
-import {db} from '@services/database'
+import {getDb} from '@services/database'
 import {StartTimestamps} from '../types/db'
 
 export class StartTimestampsController {
 
     static async getUserByGuild(guildID: string, userID: string): Promise<StartTimestamps | null> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return null;
+        }
+
         try {
             const result = await db
                 .selectFrom('start_timestamps')
@@ -37,6 +44,13 @@ export class StartTimestampsController {
     }
 
     static async getUsersInGuildByStat(guildID: string, stat: StatKey | null): Promise<StartTimestamps[]> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return [];
+        }
+
         if (!stat) {
             return [];
         }
@@ -68,6 +82,13 @@ export class StartTimestampsController {
     }
 
     static async setStartTimestamp(guildID: string, userID: string, stat: StartTsFields, timestamp: number): Promise<void> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return;
+        }
+
         try {
             await db
                 .insertInto('start_timestamps')
@@ -102,6 +123,13 @@ export class StartTimestampsController {
     }
 
     static async clearTable(): Promise<void> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return;
+        }
+
         try {
             await db
                 .deleteFrom('start_timestamps')
@@ -114,6 +142,13 @@ export class StartTimestampsController {
     }
 
     static async deleteUserStartTimestamps(guildID: string, userID: string): Promise<void> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return;
+        }
+
         try {
             await db
                 .deleteFrom('start_timestamps')

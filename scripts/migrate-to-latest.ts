@@ -2,13 +2,14 @@ import * as path from 'path'
 import { promises as fs  } from 'fs'
 import {
     Migrator,
-    FileMigrationProvider, SqliteDialect, Kysely,
+    FileMigrationProvider, Kysely, SqliteDialect,
 } from 'kysely'
-import SQLite from "better-sqlite3";
 import Logs from "../lang/logs.json";
 import process from "node:process";
+import SQLite from "better-sqlite3";
 
 async function migrateToLatest() {
+
     // Create db folder if not exists
     const dataPath = './data';
     if (!await fs.stat(dataPath).catch(() => false)) {
@@ -16,6 +17,7 @@ async function migrateToLatest() {
         console.info(Logs.info.directoryCreate.replaceAll('{DIRECTORY}', dataPath));
     }
 
+    // Get the database instance
     const defaultDbFilePath = process.env.DATABASE_URL ?? "data/gandhi-bot.db";
     const db = new Kysely<unknown>({
         dialect: new SqliteDialect({

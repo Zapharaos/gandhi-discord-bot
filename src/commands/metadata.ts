@@ -102,7 +102,7 @@ export const CommandMetadata: {
                     { name: 'Max Screen Sharing', value: UserStatsFields.MaxScreenSharing },
                     { name: 'Max Camera', value: UserStatsFields.MaxCamera },
                     { name: 'Max Daily Streak', value: UserStatsFields.MaxDailyStreak },
-                    { name: 'Total Joins', value: UserStatsFields.TotalJoins },
+                    /*{ name: 'Total Joins', value: UserStatsFields.TotalJoins },*/
                 ],
             },
         ],
