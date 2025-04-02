@@ -14,12 +14,6 @@ export class VoiceStateUtils {
         return oldState.channelId && !newState.channelId;
     }
 
-    static staysMuted(oldState: VoiceState, newState: VoiceState) {
-        const prev = oldState.selfMute || oldState.serverMute;
-        const next = newState.selfMute || newState.serverMute;
-        return prev && next;
-    }
-
     static startMute(oldState: VoiceState, newState: VoiceState) {
         const prev = oldState.selfMute || oldState.serverMute;
         const next = newState.selfMute || newState.serverMute;
@@ -50,12 +44,6 @@ export class VoiceStateUtils {
 
     static isDeafen(newState: VoiceState) {
         return newState.selfDeaf || newState.serverDeaf;
-    }
-
-    static isDeafenEvent(oldState: VoiceState, newState: VoiceState) {
-        const prev = oldState.selfDeaf || oldState.serverDeaf;
-        const next = newState.selfDeaf || newState.serverDeaf;
-        return prev !== next;
     }
 
     static startStreaming(oldState: VoiceState, newState: VoiceState) {

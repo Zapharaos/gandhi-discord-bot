@@ -109,6 +109,6 @@
     "queryStartTsDeleteUser": "Successfully deleted user {USER_ID} start timestamps in guild {GUILD_ID}.",
     "queryDailyStatsTotalUsersInGuildByStat": "Successfully queried total users daily stats in guild {GUILD_ID} by stat {STAT_KEY}.",
     "queryDailyStatsUserInGuildByStat": "Successfully queried user {USER_ID} daily stats in guild {GUILD_ID} by stat {STAT_KEY}.",
-    "queryDailyStatsDeleteUser": "Successfully deleted user {USER_ID} daily stats in guild {GUILD_ID}.",
+    "queryDailyStatsDeleteUser": "Successfully deleted user {USER_ID} daily stats in guild {GUILD_ID}."
   }
 }
