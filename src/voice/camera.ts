@@ -8,6 +8,7 @@ import {StartTimestampsController} from "@controllers/start-timestamps";
 import {UserStatsFields} from "@models/database/user_stats";
 import {StartTsFields} from "@models/database/start_timestamps";
 import {StatsControllersUtils} from "@utils/stats";
+import {UserStatsController} from "@controllers/user-stats";
 
 export class CameraVoice implements Voice {
     public name = 'CameraVoice';
@@ -24,6 +25,9 @@ export class CameraVoice implements Voice {
 
                 // Start camera timestamp for user
                 await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartCamera, props.now);
+
+                // Increment count stat
+                await UserStatsController.incrementCountStat(props.guildId, props.userId, UserStatsFields.CountCamera);
             }
 
             return;
@@ -37,6 +41,9 @@ export class CameraVoice implements Voice {
 
             // Start camera timestamp for user
             await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartCamera, props.now);
+
+            // Increment count stat
+            await UserStatsController.incrementCountStat(props.guildId, props.userId, UserStatsFields.CountCamera);
             return
         }
 

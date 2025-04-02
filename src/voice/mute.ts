@@ -8,6 +8,7 @@ import {StatsControllersUtils} from "@utils/stats";
 import {UserStatsFields} from "@models/database/user_stats";
 import {StartTsFields} from "@models/database/start_timestamps";
 import {StartTimestampsController} from "@controllers/start-timestamps";
+import {UserStatsController} from "@controllers/user-stats";
 
 export class MuteVoice implements Voice {
     public name = 'MuteVoice';
@@ -24,6 +25,9 @@ export class MuteVoice implements Voice {
 
                 // Start mute timestamp for user
                 await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartMuted, props.now);
+
+                // Increment count stat
+                await UserStatsController.incrementCountStat(props.guildId, props.userId, UserStatsFields.CountMuted);
             }
 
             return;
@@ -37,6 +41,9 @@ export class MuteVoice implements Voice {
 
             // Start mute timestamp for user
             await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartMuted, props.now);
+
+            // Increment count stat
+            await UserStatsController.incrementCountStat(props.guildId, props.userId, UserStatsFields.CountMuted);
             return
         }
 
