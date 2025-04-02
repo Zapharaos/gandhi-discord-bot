@@ -1,11 +1,18 @@
 import {Logger} from '@services/logger';
 import Logs from '../../lang/logs.json';
-import {db} from '@services/database'
+import {getDb} from '@services/database'
 import {Servers} from '../types/db'
 
 export class ServerController {
 
     static async setLogChannel(guildID: string, channelId: string): Promise<boolean> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return false;
+        }
+
         try {
             await db
                 .insertInto('servers')
@@ -32,6 +39,13 @@ export class ServerController {
     }
 
     static async getServer(guildID: string): Promise<Servers | null> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return null;
+        }
+
         try {
             const server = await db
                 .selectFrom('servers')

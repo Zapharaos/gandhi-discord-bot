@@ -36,6 +36,12 @@ export interface StartTimestamps {
 }
 
 export interface UserStats {
+  count_camera: Generated<number | null>;
+  count_connected: Generated<number | null>;
+  count_deafened: Generated<number | null>;
+  count_muted: Generated<number | null>;
+  count_screen_sharing: Generated<number | null>;
+  count_switch: Generated<number | null>;
   daily_streak: Generated<number | null>;
   guild_id: string | null;
   last_activity: Generated<number | null>;
@@ -50,7 +56,6 @@ export interface UserStats {
   time_deafened: Generated<number | null>;
   time_muted: Generated<number | null>;
   time_screen_sharing: Generated<number | null>;
-  total_joins: Generated<number | null>;
   user_id: string | null;
 }
 

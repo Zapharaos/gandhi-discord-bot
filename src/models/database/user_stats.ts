@@ -18,7 +18,12 @@ export enum UserStatsFields {
     MaxDeafened = 'max_deafened',
     MaxMuted = 'max_muted',
     MaxScreenSharing = 'max_screen_sharing',
-    TotalJoins = 'total_joins',
+    CountCamera = 'count_camera',
+    CountConnected = 'count_connected',
+    CountDeafened = 'count_deafened',
+    CountMuted = 'count_muted',
+    CountScreenSharing = 'count_screen_sharing',
+    CountSwitch = 'count_switch',
     UserId = 'user_id',
 }
 
@@ -39,6 +44,15 @@ export const StatMaxRelated = [
     UserStatsFields.MaxDailyStreak
 ];
 
+export const StatCountRelated = [
+    UserStatsFields.CountConnected,
+    UserStatsFields.CountMuted,
+    UserStatsFields.CountDeafened,
+    UserStatsFields.CountScreenSharing,
+    UserStatsFields.CountCamera,
+    UserStatsFields.CountSwitch
+];
+
 export type StatKey =
     UserStatsFields.TimeConnected |
     UserStatsFields.TimeMuted |
@@ -52,7 +66,12 @@ export type StatKey =
     UserStatsFields.MaxScreenSharing |
     UserStatsFields.MaxCamera |
     UserStatsFields.MaxDailyStreak |
-    UserStatsFields.TotalJoins |
+    UserStatsFields.CountConnected |
+    UserStatsFields.CountMuted |
+    UserStatsFields.CountDeafened |
+    UserStatsFields.CountScreenSharing |
+    UserStatsFields.CountCamera |
+    UserStatsFields.CountSwitch |
     UserStatsFields.LastActivity;
 
 export class UserStatsModel {
@@ -72,7 +91,12 @@ export class UserStatsModel {
     time_deafened: number;
     time_muted: number;
     time_screen_sharing: number;
-    total_joins: number;
+    count_camera: number;
+    count_connected: number;
+    count_deafened: number;
+    count_muted: number;
+    count_screen_sharing: number;
+    count_switch: number;
     user_id: string | null;
 
     isLive: boolean = false;
@@ -92,7 +116,12 @@ export class UserStatsModel {
         this.time_deafened = data.time_deafened ?? 0;
         this.time_muted = data.time_muted ?? 0;
         this.time_screen_sharing = data.time_screen_sharing ?? 0;
-        this.total_joins = data.total_joins ?? 0;
+        this.count_camera = data.count_camera ?? 0;
+        this.count_connected = data.count_connected ?? 0;
+        this.count_deafened = data.count_deafened ?? 0;
+        this.count_muted = data.count_muted ?? 0;
+        this.count_screen_sharing = data.count_screen_sharing ?? 0;
+        this.count_switch = data.count_switch ?? 0;
         this.user_id = data.user_id ?? null;
     }
 
@@ -116,7 +145,12 @@ export class UserStatsModel {
             max_deafened: DatabaseUtils.unwrapGeneratedNumber(stats.max_deafened),
             max_muted: DatabaseUtils.unwrapGeneratedNumber(stats.max_muted),
             max_screen_sharing: DatabaseUtils.unwrapGeneratedNumber(stats.max_screen_sharing),
-            total_joins: DatabaseUtils.unwrapGeneratedNumber(stats.total_joins),
+            count_camera: DatabaseUtils.unwrapGeneratedNumber(stats.count_camera),
+            count_connected: DatabaseUtils.unwrapGeneratedNumber(stats.count_connected),
+            count_deafened: DatabaseUtils.unwrapGeneratedNumber(stats.count_deafened),
+            count_muted: DatabaseUtils.unwrapGeneratedNumber(stats.count_muted),
+            count_screen_sharing: DatabaseUtils.unwrapGeneratedNumber(stats.count_screen_sharing),
+            count_switch: DatabaseUtils.unwrapGeneratedNumber(stats.count_switch),
             user_id: stats.user_id ?? null,
         })
     }

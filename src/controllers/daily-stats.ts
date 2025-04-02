@@ -1,6 +1,6 @@
 import {Logger} from "@services/logger";
 import Logs from "../../lang/logs.json";
-import {db} from '@services/database'
+import {getDb} from '@services/database'
 import {DailyStats, DB} from '../types/db'
 import {ExpressionBuilder} from "kysely";
 import {StatKey} from "@models/database/daily_stats";
@@ -8,6 +8,13 @@ import {StatKey} from "@models/database/daily_stats";
 export class DailyStatsController {
 
     static async getTotalForUsersInGuildByStat(guildID: string, stat: string): Promise<DailyStats[]> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return [];
+        }
+
         try {
             const result = await db
                 .selectFrom('daily_stats')
@@ -37,6 +44,13 @@ export class DailyStatsController {
     }
 
     static async getUserInGuildByStat(guildID: string, userID: string, stat: string): Promise<DailyStats[]> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return [];
+        }
+
         try {
             const result = await db
                 .selectFrom('daily_stats')
@@ -69,6 +83,13 @@ export class DailyStatsController {
     }
 
     static async updateUserDailyStats(guildID: string, userID: string, stat: string, duration: number, now: number): Promise<void> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return;
+        }
+
         const days = [];
         let remainingDuration = duration;
         let dayMax = now;
@@ -120,6 +141,34 @@ export class DailyStatsController {
                     , err);
             }
 
+        }
+    }
+
+    static async deleteUserDailyStats(guildID: string, userID: string): Promise<void> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return;
+        }
+
+        try {
+            await db
+                .deleteFrom('daily_stats')
+                .where('guild_id', '=', guildID)
+                .where('user_id', '=', userID)
+                .execute();
+
+            Logger.debug(Logs.debug.queryDailyStatsDeleteUser
+                .replaceAll('{GUILD_ID}', guildID)
+                .replaceAll('{USER_ID}', userID)
+            );
+        } catch (err) {
+            await Logger.error(
+                Logs.error.queryDailyStatsDeleteUser
+                    .replaceAll('{GUILD_ID}', guildID)
+                    .replaceAll('{USER_ID}', userID)
+                , err);
         }
     }
 }

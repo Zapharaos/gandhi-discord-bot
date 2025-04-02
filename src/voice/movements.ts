@@ -31,8 +31,8 @@ export class MovementsVoice implements Voice {
             // Start connected timestamp for user
             await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartConnected, props.now);
 
-            // Increment total joins for user
-            await UserStatsController.incrementTotalJoins(props.guildId, props.userId);
+            // Increment count stat
+            await UserStatsController.incrementCountStat(props.guildId, props.userId, UserStatsFields.CountConnected);
         }
     }
 
@@ -104,6 +104,9 @@ export class MovementsVoice implements Voice {
     private async handleSwitch(props: VoiceProps, data: EventData): Promise<void> {
         // Check if the user is switching channels
         if (VoiceStateUtils.isSwitchingChannel(props.oldState, props.newState)) {
+            // Increment count stat
+            await UserStatsController.incrementCountStat(props.guildId, props.userId, UserStatsFields.CountSwitch);
+
             // Send message to log channel
             await props.logChannel.send(`🔄 **${props.userName}** switched from **${props.oldState.channel?.name}** to **${props.newState.channel?.name}**`);
             Logger.debug('User is switching channels');

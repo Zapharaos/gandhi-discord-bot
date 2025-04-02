@@ -102,7 +102,12 @@ export const CommandMetadata: {
                     { name: 'Max Screen Sharing', value: UserStatsFields.MaxScreenSharing },
                     { name: 'Max Camera', value: UserStatsFields.MaxCamera },
                     { name: 'Max Daily Streak', value: UserStatsFields.MaxDailyStreak },
-                    { name: 'Total Joins', value: UserStatsFields.TotalJoins },
+                    { name: 'Count Connected', value: UserStatsFields.CountConnected },
+                    { name: 'Count Switch', value: UserStatsFields.CountSwitch },
+                    { name: 'Count Muted', value: UserStatsFields.CountMuted },
+                    { name: 'Count Deafened', value: UserStatsFields.CountDeafened },
+                    { name: 'Count Screen Sharing', value: UserStatsFields.CountScreenSharing },
+                    { name: 'Count Camera', value: UserStatsFields.CountCamera },
                 ],
             },
         ],
@@ -156,5 +161,23 @@ export const CommandMetadata: {
                 ],
             }
         ],
-    }
+    },
+    LIST_INACTIVES: {
+        type: ApplicationCommandType.ChatInput,
+        name: 'list-inactives',
+        description: 'Lists inactive users in the server',
+        dm_permission: false,
+        default_member_permissions: PermissionsBitField.resolve([
+            PermissionFlagsBits.Administrator,
+            PermissionFlagsBits.ManageChannels,
+        ]).toString(),
+        options: [
+            {
+                type: 4,
+                name: 'days',
+                description: 'Number of days since last activity to be considered inactive (default: 100)',
+                required: false,
+            },
+        ],
+    },
 };

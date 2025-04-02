@@ -24,6 +24,7 @@ import {MuteVoice} from "./voice/mute";
 import {DeafenVoice} from "./voice/deafen";
 import {ScreenSharingVoice} from "./voice/screen-sharing";
 import {CameraVoice} from "./voice/camera";
+import {ListInactivesCommand} from "@commands/utility/list-inactives";
 
 dotenv.config();
 
@@ -55,7 +56,8 @@ async function start(): Promise<void> {
     const client = new Client({
         intents: [
             GatewayIntentBits.Guilds,
-            GatewayIntentBits.GuildVoiceStates
+            GatewayIntentBits.GuildVoiceStates,
+            GatewayIntentBits.GuildMembers,
         ]
     });
 
@@ -68,6 +70,7 @@ async function start(): Promise<void> {
         new RankCommand(),
         new StatsCommand(),
         new HeatmapCommand(),
+        new ListInactivesCommand()
     ];
 
     // Event handlers

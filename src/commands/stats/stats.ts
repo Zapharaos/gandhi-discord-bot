@@ -52,6 +52,7 @@ export class StatsCommand implements Command {
         const fields = [
             this.buildTotalFields(stats),
             this.buildMaxFields(stats),
+            this.buildCountFields(stats)
         ]
         if (stats.isLive) {
             fields.push(this.buildLiveFields(startTimestamps, now));
@@ -123,6 +124,35 @@ export class StatsCommand implements Command {
             {
                 name: '**Max Daily Streak**',
                 value: stats.formatStatAsString(UserStatsFields.MaxDailyStreak)
+            }
+        ]
+    }
+
+    private buildCountFields(stats: UserStatsModel): APIEmbedField[] {
+        return [
+            {
+                name: '**Count Connected**',
+                value: stats.formatStatAsString(UserStatsFields.CountConnected)
+            },
+            {
+                name: '**Count Channel Switch**',
+                value: stats.formatStatAsString(UserStatsFields.CountSwitch)
+            },
+            {
+                name: '**Count Muted**',
+                value: stats.formatStatAsString(UserStatsFields.CountMuted)
+            },
+            {
+                name: '**Count Deafened**',
+                value: stats.formatStatAsString(UserStatsFields.CountDeafened)
+            },
+            {
+                name: '**Count Screen Sharing**',
+                value: stats.formatStatAsString(UserStatsFields.CountScreenSharing)
+            },
+            {
+                name: '**Count Camera**',
+                value: stats.formatStatAsString(UserStatsFields.CountCamera)
             }
         ]
     }

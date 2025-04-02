@@ -8,6 +8,7 @@ import {StartTimestampsController} from "@controllers/start-timestamps";
 import {StartTsFields} from "@models/database/start_timestamps";
 import {UserStatsFields} from "@models/database/user_stats";
 import {StatsControllersUtils} from "@utils/stats";
+import {UserStatsController} from "@controllers/user-stats";
 
 export class DeafenVoice implements Voice {
     public name = 'DeafenVoice';
@@ -24,6 +25,9 @@ export class DeafenVoice implements Voice {
 
                 // Start deaf timestamp for user
                 await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartDeafened, props.now);
+
+                // Increment count stat
+                await UserStatsController.incrementCountStat(props.guildId, props.userId, UserStatsFields.CountDeafened);
             }
 
             return;
@@ -37,6 +41,9 @@ export class DeafenVoice implements Voice {
 
             // Start deaf timestamp for user
             await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartDeafened, props.now);
+
+            // Increment count stat
+            await UserStatsController.incrementCountStat(props.guildId, props.userId, UserStatsFields.CountDeafened);
             return
         }
 

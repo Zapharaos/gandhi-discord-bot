@@ -31,7 +31,8 @@
     "sqliteDisconnect": "Disconnecting from SQLite database.",
     "sqliteMigrate": "Migrating SQLite database.",
     "sqliteMigration": "Applied migration {MIGRATION_NAME} to SQLite database.",
-    "directoryCreate": "Creating directory '{DIRECTORY}'."
+    "directoryCreate": "Creating directory '{DIRECTORY}'.",
+    "memberDeleteFromGuild": "Successfully deleted member {USER_ID} from guild {GUILD_ID}."
   },
   "warn": {
     "managerNoShards": "No shards to spawn."
@@ -77,13 +78,18 @@
     "queryStatsUserUpdateStat": "An error occurred while updating user {USER_ID} stat {STAT_KEY} with {STAT_VALUE} in guild {GUILD_ID}.",
     "queryStatsUserGetActivityStreak": "An error occurred while querying user {USER_ID} activity and streak in guild {GUILD_ID}.",
     "queryStatsUserSetActivityStreak": "An error occurred while setting user {USER_ID} activity and streak in guild {GUILD_ID}.",
-    "queryStatsUserIncrementTotalJoins": "An error occurred while incrementing total joins for user {USER_ID} in guild {GUILD_ID}.",
+    "queryStatsUserIncrementCountStat": "An error occurred while incrementing count stat {STAT} for user {USER_ID} in guild {GUILD_ID}.",
+    "queryStatsUserDelete": "An error occurred while deleting user {USER_ID} user stats in guild {GUILD_ID}.",
     "queryStartTsUserInGuild": "An error occurred while querying user {USER_ID} start timestamp in guild {GUILD_ID}.",
     "queryStartTsUserInGuildByStat": "An error occurred while querying users start timestamp in guild {GUILD_ID}.",
     "queryStartTsSetTimestamp": "An error occurred while setting timestamp {TIMESTAMP} for stat {STAT} and user {USER_ID} in guild {GUILD_ID}.",
+    "queryStartTsClear": "An error occurred while clearing start timestamps table.",
+    "queryStartTsDeleteUser": "An error occurred while deleting user {USER_ID} start timestamps in guild {GUILD_ID}.",
     "queryDailyStatsTotalUsersInGuildByStat": "An error occurred while querying total users daily stats in guild {GUILD_ID} by stat {STAT_KEY}.",
     "queryDailyStatsUserInGuildByStat": "An error occurred while querying user {USER_ID} daily stats in guild {GUILD_ID} by stat {STAT_KEY}.",
-    "queryDailyStatsUpdateUser": "An error occurred while updating user {USER_ID} daily stats in guild {GUILD_ID} by stat {STAT_KEY}."
+    "queryDailyStatsUpdateUser": "An error occurred while updating user {USER_ID} daily stats in guild {GUILD_ID} by stat {STAT_KEY}.",
+    "queryDailyStatsDeleteUser": "An error occurred while deleting user {USER_ID} daily stats in guild {GUILD_ID}.",
+    "memberDeleteFromGuild": "An error occurred while deleting member {USER_ID} from guild {GUILD_ID}."
   },
   "debug": {
     "sqliteConnected": "Already connected to SQLite database.",
@@ -94,11 +100,15 @@
     "queryStatsUserUpdateStat": "Successfully updated user {USER_ID} stat {STAT_KEY} with {STAT_VALUE} in guild {GUILD_ID}.",
     "queryStatsUserGetActivityStreak": "Successfully queried user {USER_ID} activity streak in guild {GUILD_ID}.",
     "queryStatsUserSetActivityStreak": "Successfully set user {USER_ID} activity and streak in guild {GUILD_ID}.",
-    "queryStatsUserIncrementTotalJoins": "Successfully incremented total joins for user {USER_ID} in guild {GUILD_ID}.",
+    "queryStatsUserIncrementCountStat": "Successfully incremented count stat {STAT} for user {USER_ID} in guild {GUILD_ID}.",
+    "queryStatsUserDelete": "Successfully deleted user {USER_ID} user stats in guild {GUILD_ID}.",
     "queryStartTsUserInGuild": "Successfully queried user {USER_ID} start timestamp in guild {GUILD_ID}.",
     "queryStartTsUserInGuildByStat": "Successfully queried users start timestamp in guild {GUILD_ID}.",
     "queryStartTsSetTimestamp": "Successfully set timestamp {TIMESTAMP} for stat {STAT} and user {USER_ID} in guild {GUILD_ID}.",
+    "queryStartTsClear": "Successfully cleared start timestamps table.",
+    "queryStartTsDeleteUser": "Successfully deleted user {USER_ID} start timestamps in guild {GUILD_ID}.",
     "queryDailyStatsTotalUsersInGuildByStat": "Successfully queried total users daily stats in guild {GUILD_ID} by stat {STAT_KEY}.",
-    "queryDailyStatsUserInGuildByStat": "Successfully queried user {USER_ID} daily stats in guild {GUILD_ID} by stat {STAT_KEY}."
+    "queryDailyStatsUserInGuildByStat": "Successfully queried user {USER_ID} daily stats in guild {GUILD_ID} by stat {STAT_KEY}.",
+    "queryDailyStatsDeleteUser": "Successfully deleted user {USER_ID} daily stats in guild {GUILD_ID}."
   }
 }
