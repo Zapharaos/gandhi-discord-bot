@@ -18,9 +18,6 @@ export class MuteVoice implements Voice {
         // Check if the user is joining a channel
         if (VoiceStateUtils.isJoiningChannel(props.oldState, props.newState)) {
 
-            // Skip is user is deafened as it already involves mute
-            if (VoiceStateUtils.isDeafen(props.newState)) return;
-
             // While muted
             if (VoiceStateUtils.isMuted(props.newState)) {
                 Logger.debug('User is joining a channel while muted');
@@ -29,38 +26,6 @@ export class MuteVoice implements Voice {
                 await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartMuted, props.now);
             }
 
-            return;
-        }
-
-        // Deafen event triggers the mute event
-        if (VoiceStateUtils.isDeafenEvent(props.oldState, props.newState)) {
-
-            // User does not stay muted -> ignore the event
-            // It means the mute event was triggered as part of start/stop deafen event
-            if (!VoiceStateUtils.staysMuted(props.oldState, props.newState)) {
-                return
-            }
-
-            // User start deafen while already being muted -> stop mute
-            if (VoiceStateUtils.startDeafen(props.oldState, props.newState) && props.userStartTs && props.userStartTs.start_muted !== 0) {
-                const duration = TimeUtils.getDuration(props.userStartTs.start_muted, props.now);
-                Logger.debug(`User ${props.userName} was muted before deafen event = stop mute timers after ${duration} ms`);
-
-                // Update user stats and stop mute timestamp for user
-                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeMuted, StartTsFields.StartMuted, duration, props.now);
-                return
-            }
-
-            // User stop deafen while still being muted -> restart mute
-            if (VoiceStateUtils.stopDeafen(props.oldState, props.newState)) {
-                Logger.debug('User still muted after deafen event = restart mute timers');
-
-                // Start mute timestamp for user
-                await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartMuted, props.now);
-                return
-            }
-
-            // Unreachable
             return;
         }
 
