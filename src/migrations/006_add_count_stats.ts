@@ -10,7 +10,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
 
         // copy data from old column
         await trx
-            .updateTable('user_stats' as any)
+            .updateTable('user_stats' as any) // eslint-disable-line @typescript-eslint/no-explicit-any
             .set({ count_connected: sql`total_joins`})
             .execute();
 
@@ -55,8 +55,8 @@ export async function down(db: Kysely<unknown>): Promise<void> {
 
         // copy data from old column
         await trx
-            .updateTable('user_stats' as any)
-            .set({ total_joins: db.dynamic.ref('count_connected') as any})
+            .updateTable('user_stats' as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+            .set({ total_joins: db.dynamic.ref('count_connected') as unknown as number })
             .execute();
 
         await trx.schema
