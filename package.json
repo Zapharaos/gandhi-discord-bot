@@ -1,6 +1,6 @@
 {
   "name": "gandhi-discord-bot",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "author": "Matthieu FREITAG",
   "license": "MIT",
   "description": "Discord bot that tracks various user activities in voice channels and produces statistics",
