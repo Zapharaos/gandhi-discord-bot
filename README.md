@@ -25,7 +25,7 @@ It provides the following statistics:
 - a yearly calendar heatmap for each time statistic mentioned above (per user or per guild)
 - daily streaks (how many days in a row the user has been active)
 - maximum stats (the longest/highest value for each statistic)
-- total joins (how many times the user has joined a voice channel)
+- event counters (how many times the user has triggered an event inside a voice channel)
 
 ## Download
 
@@ -79,11 +79,14 @@ crontab -e # This will open the crontab file in your default editor
 0 5 * * 1 /realpath/to/docker-db-backup.sh # Add this line to the file and save it
 ```
 
-If you want to watch the logs of the cron job, you can update the previous commands:
+If you want to watch the logs of the cron job, you can update the cronjob line :
 ```bash
-crontab -e # This will open the crontab file in your default editor
-0 5 * * 1 /realpath/to/docker-db-backup.sh 2>&1 | logger -t gandhi-bot-docker-db-backup # Add this line to the file and save it
-grep 'gandhi-bot-docker-db-backup' /var/log/syslog # To watch the related logs
+crontab -e
+0 5 * * 1 /realpath/to/docker-db-backup.sh 2>&1 | logger -t gandhi-bot-docker-db-backup
+
+# Then, to read logs, you can run the following commands:
+grep 'gandhi-bot-docker-db-backup' /var/log/syslog
+journalctl | grep 'gandhi-bot-docker-db-backup'
 ```
 
 Now the database will be backed up every week on Monday at 5 AM. The backups will be stored inside the project's `var/db-backups` directory where you can also find the script's execution logs.
