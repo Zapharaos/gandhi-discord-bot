@@ -74,7 +74,7 @@ export class ListInactivesCommand implements Command {
 
             // Inactive if last activity is 0
             // Inactive if last activity is more than the limit
-            if (user.last_activity === 0 || TimeUtils.getDaysDifference(user.last_activity, now) < days) {
+            if (user.last_activity === 0 || TimeUtils.getDaysDifference(user.last_activity, now) > days) {
                 inactivesMap.set(user.user_id, {
                     userId: user.user_id,
                     lastActivity: user.last_activity,
