@@ -121,14 +121,14 @@ export class Bot {
             // Fetch partials if needed
             if (reaction.partial) {
                 Logger.debug('Reaction is partial, fetching...');
-                try { await reaction.fetch(); } catch (e) {
+                try { await reaction.fetch(); } catch {
                     Logger.debug('Failed to fetch partial reaction');
                     return;
                 }
             }
             if (user.partial) {
                 Logger.debug('User is partial, fetching...');
-                try { await user.fetch(); } catch (e) {
+                try { await user.fetch(); } catch {
                     Logger.debug('Failed to fetch partial user');
                     return;
                 }

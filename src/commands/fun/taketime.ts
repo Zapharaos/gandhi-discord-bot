@@ -67,7 +67,7 @@ export class TaketimeCommand implements Command {
             hands[user.id] = dealt.slice(idx * cardsPerPlayer, (idx + 1) * cardsPerPlayer);
         });
 
-        let failedDMs: string[] = [];
+        const failedDMs: string[] = [];
         if (users.length === 2) {
             // For 2 players: send 4 cards, store 2 for later
             for (const user of users) {
@@ -87,7 +87,7 @@ export class TaketimeCommand implements Command {
 
                     pendingTaketimeCards[user.id] = { messageId: dmMsg.id, cards: last2, timeoutId };
                     Logger.debug(`Stored pending cards for user ${user.id}, messageId: ${dmMsg.id}`);
-                } catch (e) {
+                } catch {
                     failedDMs.push(`<@${user.id}>`);
                 }
             }
@@ -99,7 +99,7 @@ export class TaketimeCommand implements Command {
                         .map(card => `- ${card.color} ${card.value}`)
                         .join('\n');
                     await user.send(`Your cards:\n${hand}`);
-                } catch (e) {
+                } catch {
                     failedDMs.push(`<@${user.id}>`);
                 }
             }
