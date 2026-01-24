@@ -4,9 +4,6 @@ export class TimeUtils {
     static SecondsInMinute = 60;
     static MinutesInHour = 60;
     static HoursInDay = 24;
-    static DaysInWeek = 7;
-    static WeeksInMonth = 4.345;
-    static MonthsInYear = 12;
 
     /**
      * Rounds a timestamp down to the nearest day.
@@ -77,67 +74,46 @@ export class TimeUtils {
      * @returns {string} The formatted duration string.
      */
     static formatDuration(ms: number): string {
-        // If the duration is non-existent => zeros
-        if (!ms || ms === 0) {
-            return `${this.pad(0)}s`;
+        if (!ms || ms === 0) return `${this.pad(0)}s`;
+
+        const units = [
+            { label: 'y',   ms: this.MsInSecond * this.SecondsInMinute * this.MinutesInHour * this.HoursInDay * 365 },
+            { label: 'mo',  ms: this.MsInSecond * this.SecondsInMinute * this.MinutesInHour * this.HoursInDay * 30 },
+            { label: 'w',   ms: this.MsInSecond * this.SecondsInMinute * this.MinutesInHour * this.HoursInDay * 7 },
+            { label: 'd',   ms: this.MsInSecond * this.SecondsInMinute * this.MinutesInHour * this.HoursInDay },
+            { label: 'h',   ms: this.MsInSecond * this.SecondsInMinute * this.MinutesInHour },
+            { label: 'm',   ms: this.MsInSecond * this.SecondsInMinute },
+            { label: 's',   ms: this.MsInSecond },
+        ];
+
+        let remaining = ms;
+        const parts: string[] = [];
+        let started = false;
+        let forceNext = false;
+
+        for (let i = 0; i < units.length; i++) {
+            const unit = units[i];
+            const value = Math.floor(remaining / unit.ms);
+            remaining -= value * unit.ms;
+
+            if (value > 0 || started) {
+                parts.push(`${this.pad(value)}${unit.label}`);
+                started = true;
+                // If this is the first non-zero, force the next unit to display even if zero
+                forceNext = value > 0 && i < units.length - 1;
+            } else if (forceNext) {
+                parts.push(`${this.pad(0)}${unit.label}`);
+                forceNext = false;
+                started = true;
+            }
         }
 
-        // If the duration is less than a minute => seconds.milliseconds
-        if (ms < this.MsInSecond * this.SecondsInMinute) {
+        // For durations less than 1 second, show as fractional seconds
+        if (parts.length === 0 && ms > 0) {
             return `${(ms / this.MsInSecond).toFixed(3)}s`;
         }
 
-        // Calculate the duration in seconds, minutes, hours, days, weeks, months, and years
-        const seconds = Math.floor(ms / this.MsInSecond);
-        const minutes = Math.floor(seconds / this.SecondsInMinute);
-        const hours = Math.floor(minutes / this.MinutesInHour);
-        const days = Math.floor(hours / this.HoursInDay);
-        const weeks = Math.floor(days / this.DaysInWeek);
-        const months = Math.floor(weeks / this.WeeksInMonth);
-        const years = Math.floor(months / this.MonthsInYear);
-
-        let s, mi, h, d, w, mo, y;
-
-        // Format the durations into strings
-        if (seconds > 0) {
-            s = `${this.pad(seconds)}s`;
-        }
-        if (minutes > 0) {
-            s = `${this.pad(seconds % this.SecondsInMinute)}s`;
-            mi = `${this.pad(minutes)}m`;
-        }
-        if (hours > 0) {
-            mi = `${this.pad(minutes % this.MinutesInHour)}m`;
-            h = `${this.pad(hours)}h`;
-        }
-        if (days > 0) {
-            h = `${this.pad(hours % this.HoursInDay)}h`;
-            d = `${this.pad(days)}d`;
-        }
-        if (weeks > 0) {
-            d = `${this.pad(days % this.DaysInWeek)}d`;
-            w = `${this.pad(weeks)}w`;
-        }
-        if (months > 0) {
-            w = `${this.pad(weeks % this.WeeksInMonth)}w`;
-            mo = `${this.pad(months)}m`;
-        }
-        if (years > 0) {
-            mo = `${this.pad(months % this.MonthsInYear)}m`;
-            y = `${this.pad(years)}y`;
-        }
-
-        // Combine the formatted durations into a single string
-        let duration = '';
-        if (y) duration += `${y} `;
-        if (mo) duration += `${mo} `;
-        if (w) duration += `${w} `;
-        if (d) duration += `${d} `;
-        if (h) duration += `${h} `;
-        if (mi) duration += `${mi} `;
-        if (s) duration += `${s}`;
-
-        return duration;
+        return parts.join(' ');
     }
 
     /**
