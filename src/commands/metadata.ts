@@ -180,4 +180,36 @@ export const CommandMetadata: {
             },
         ],
     },
+    TAKETIME: {
+        type: ApplicationCommandType.ChatInput,
+        name: 'taketime',
+        description: 'Deal secret cards to 2-4 users from two decks (white/black, 1-12)',
+        dm_permission: false,
+        options: [
+            {
+                type: 6, // USER
+                name: 'user1',
+                description: 'First user',
+                required: true,
+            },
+            {
+                type: 6, // USER
+                name: 'user2',
+                description: 'Second user',
+                required: true,
+            },
+            {
+                type: 6, // USER
+                name: 'user3',
+                description: 'Third user',
+                required: false,
+            },
+            {
+                type: 6, // USER
+                name: 'user4',
+                description: 'Fourth user',
+                required: false,
+            },
+        ],
+    },
 };
