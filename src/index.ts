@@ -1,4 +1,4 @@
-import {Client, GatewayIntentBits, REST} from 'discord.js';
+import {Client, GatewayIntentBits, REST, Partials} from 'discord.js';
 import dotenv from 'dotenv';
 import * as process from "node:process";
 
@@ -25,6 +25,7 @@ import {DeafenVoice} from "./voice/deafen";
 import {ScreenSharingVoice} from "./voice/screen-sharing";
 import {CameraVoice} from "./voice/camera";
 import {ListInactivesCommand} from "@commands/utility/list-inactives";
+import {TaketimeCommand} from "@commands/fun/taketime";
 
 dotenv.config();
 
@@ -58,7 +59,18 @@ async function start(): Promise<void> {
             GatewayIntentBits.Guilds,
             GatewayIntentBits.GuildVoiceStates,
             GatewayIntentBits.GuildMembers,
-        ]
+            GatewayIntentBits.GuildMessages,
+            GatewayIntentBits.GuildMessageReactions,
+            GatewayIntentBits.MessageContent,
+            GatewayIntentBits.DirectMessages,
+            GatewayIntentBits.DirectMessageReactions,
+        ],
+        partials: [
+            Partials.Message,
+            Partials.Channel,
+            Partials.Reaction,
+            Partials.User,
+        ],
     });
 
     // Commands
@@ -70,7 +82,8 @@ async function start(): Promise<void> {
         new RankCommand(),
         new StatsCommand(),
         new HeatmapCommand(),
-        new ListInactivesCommand()
+        new ListInactivesCommand(),
+        new TaketimeCommand(),
     ];
 
     // Event handlers

@@ -14,7 +14,9 @@
     "next": "▶️",
     "first": "⏪",
     "last": "⏩",
-    "refresh": "🔄"
+    "refresh": "🔄",
+    "black": "◾",
+    "white": "◽"
   },
   "colors": {
     "default": "#0099ff",
