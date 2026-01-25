@@ -6,6 +6,7 @@ import {InteractionUtils} from "@utils/interaction";
 import {StartTimestampsModel, StatKey} from "@models/database/start_timestamps";
 import {DailyStatsController} from "@controllers/daily-stats";
 import {StartTimestampsController} from "@controllers/start-timestamps";
+import {UserStatsController} from "@controllers/user-stats";
 import {DailyStatsModel, DailyStatsMap} from "@models/database/daily_stats";
 import puppeteer from "puppeteer";
 import {UserStatsFields} from "@models/database/user_stats";
@@ -14,7 +15,7 @@ import Logs from "../../../lang/logs.json";
 
 export class HeatmapCommand implements Command {
     public names = ['heatmap'];
-    public deferType = CommandDeferType.PUBLIC;
+    public deferType = CommandDeferType.HIDDEN;
     public requireClientPerms: PermissionsString[] = [];
 
     public async execute(intr: ChatInputCommandInteraction): Promise<void> {
@@ -32,6 +33,18 @@ export class HeatmapCommand implements Command {
             await Logger.error(Logs.error.intrMissingGuildID);
             await InteractionUtils.editReply(intr, 'This command can only be used in a server.');
             return;
+        }
+
+        // Check if target user is private and not the command user (only when targeting specific user, not all)
+        if (!targetAll && target) {
+            const interactionUser = InteractionUtils.getInteractionUser(intr);
+            if (interactionUser.id !== intr.user.id) {
+                const isPrivate = await UserStatsController.isUserPrivate(guildId, interactionUser.id);
+                if (isPrivate) {
+                    await InteractionUtils.editReply(intr, `❌ This user has enabled private mode and cannot be targeted.`);
+                    return;
+                }
+            }
         }
 
         // Get the remaining options

@@ -39,12 +39,28 @@ You can enable/disable stats tracking, enable/disable event logs, and set the lo
 - `/serversettings stats:OFF` - Disable stats tracking only
 - `/serversettings logs:OFF` - Disable event logs only
 
+Additionally, each user can configure their own personal settings:
+- `/usersettings [stats] [logs] [private]` - Configure your personal settings for stats tracking, event logs, and privacy.
+
+For example:
+- `/usersettings stats:OFF` - Opt-out of stats tracking for yourself
+- `/usersettings logs:OFF` - Opt-out of event logs for yourself
+- `/usersettings private:ON` - Enable private mode (hide from others)
+
+**Note:** Both server and user settings must be enabled for a feature to work. If either the server or the user has disabled stats/logs, the feature will be disabled for that user.
+
+**Private Mode:** When enabled, other users cannot:
+- Target you with commands like `/stats`, `/biggusdickus`, or `/heatmap`
+- See your data in ranking lists (`/rank`) or inactive user lists (`/list-inactives`)
+- However, you can still run all commands and see your own data in the results (responses are private to you)
+
 Now every user's actions in voice channels will be tracked and/or logged based on your settings.
 
 ## Commands
 
 The following commands are available:
 - `/serversettings [stats] [logs] [logchannel]` - Configure server settings for stats tracking and event logs.
+- `/usersettings [stats] [logs] [private]` - Configure your personal settings for stats tracking, event logs, and privacy (private response).
 - `/stats [user]` - Returns the stats for a specific user (default: yourself).
 - `/rank [stat]` - Returns the server ranking for a specific stat (default: time connected).
 - `/heatmap [target] [target-all] [stat] [format]` - Returns the yearly calendar heatmap (default: yourself, time connected, png).

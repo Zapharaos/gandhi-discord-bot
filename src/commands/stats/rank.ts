@@ -32,7 +32,7 @@ class RankUser extends UserStatsModel{
 
 export class RankCommand implements Command {
     public names = ['rank'];
-    public deferType = CommandDeferType.PUBLIC;
+    public deferType = CommandDeferType.HIDDEN;
     public requireClientPerms: PermissionsString[] = [];
     private readonly pageSize = 10;
 
@@ -70,6 +70,14 @@ export class RankCommand implements Command {
         const rankUsers: RankUser[] = [];
         const now = Date.now();
         for (const row of usersStats) {
+
+            // Filter out private users (unless it's the command user)
+            if (row.user_id !== intr.user.id) {
+                const isPrivate = await UserStatsController.isUserPrivate(guildId, row.user_id!);
+                if (isPrivate) {
+                    continue;
+                }
+            }
 
             // Combine the user stats with his live stats (if any)
             const liveStat = usersLiveStats.get(row.user_id!);

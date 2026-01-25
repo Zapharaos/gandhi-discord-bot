@@ -37,9 +37,18 @@ export class VoiceHandler implements EventHandler {
         const server = await ServerController.getServer(guild.id);
         if (!server || !server.log_channel_id) return;
 
-        // Check if stats or logs are enabled (default to true if not set)
-        const statsEnabled = (server.stats as unknown as number | null) == null || (server.stats as unknown as number) !== 0;
-        const logsEnabled = (server.logs as unknown as number | null) == null || (server.logs as unknown as number) !== 0;
+        // Check if stats or logs are enabled at server level (default to true if not set)
+        const serverStatsEnabled = (server.stats as unknown as number | null) == null || (server.stats as unknown as number) !== 0;
+        const serverLogsEnabled = (server.logs as unknown as number | null) == null || (server.logs as unknown as number) !== 0;
+
+        // Check if stats or logs are enabled at user level (default to true if not set)
+        const userStats = await UserStatsController.getUserInGuild(guild.id, user.id);
+        const userStatsEnabled = !userStats || (userStats.stats as unknown as number | null) == null || (userStats.stats as unknown as number) !== 0;
+        const userLogsEnabled = !userStats || (userStats.logs as unknown as number | null) == null || (userStats.logs as unknown as number) !== 0;
+
+        // Combine server and user settings (both must be enabled for the feature to work)
+        const statsEnabled = serverStatsEnabled && userStatsEnabled;
+        const logsEnabled = serverLogsEnabled && userLogsEnabled;
 
         // If both are disabled, return early
         if (!statsEnabled && !logsEnabled) return;

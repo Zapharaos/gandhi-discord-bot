@@ -12,6 +12,7 @@ import {CommandRegistrationService} from "@services/command-registration-service
 import {EventDataService} from "@services/event-data-service";
 import Logs from '../lang/logs.json';
 import {ServerSettingsCommand} from "@commands/utility/server-settings";
+import {UserSettingsCommand} from "@commands/utility/user-settings";
 import {ClashCommand} from "@commands/fun/clash";
 import {BiggusdickusCommand} from "@commands/stats/biggusdickus";
 import {RankCommand} from "@commands/stats/rank";
@@ -77,6 +78,7 @@ async function start(): Promise<void> {
     const commands: Command[] = [
         new PingCommand(),
         new ServerSettingsCommand(),
+        new UserSettingsCommand(),
         new ClashCommand(),
         new BiggusdickusCommand(),
         new RankCommand(),

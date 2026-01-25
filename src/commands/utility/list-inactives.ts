@@ -17,7 +17,7 @@ type InactiveUser = {
 
 export class ListInactivesCommand implements Command {
     public names = ['list-inactives'];
-    public deferType = CommandDeferType.PUBLIC;
+    public deferType = CommandDeferType.HIDDEN;
     public requireClientPerms: PermissionsString[] = ["Administrator", "ManageChannels"];
     private readonly pageSize = 10;
 
@@ -36,7 +36,7 @@ export class ListInactivesCommand implements Command {
         // Get users in the guild
         const rows = await UserStatsController.getUsersInGuildByStat(guildId, UserStatsFields.LastActivity);
         const usersStats = rows.map(row => UserStatsModel.fromUserStats(row));
-        const { inactivesMap, safeUsers } = this.processUserStats(usersStats, now, days);
+        const { inactivesMap, safeUsers } = await this.processUserStats(usersStats, now, days, guildId, intr.user.id);
 
         // Fetch all guild members
         const guildUsers = await InteractionUtils.fetchAllGuildMembers(intr.guild!);
@@ -63,14 +63,22 @@ export class ListInactivesCommand implements Command {
         await InteractionUtils.replyWithPagination(intr, ebs);
     }
 
-    private processUserStats(usersStats: UserStatsModel[], now: number, days: number) {
+    private async processUserStats(usersStats: UserStatsModel[], now: number, days: number, guildId: string, commandUserId: string) {
         const inactivesMap = new Map<string, InactiveUser>(); // Map to store all inactive users
         const safeUsers = new Set<string>(); // Set to store all users that are not inactive
 
         // Check each user inside db for inactivity
-        usersStats.forEach(user => {
+        for (const user of usersStats) {
             // Skip users without a user_id
-            if (!user.user_id) return;
+            if (!user.user_id) continue;
+
+            // Filter out private users (unless it's the command user)
+            if (user.user_id !== commandUserId) {
+                const isPrivate = await UserStatsController.isUserPrivate(guildId, user.user_id);
+                if (isPrivate) {
+                    continue;
+                }
+            }
 
             // Inactive if last activity is 0
             // Inactive if last activity is more than the limit
@@ -85,7 +93,7 @@ export class ListInactivesCommand implements Command {
                 // User is not inactive
                 safeUsers.add(user.user_id);
             }
-        });
+        }
 
         return { inactivesMap, safeUsers };
     }

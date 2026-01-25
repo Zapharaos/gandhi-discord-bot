@@ -59,6 +59,44 @@ export const CommandMetadata: {
             },
         ],
     },
+    USER_SETTINGS: {
+        type: ApplicationCommandType.ChatInput,
+        name: 'usersettings',
+        description: 'Configure your personal settings for stats tracking and event logs',
+        dm_permission: false,
+        options: [
+            {
+                type: 3,
+                name: 'stats',
+                description: 'Enable or disable your stats tracking',
+                required: false,
+                choices: [
+                    { name: 'ON', value: 'on' },
+                    { name: 'OFF', value: 'off' },
+                ],
+            },
+            {
+                type: 3,
+                name: 'logs',
+                description: 'Enable or disable your event logs',
+                required: false,
+                choices: [
+                    { name: 'ON', value: 'on' },
+                    { name: 'OFF', value: 'off' },
+                ],
+            },
+            {
+                type: 3,
+                name: 'private',
+                description: 'Enable or disable private mode (hide from others)',
+                required: false,
+                choices: [
+                    { name: 'ON', value: 'on' },
+                    { name: 'OFF', value: 'off' },
+                ],
+            },
+        ],
+    },
     CLASH: {
         type: ApplicationCommandType.ChatInput,
         name: 'clash',
