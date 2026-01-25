@@ -21,10 +21,10 @@ export const CommandMetadata: {
         ]).toString(),
         options: [],
     },
-    SET_LOG_CHANNEL: {
+    SERVER_SETTINGS: {
         type: ApplicationCommandType.ChatInput,
-        name: 'setlogchannel',
-        description: 'Set the log channel for voice-channel activity tracking',
+        name: 'serversettings',
+        description: 'Configure server settings for stats tracking and event logs',
         dm_permission: false,
         default_member_permissions: PermissionsBitField.resolve([
             PermissionFlagsBits.Administrator,
@@ -32,10 +32,30 @@ export const CommandMetadata: {
         ]).toString(),
         options: [
             {
+                type: 3,
+                name: 'stats',
+                description: 'Enable or disable stats tracking',
+                required: false,
+                choices: [
+                    { name: 'ON', value: 'on' },
+                    { name: 'OFF', value: 'off' },
+                ],
+            },
+            {
+                type: 3,
+                name: 'logs',
+                description: 'Enable or disable event logs',
+                required: false,
+                choices: [
+                    { name: 'ON', value: 'on' },
+                    { name: 'OFF', value: 'off' },
+                ],
+            },
+            {
                 type: 7,
-                name: 'channel',
+                name: 'logchannel',
                 description: 'Select a text channel for logs',
-                required: true,
+                required: false,
             },
         ],
     },

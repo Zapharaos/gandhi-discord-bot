@@ -23,6 +23,8 @@ export interface DailyStats {
 export interface Servers {
   guild_id: string | null;
   log_channel_id: string | null;
+  stats: Generated<number | null>;
+  logs: Generated<number | null>;
 }
 
 export interface StartTimestamps {
