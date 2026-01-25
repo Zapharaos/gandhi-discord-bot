@@ -7,6 +7,7 @@ import {
 import {Voice} from "../voice/voice";
 import {EventData} from "@models/event-data";
 import {VoiceProps} from "@models/voice-props";
+import {SettingsProps} from "@models/settings-props";
 import {ServerController} from "@controllers/server";
 import {StartTimestampsController} from "@controllers/start-timestamps";
 import {Logger} from "@services/logger";
@@ -35,17 +36,30 @@ export class VoiceHandler implements EventHandler {
         // Retrieve the server and log channel
         const server = await ServerController.getServer(guild.id);
         if (!server || !server.log_channel_id) return;
+
+        // Check if stats or logs are enabled (default to true if not set)
+        const statsEnabled = (server.stats as unknown as number | null) == null || (server.stats as unknown as number) !== 0;
+        const logsEnabled = (server.logs as unknown as number | null) == null || (server.logs as unknown as number) !== 0;
+
+        // If both are disabled, return early
+        if (!statsEnabled && !logsEnabled) return;
+
         const logChannel = guild.channels.cache.get(server.log_channel_id);
         if (!logChannel || logChannel.type !== ChannelType.GuildText || !(logChannel instanceof TextChannel)) return;
 
-        // Update the user last activity and streak
-        await UserStatsController.updateLastActivityAndStreak(guild.id, user.id, Date.now());
+        // Update the user last activity and streak (only if stats are enabled)
+        if (statsEnabled) {
+            await UserStatsController.updateLastActivityAndStreak(guild.id, user.id, Date.now());
+        }
 
-        // Retrieve the user start timestamps
-        const row = await StartTimestampsController.getUserByGuild(guild.id, user.id);
+        // Retrieve the user start timestamps (only if stats are enabled)
+        const row = statsEnabled ? await StartTimestampsController.getUserByGuild(guild.id, user.id) : null;
         const startTimestamps = StartTimestampsModel.fromStartTimestamps(row ?? {});
 
-        const props = new VoiceProps(oldState, newState, guild.id, user.id, userName, startTimestamps, logChannel, Date.now());
+        // Create settings object
+        const settings = new SettingsProps(statsEnabled, logsEnabled, logChannel);
+
+        const props = new VoiceProps(oldState, newState, guild.id, user.id, userName, startTimestamps, settings, Date.now());
 
         for (const voice of this.voices) {
             try {

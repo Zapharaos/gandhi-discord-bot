@@ -31,15 +31,20 @@ It provides the following statistics:
 
 Click on [this link](https://discord.com/oauth2/authorize?client_id=1345799506217930876) to add the bot to your server. Enable the required permissions and you're good to go!
 
-The first step is to set the log channel for the bot to log user activities inside voice channels. Use the following command:
-- `/setlogchannel [text-channel]` - Set the log channel for voice-channel activity tracking.
+The first step is to configure your server settings using the following command:
+- `/serversettings [stats] [logs] [logchannel]` - Configure server settings for stats tracking and event logs.
 
-Now every user's actions in voice channels will be logged in the specified channel.
+You can enable/disable stats tracking, enable/disable event logs, and set the log channel all in one command. For example:
+- `/serversettings stats:ON logs:ON logchannel:#bot-logs` - Enable everything and set the log channel
+- `/serversettings stats:OFF` - Disable stats tracking only
+- `/serversettings logs:OFF` - Disable event logs only
+
+Now every user's actions in voice channels will be tracked and/or logged based on your settings.
 
 ## Commands
 
 The following commands are available:
-- `/setlogchannel [text-channel]` - Set the log channel for voice-channel activity tracking.
+- `/serversettings [stats] [logs] [logchannel]` - Configure server settings for stats tracking and event logs.
 - `/stats [user]` - Returns the stats for a specific user (default: yourself).
 - `/rank [stat]` - Returns the server ranking for a specific stat (default: time connected).
 - `/heatmap [target] [target-all] [stat] [format]` - Returns the yearly calendar heatmap (default: yourself, time connected, png).

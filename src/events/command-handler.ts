@@ -16,6 +16,7 @@ import {Logger} from '@services/logger';
 import {InteractionUtils} from '@utils/interaction';
 import {CommandUtils} from '@utils/command';
 import {EventDataService} from "@services/event-data-service";
+import {ServerController} from "@controllers/server";
 import Logs from '../../lang/logs.json';
 
 export class CommandHandler implements EventHandler {
@@ -114,6 +115,18 @@ export class CommandHandler implements EventHandler {
         // Return if defer was unsuccessful
         if (command.deferType !== CommandDeferType.NONE && !intr.deferred) {
             return;
+        }
+
+        // Check if command requires stats to be enabled
+        const statsRequiredCommands = ['biggusdickus', 'rank', 'stats', 'heatmap', 'list-inactives'];
+        if (intr.guild && statsRequiredCommands.includes(commandName)) {
+            const server = await ServerController.getServer(intr.guild.id);
+            const statsEnabled = !server || (server.stats as unknown as number | null) == null || (server.stats as unknown as number) !== 0;
+
+            if (!statsEnabled) {
+                await InteractionUtils.send(intr, '❌ This command is disabled because stats tracking is turned off for this server. An administrator can enable it using `/serversettings stats:ON`');
+                return;
+            }
         }
 
         // Get data from database
