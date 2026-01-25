@@ -24,15 +24,19 @@ export class MovementsVoice implements Voice {
         // Check if the user is joining a channel
         if (VoiceStateUtils.isJoiningChannel(props.oldState, props.newState)) {
 
-            // Send message to log channel
-            await props.logChannel.send(`➡️ **${props.userName}** joined **${props.newState.channel?.name}**`);
+            // Send message to log channel (only if logs are enabled)
+            if (props.settings.serverlogs) {
+                await props.settings.logchannel.send(`➡️ **${props.userName}** joined **${props.newState.channel?.name}**`);
+            }
             Logger.debug('User is joining a channel');
 
-            // Start connected timestamp for user
-            await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartConnected, props.now);
+            // Start connected timestamp for user (only if stats are enabled)
+            if (props.settings.serverstats) {
+                await StartTimestampsController.setStartTimestamp(props.guildId, props.userId, StartTsFields.StartConnected, props.now);
 
-            // Increment count stat
-            await UserStatsController.incrementCountStat(props.guildId, props.userId, UserStatsFields.CountConnected);
+                // Increment count stat
+                await UserStatsController.incrementCountStat(props.guildId, props.userId, UserStatsFields.CountConnected);
+            }
         }
     }
 
@@ -42,25 +46,31 @@ export class MovementsVoice implements Voice {
         if (VoiceStateUtils.isLeavingChannel(props.oldState, props.newState)) {
 
             // Time was not tracked, send default message
-            if (!props.userStartTs || props.userStartTs.start_connected === 0) {
-                // Send message to log channel
-                await props.logChannel.send(`⬅️ **${props.userName}** left **${props.oldState.channel?.name}**`);
+            if (!props.settings.serverstats || !props.userStartTs || props.userStartTs.start_connected === 0) {
+                // Send message to log channel (only if logs are enabled)
+                if (props.settings.serverlogs) {
+                    await props.settings.logchannel.send(`⬅️ **${props.userName}** left **${props.oldState.channel?.name}**`);
+                }
                 Logger.debug('User is leaving a channel but no start time was tracked');
             }
             // Time tracked: calculate duration and update database
             else {
                 const duration = TimeUtils.getDuration(props.userStartTs.start_connected, props.now);
 
-                // Send message to log channel
-                await props.logChannel.send(`⬅️ **${props.userName}** left **${props.oldState.channel?.name}** after **${TimeUtils.formatDuration(duration)}**`);
+                // Send message to log channel (with or without time based on logs setting)
+                if (props.settings.serverlogs) {
+                    await props.settings.logchannel.send(`⬅️ **${props.userName}** left **${props.oldState.channel?.name}** after **${TimeUtils.formatDuration(duration)}**`);
+                }
                 Logger.debug(`User is leaving a channel after ${duration} ms`);
 
-                // Update user stats and stop connected timestamp for user
-                await StatsControllersUtils.updateStat(props, UserStatsFields.TimeConnected, StartTsFields.StartConnected, duration, props.now);
+                // Update user stats and stop connected timestamp for user (only if stats are enabled)
+                if (props.settings.serverstats) {
+                    await StatsControllersUtils.updateStat(props, UserStatsFields.TimeConnected, StartTsFields.StartConnected, duration, props.now);
+                }
             }
 
-            // If user has no live stats, do nothing
-            if (!props.userStartTs) return;
+            // If stats are disabled or user has no live stats, do nothing
+            if (!props.settings.serverstats || !props.userStartTs) return;
 
             // Stop mute if user was muted
             if (props.userStartTs.start_muted !== 0) {
@@ -104,11 +114,15 @@ export class MovementsVoice implements Voice {
     private async handleSwitch(props: VoiceProps, data: EventData): Promise<void> {
         // Check if the user is switching channels
         if (VoiceStateUtils.isSwitchingChannel(props.oldState, props.newState)) {
-            // Increment count stat
-            await UserStatsController.incrementCountStat(props.guildId, props.userId, UserStatsFields.CountSwitch);
+            // Increment count stat (only if stats are enabled)
+            if (props.settings.serverstats) {
+                await UserStatsController.incrementCountStat(props.guildId, props.userId, UserStatsFields.CountSwitch);
+            }
 
-            // Send message to log channel
-            await props.logChannel.send(`🔄 **${props.userName}** switched from **${props.oldState.channel?.name}** to **${props.newState.channel?.name}**`);
+            // Send message to log channel (only if logs are enabled)
+            if (props.settings.serverlogs) {
+                await props.settings.logchannel.send(`🔄 **${props.userName}** switched from **${props.oldState.channel?.name}** to **${props.newState.channel?.name}**`);
+            }
             Logger.debug('User is switching channels');
         }
     }

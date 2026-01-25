@@ -31,15 +31,36 @@ It provides the following statistics:
 
 Click on [this link](https://discord.com/oauth2/authorize?client_id=1345799506217930876) to add the bot to your server. Enable the required permissions and you're good to go!
 
-The first step is to set the log channel for the bot to log user activities inside voice channels. Use the following command:
-- `/setlogchannel [text-channel]` - Set the log channel for voice-channel activity tracking.
+The first step is to configure your server settings using the following command:
+- `/serversettings [stats] [logs] [logchannel]` - Configure server settings for stats tracking and event logs.
 
-Now every user's actions in voice channels will be logged in the specified channel.
+You can enable/disable stats tracking, enable/disable event logs, and set the log channel all in one command. For example:
+- `/serversettings stats:ON logs:ON logchannel:#bot-logs` - Enable everything and set the log channel
+- `/serversettings stats:OFF` - Disable stats tracking only
+- `/serversettings logs:OFF` - Disable event logs only
+
+Additionally, each user can configure their own personal settings:
+- `/usersettings [stats] [logs] [private]` - Configure your personal settings for stats tracking, event logs, and privacy.
+
+For example:
+- `/usersettings stats:OFF` - Opt-out of stats tracking for yourself
+- `/usersettings logs:OFF` - Opt-out of event logs for yourself
+- `/usersettings private:ON` - Enable private mode (hide from others)
+
+**Note:** Both server and user settings must be enabled for a feature to work. If either the server or the user has disabled stats/logs, the feature will be disabled for that user.
+
+**Private Mode:** When enabled, other users cannot:
+- Target you with commands like `/stats`, `/biggusdickus`, or `/heatmap`
+- See your data in ranking lists (`/rank`) or inactive user lists (`/list-inactives`)
+- However, you can still run all commands and see your own data in the results (responses are private to you)
+
+Now every user's actions in voice channels will be tracked and/or logged based on your settings.
 
 ## Commands
 
 The following commands are available:
-- `/setlogchannel [text-channel]` - Set the log channel for voice-channel activity tracking.
+- `/serversettings [stats] [logs] [logchannel]` - Configure server settings for stats tracking and event logs.
+- `/usersettings [stats] [logs] [private]` - Configure your personal settings for stats tracking, event logs, and privacy (private response).
 - `/stats [user]` - Returns the stats for a specific user (default: yourself).
 - `/rank [stat]` - Returns the server ranking for a specific stat (default: time connected).
 - `/heatmap [target] [target-all] [stat] [format]` - Returns the yearly calendar heatmap (default: yourself, time connected, png).

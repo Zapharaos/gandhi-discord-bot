@@ -4,6 +4,7 @@ import {
     CommandInteraction,
     Events, GuildMember,
     Interaction, PartialGuildMember, VoiceState,
+    MessageReaction, User as DiscordUser, PartialMessageReaction, PartialUser
 } from 'discord.js';
 
 import {
@@ -16,6 +17,7 @@ import {VoiceHandler} from "@events/voice-handler";
 import {StartTimestampsController} from "@controllers/start-timestamps";
 import {DailyStatsController} from "@controllers/daily-stats";
 import {UserStatsController} from "@controllers/user-stats";
+import {pendingTaketimeCards} from '@commands/fun/taketime';
 
 export class Bot {
     private ready = false;
@@ -43,6 +45,7 @@ export class Bot {
         this.client.on(Events.InteractionCreate, (intr: Interaction) => this.onInteraction(intr));
         this.client.on(Events.VoiceStateUpdate, (oldState: VoiceState, newState: VoiceState) => this.onVoiceState(oldState, newState));
         this.client.on(Events.GuildMemberRemove, (member: GuildMember | PartialGuildMember) => this.onGuildMemberRemove(member));
+        this.client.on(Events.MessageReactionAdd, (reaction, user) => this.onMessageReactionAdd(reaction, user));
     }
 
     private async login(token: string): Promise<void> {
@@ -108,6 +111,59 @@ export class Bot {
                     .replaceAll('{USER_ID}', userID)
 
             , error);
+        }
+    }
+
+    private async onMessageReactionAdd(reaction: MessageReaction | PartialMessageReaction, user: DiscordUser | PartialUser): Promise<void> {
+        // Only handle DMs, only if user is not the bot
+        Logger.debug('onMessageReactionAdd triggered');
+        try {
+            // Fetch partials if needed
+            if (reaction.partial) {
+                Logger.debug('Reaction is partial, fetching...');
+                try { await reaction.fetch(); } catch {
+                    Logger.debug('Failed to fetch partial reaction');
+                    return;
+                }
+            }
+            if (user.partial) {
+                Logger.debug('User is partial, fetching...');
+                try { await user.fetch(); } catch {
+                    Logger.debug('Failed to fetch partial user');
+                    return;
+                }
+            }
+
+            Logger.debug(`Reaction from user: ${user.id}, bot: ${user.bot}`);
+            if (user.bot) return;
+
+            Logger.debug(`Message guildId: ${reaction.message.guildId}, isDM: ${!reaction.message.guildId}`);
+            // Only handle DMs
+            if (reaction.message.guildId) return;
+
+            Logger.debug(`Checking pendingTaketimeCards for user ${user.id}: ${!!pendingTaketimeCards[user.id]}`);
+            // Check for pending taketime cards
+            if (pendingTaketimeCards[user.id]) {
+                const pending = pendingTaketimeCards[user.id];
+                Logger.debug(`Pending found. Message ID: ${reaction.message.id}, Expected: ${pending.messageId}`);
+                if (reaction.message.id === pending.messageId) {
+                    Logger.debug('Message ID matches! Sending remaining cards...');
+                    try {
+                        const revealMsg = 'Your remaining cards:\n' + pending.cards.map(card => `- ${card.color} ${card.value}`).join('\n');
+                        await user.send(revealMsg);
+                        // Clear timeout and delete pending cards
+                        clearTimeout(pending.timeoutId);
+                        delete pendingTaketimeCards[user.id];
+                        Logger.debug('Remaining cards sent successfully!');
+                    } catch (e) {
+                        Logger.error('Failed to send remaining cards', e);
+                    }
+                } else {
+                    Logger.debug('Message ID does not match');
+                }
+            }
+        } catch (e) {
+            Logger.error('Error in onMessageReactionAdd', e);
         }
     }
 }

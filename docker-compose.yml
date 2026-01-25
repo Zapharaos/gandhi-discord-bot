@@ -4,7 +4,7 @@ services:
     ports:
       - "${PORT}:${PORT}"
     volumes:
-      - sqlite_data:/app/data
+      - ./data:/app/data
       - ./var:/app/var
     restart: unless-stopped
     command:
@@ -15,4 +15,4 @@ services:
             node --enable-source-maps /app/dist/src/index.js
 
 volumes:
-  sqlite_data:
+  data:

@@ -1,4 +1,4 @@
-import {Client, GatewayIntentBits, REST} from 'discord.js';
+import {Client, GatewayIntentBits, REST, Partials} from 'discord.js';
 import dotenv from 'dotenv';
 import * as process from "node:process";
 
@@ -11,7 +11,8 @@ import {CommandMetadata} from "@commands/metadata";
 import {CommandRegistrationService} from "@services/command-registration-service";
 import {EventDataService} from "@services/event-data-service";
 import Logs from '../lang/logs.json';
-import {SetLogChannelCommand} from "@commands/utility/setlogchannel";
+import {ServerSettingsCommand} from "@commands/utility/server-settings";
+import {UserSettingsCommand} from "@commands/utility/user-settings";
 import {ClashCommand} from "@commands/fun/clash";
 import {BiggusdickusCommand} from "@commands/stats/biggusdickus";
 import {RankCommand} from "@commands/stats/rank";
@@ -25,6 +26,7 @@ import {DeafenVoice} from "./voice/deafen";
 import {ScreenSharingVoice} from "./voice/screen-sharing";
 import {CameraVoice} from "./voice/camera";
 import {ListInactivesCommand} from "@commands/utility/list-inactives";
+import {TaketimeCommand} from "@commands/fun/taketime";
 
 dotenv.config();
 
@@ -58,19 +60,32 @@ async function start(): Promise<void> {
             GatewayIntentBits.Guilds,
             GatewayIntentBits.GuildVoiceStates,
             GatewayIntentBits.GuildMembers,
-        ]
+            GatewayIntentBits.GuildMessages,
+            GatewayIntentBits.GuildMessageReactions,
+            GatewayIntentBits.MessageContent,
+            GatewayIntentBits.DirectMessages,
+            GatewayIntentBits.DirectMessageReactions,
+        ],
+        partials: [
+            Partials.Message,
+            Partials.Channel,
+            Partials.Reaction,
+            Partials.User,
+        ],
     });
 
     // Commands
     const commands: Command[] = [
         new PingCommand(),
-        new SetLogChannelCommand(),
+        new ServerSettingsCommand(),
+        new UserSettingsCommand(),
         new ClashCommand(),
         new BiggusdickusCommand(),
         new RankCommand(),
         new StatsCommand(),
         new HeatmapCommand(),
-        new ListInactivesCommand()
+        new ListInactivesCommand(),
+        new TaketimeCommand(),
     ];
 
     // Event handlers

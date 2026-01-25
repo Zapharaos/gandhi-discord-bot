@@ -23,6 +23,8 @@ export interface DailyStats {
 export interface Servers {
   guild_id: string | null;
   log_channel_id: string | null;
+  stats: Generated<number | null>;
+  logs: Generated<number | null>;
 }
 
 export interface StartTimestamps {
@@ -45,12 +47,15 @@ export interface UserStats {
   daily_streak: Generated<number | null>;
   guild_id: string | null;
   last_activity: Generated<number | null>;
+  logs: Generated<number | null>;
   max_camera: Generated<number | null>;
   max_connected: Generated<number | null>;
   max_daily_streak: Generated<number | null>;
   max_deafened: Generated<number | null>;
   max_muted: Generated<number | null>;
   max_screen_sharing: Generated<number | null>;
+  private: Generated<number | null>;
+  stats: Generated<number | null>;
   time_camera: Generated<number | null>;
   time_connected: Generated<number | null>;
   time_deafened: Generated<number | null>;

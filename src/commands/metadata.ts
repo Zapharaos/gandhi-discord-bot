@@ -21,10 +21,10 @@ export const CommandMetadata: {
         ]).toString(),
         options: [],
     },
-    SET_LOG_CHANNEL: {
+    SERVER_SETTINGS: {
         type: ApplicationCommandType.ChatInput,
-        name: 'setlogchannel',
-        description: 'Set the log channel for voice-channel activity tracking',
+        name: 'serversettings',
+        description: 'Configure server settings for stats tracking and event logs',
         dm_permission: false,
         default_member_permissions: PermissionsBitField.resolve([
             PermissionFlagsBits.Administrator,
@@ -32,10 +32,68 @@ export const CommandMetadata: {
         ]).toString(),
         options: [
             {
+                type: 3,
+                name: 'stats',
+                description: 'Enable or disable stats tracking',
+                required: false,
+                choices: [
+                    { name: 'ON', value: 'on' },
+                    { name: 'OFF', value: 'off' },
+                ],
+            },
+            {
+                type: 3,
+                name: 'logs',
+                description: 'Enable or disable event logs',
+                required: false,
+                choices: [
+                    { name: 'ON', value: 'on' },
+                    { name: 'OFF', value: 'off' },
+                ],
+            },
+            {
                 type: 7,
-                name: 'channel',
+                name: 'logchannel',
                 description: 'Select a text channel for logs',
-                required: true,
+                required: false,
+            },
+        ],
+    },
+    USER_SETTINGS: {
+        type: ApplicationCommandType.ChatInput,
+        name: 'usersettings',
+        description: 'Configure your personal settings for stats tracking and event logs',
+        dm_permission: false,
+        options: [
+            {
+                type: 3,
+                name: 'stats',
+                description: 'Enable or disable your stats tracking',
+                required: false,
+                choices: [
+                    { name: 'ON', value: 'on' },
+                    { name: 'OFF', value: 'off' },
+                ],
+            },
+            {
+                type: 3,
+                name: 'logs',
+                description: 'Enable or disable your event logs',
+                required: false,
+                choices: [
+                    { name: 'ON', value: 'on' },
+                    { name: 'OFF', value: 'off' },
+                ],
+            },
+            {
+                type: 3,
+                name: 'private',
+                description: 'Enable or disable private mode (hide from others)',
+                required: false,
+                choices: [
+                    { name: 'ON', value: 'on' },
+                    { name: 'OFF', value: 'off' },
+                ],
             },
         ],
     },
@@ -176,6 +234,38 @@ export const CommandMetadata: {
                 type: 4,
                 name: 'days',
                 description: 'Number of days since last activity to be considered inactive (default: 100)',
+                required: false,
+            },
+        ],
+    },
+    TAKETIME: {
+        type: ApplicationCommandType.ChatInput,
+        name: 'taketime',
+        description: 'Deal secret cards to 2-4 users from two decks (white/black, 1-12)',
+        dm_permission: false,
+        options: [
+            {
+                type: 6, // USER
+                name: 'user1',
+                description: 'First user',
+                required: true,
+            },
+            {
+                type: 6, // USER
+                name: 'user2',
+                description: 'Second user',
+                required: true,
+            },
+            {
+                type: 6, // USER
+                name: 'user3',
+                description: 'Third user',
+                required: false,
+            },
+            {
+                type: 6, // USER
+                name: 'user4',
+                description: 'Fourth user',
                 required: false,
             },
         ],
