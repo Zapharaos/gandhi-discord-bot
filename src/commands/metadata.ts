@@ -85,6 +85,16 @@ export const CommandMetadata: {
                     { name: 'OFF', value: 'off' },
                 ],
             },
+            {
+                type: 3,
+                name: 'private',
+                description: 'Enable or disable private mode (hide from others)',
+                required: false,
+                choices: [
+                    { name: 'ON', value: 'on' },
+                    { name: 'OFF', value: 'off' },
+                ],
+            },
         ],
     },
     CLASH: {

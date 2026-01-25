@@ -13,7 +13,7 @@ import {StartTimestampsModel, StartTsFields, StatKey} from "@models/database/sta
 
 export class StatsCommand implements Command {
     public names = ['stats'];
-    public deferType = CommandDeferType.PUBLIC;
+    public deferType = CommandDeferType.HIDDEN;
     public requireClientPerms: PermissionsString[] = [];
 
     public async execute(intr: ChatInputCommandInteraction): Promise<void> {
@@ -24,6 +24,15 @@ export class StatsCommand implements Command {
         }
 
         const interactionUser: InteractionUser = InteractionUtils.getInteractionUser(intr);
+
+        // Check if target user is private and not the command user
+        if (interactionUser.id !== intr.user.id) {
+            const isPrivate = await UserStatsController.isUserPrivate(guildId, interactionUser.id);
+            if (isPrivate) {
+                await InteractionUtils.send(intr, `❌ This user has enabled private mode and cannot be targeted.`);
+                return;
+            }
+        }
 
         // Get the user stats
         const rowUserStats = await UserStatsController.getUserInGuild(guildId, interactionUser.id);

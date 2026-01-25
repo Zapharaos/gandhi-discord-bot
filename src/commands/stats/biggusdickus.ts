@@ -11,20 +11,29 @@ import {UserStatsModel} from "@models/database/user_stats";
 
 export class BiggusdickusCommand implements Command {
     public names = ['biggusdickus'];
-    public deferType = CommandDeferType.NONE;
+    public deferType = CommandDeferType.HIDDEN;
     public requireClientPerms: PermissionsString[] = [];
 
     public async execute(intr: ChatInputCommandInteraction): Promise<void> {
         const guildId = InteractionUtils.getGuildId(intr);
         if (!guildId) {
             await Logger.error(Logs.error.intrMissingGuildID);
-            await InteractionUtils.send(intr, 'This command can only be used in a server.');
+            await InteractionUtils.editReply(intr, 'This command can only be used in a server.');
             return;
         }
 
         const interactionUser: InteractionUser = InteractionUtils.getInteractionUser(intr);
         // intrUserRaw is the user mention in the reply
         const intrUserRaw = InteractionUtils.getInteractionUserRaw(intr);
+
+        // Check if target user is private and not the command user
+        if (interactionUser.id !== intr.user.id) {
+            const isPrivate = await UserStatsController.isUserPrivate(guildId, interactionUser.id);
+            if (isPrivate) {
+                await InteractionUtils.editReply(intr, `❌ This user has enabled private mode and cannot be targeted.`);
+                return;
+            }
+        }
 
         // Get the user stats
         const rowUserStats = await UserStatsController.getUserInGuild(guildId, interactionUser.id);
@@ -34,7 +43,7 @@ export class BiggusdickusCommand implements Command {
 
         // User has no stats yet
         if(!rowUserStats && !rowStartTs){
-            await InteractionUtils.send(intr, `${intrUserRaw} has no stats yet!`);
+            await InteractionUtils.editReply(intr, `${intrUserRaw} has no stats yet!`);
             return;
         }
 
@@ -58,7 +67,7 @@ export class BiggusdickusCommand implements Command {
 
         // Build the reply
         const reply = this.formatReply(streak, intrUserRaw);
-        await InteractionUtils.send(intr, reply);
+        await InteractionUtils.editReply(intr, reply);
     }
 
     private getPP(num: number){

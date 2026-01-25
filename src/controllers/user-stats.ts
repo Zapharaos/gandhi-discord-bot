@@ -287,7 +287,7 @@ export class UserStatsController {
     static async updateUserSettings(
         guildID: string,
         userID: string,
-        settings: { stats?: boolean; logs?: boolean }
+        settings: { stats?: boolean; logs?: boolean; private?: boolean }
     ): Promise<boolean> {
         // Get the database instance
         const db = await getDb();
@@ -305,6 +305,9 @@ export class UserStatsController {
             if (settings.logs !== undefined) {
                 updateData.logs = settings.logs ? 1 : 0;
             }
+            if (settings.private !== undefined) {
+                updateData.private = settings.private ? 1 : 0;
+            }
 
             await db
                 .insertInto('user_stats')
@@ -319,6 +322,34 @@ export class UserStatsController {
             return true;
         } catch (err) {
             await Logger.error(`Error updating user settings for user ${userID} in guild ${guildID}`, err);
+            return false;
+        }
+    }
+
+    static async isUserPrivate(guildID: string, userID: string): Promise<boolean> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return false;
+        }
+
+        try {
+            const userStats = await db
+                .selectFrom('user_stats')
+                .select('private')
+                .where('guild_id', '=', guildID)
+                .where('user_id', '=', userID)
+                .executeTakeFirst();
+
+            if (!userStats) {
+                return false; // Default to not private if no record
+            }
+
+            const isPrivate = (userStats.private as unknown as number | null);
+            return isPrivate !== null && isPrivate !== 0;
+        } catch (err) {
+            await Logger.error(`Error checking if user ${userID} is private in guild ${guildID}`, err);
             return false;
         }
     }

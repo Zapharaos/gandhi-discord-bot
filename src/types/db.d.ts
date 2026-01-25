@@ -54,6 +54,7 @@ export interface UserStats {
   max_deafened: Generated<number | null>;
   max_muted: Generated<number | null>;
   max_screen_sharing: Generated<number | null>;
+  private: Generated<number | null>;
   stats: Generated<number | null>;
   time_camera: Generated<number | null>;
   time_connected: Generated<number | null>;

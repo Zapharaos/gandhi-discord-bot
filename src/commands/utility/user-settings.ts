@@ -7,7 +7,7 @@ import Logs from "../../../lang/logs.json";
 
 export class UserSettingsCommand implements Command {
     public names = ['usersettings'];
-    public deferType = CommandDeferType.NONE;
+    public deferType = CommandDeferType.HIDDEN;
     public requireClientPerms: PermissionsString[] = [];
 
     public async execute(intr: ChatInputCommandInteraction): Promise<void> {
@@ -20,21 +20,25 @@ export class UserSettingsCommand implements Command {
 
         const stats = intr.options.getString("stats");
         const logs = intr.options.getString("logs");
+        const privateMode = intr.options.getString("private");
 
         // Check if at least one option is provided
-        if (!stats && !logs) {
+        if (!stats && !logs && !privateMode) {
             await InteractionUtils.send(intr, "❌ Please provide at least one setting to update!");
             return;
         }
 
         try {
-            const updates: { stats?: boolean; logs?: boolean } = {};
+            const updates: { stats?: boolean; logs?: boolean; private?: boolean } = {};
 
             if (stats) {
                 updates.stats = stats.toLowerCase() === 'on';
             }
             if (logs) {
                 updates.logs = logs.toLowerCase() === 'on';
+            }
+            if (privateMode) {
+                updates.private = privateMode.toLowerCase() === 'on';
             }
 
             const success = await UserStatsController.updateUserSettings(guildId, intr.user.id, updates);
@@ -46,6 +50,9 @@ export class UserSettingsCommand implements Command {
                 }
                 if (logs) {
                     messages.push(`📝 Your event logs: **${logs.toUpperCase()}**`);
+                }
+                if (privateMode) {
+                    messages.push(`🔒 Private mode: **${privateMode.toUpperCase()}**`);
                 }
 
                 await InteractionUtils.send(intr, `✅ Your settings updated:\n${messages.join('\n')}`);
