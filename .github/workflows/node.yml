@@ -11,7 +11,9 @@ jobs:
   build:
     strategy:
       matrix:
-        node: [ 'latest' ]
+        # Pin to an LTS release: 'latest' resolves to bleeding-edge Node (26+),
+        # for which better-sqlite3 has no prebuilt binary and fails to compile.
+        node: [ '22' ]
         os: [ ubuntu-latest ]
 
     runs-on: ${{ matrix.os }}
