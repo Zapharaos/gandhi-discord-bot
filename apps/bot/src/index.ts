@@ -31,6 +31,7 @@ import {ScreenSharingVoice} from "./voice/screen-sharing";
 import {CameraVoice} from "./voice/camera";
 import {ListInactivesCommand} from "@commands/utility/list-inactives";
 import {TaketimeCommand} from "@commands/fun/taketime";
+import {webEvents} from "@services/web-event-publisher";
 
 dotenv.config();
 
@@ -57,6 +58,9 @@ async function start(): Promise<void> {
 
     // Services
     const eventDataService = new EventDataService();
+
+    // Optional live-event bridge to the web service (no-op if not configured).
+    webEvents.start();
 
     // Client
     const client = new Client({

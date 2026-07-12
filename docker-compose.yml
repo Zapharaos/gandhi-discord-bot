@@ -8,6 +8,9 @@ services:
     environment:
       # Keep the runtime in UTC so day bucketing and date rendering stay consistent.
       - TZ=UTC
+      # Push live voice events to the web service over the internal WebSocket.
+      - WEB_INTERNAL_WS_URL=ws://web-api:${WEB_PORT}/internal/events
+      - INTERNAL_WS_TOKEN=${INTERNAL_WS_TOKEN}
     ports:
       - "${PORT}:${PORT}"
     volumes:
@@ -49,6 +52,12 @@ services:
       # but the connection is opened read-only in code — the bot is the sole writer.
       - ./data:/app/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:${WEB_PORT}/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   # Static Angular front-end served by nginx, which reverse-proxies /api, /auth
   # and /ws to the web service so the SPA is same-origin (no CORS). Deployable
@@ -62,6 +71,12 @@ services:
     ports:
       - "${WEB_UI_PORT:-8080}:80"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 volumes:
   data:

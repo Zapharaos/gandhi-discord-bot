@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { combineLatest, startWith, Subject, switchMap, map, auditTime } from 'rxjs';
 import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
+import { ButtonModule } from 'primeng/button';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { ApiService } from '@core/api/api.service';
@@ -26,6 +27,7 @@ interface StatOption {
     FormsModule,
     SelectModule,
     TagModule,
+    ButtonModule,
     TranslatePipe,
     StatCardComponent,
     HeatmapComponent,
@@ -33,11 +35,15 @@ interface StatOption {
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="flex items-center gap-3">
+    <section class="flex flex-wrap items-center gap-3">
       <h1 class="text-xl font-bold">{{ title() }}</h1>
       @if (stats()?.isLive) {
         <p-tag severity="success" [value]="'dashboard.live' | translate" icon="pi pi-circle-fill" />
       }
+      <div class="ml-auto flex gap-2">
+        <p-button size="small" severity="secondary" [outlined]="true" icon="pi pi-download" label="JSON" (onClick)="export('json')" />
+        <p-button size="small" severity="secondary" [outlined]="true" icon="pi pi-download" label="CSV" (onClick)="export('csv')" />
+      </div>
     </section>
 
     @if (stats(); as s) {
@@ -120,6 +126,12 @@ export class DashboardComponent implements OnDestroy {
     this.ws.connect();
     // Live: re-fetch (throttled) whenever a voice event lands for a room we're in.
     this.ws.events.pipe(auditTime(1500)).subscribe(() => this.refresh$.next());
+  }
+
+  export(format: 'json' | 'csv'): void {
+    // Full-page navigation so the browser handles the file download (the session
+    // cookie is sent automatically).
+    window.location.href = this.api.exportUrl(format, this.guildId());
   }
 
   ngOnDestroy(): void {

@@ -9,6 +9,7 @@ import {InteractionUtils} from "@utils/interaction";
 import {UserStatsController} from "@controllers/user-stats";
 import {DailyStatsController} from "@controllers/daily-stats";
 import {StartTimestampsController} from "@controllers/start-timestamps";
+import {buildExportPayload} from "@gandhi/core/services/export";
 
 // Conservative cap so the file uploads on any server (Discord's base limit is 25 MiB,
 // but non-boosted servers historically allowed less). Aggregate stats are tiny, so
@@ -44,27 +45,17 @@ export class ExportDataCommand implements Command {
             return;
         }
 
-        // Group all rows by guild so the export is easy to read and portable.
-        const guildIds = new Set<string>();
-        for (const r of statsRows) if (r.guild_id) guildIds.add(r.guild_id);
-        for (const r of dailyRows) if (r.guild_id) guildIds.add(r.guild_id);
-        for (const r of tsRows) if (r.guild_id) guildIds.add(r.guild_id);
-
-        const guilds = [...guildIds].map((gid) => ({
-            guild_id: gid,
-            guild_name: intr.client.guilds.cache.get(gid)?.name ?? null,
-            user_stats: statsRows.find((r) => r.guild_id === gid) ?? null,
-            start_timestamps: tsRows.find((r) => r.guild_id === gid) ?? null,
-            daily_stats: dailyRows.filter((r) => r.guild_id === gid),
-        }));
-
-        const payload = {
-            export_version: 1,
-            exported_at: new Date().toISOString(),
-            discord_user_id: intr.user.id,
+        // Group all rows by guild into a portable payload (shared with the web
+        // service via @gandhi/core), resolving guild names from the client cache.
+        const payload = buildExportPayload({
+            userId: intr.user.id,
             scope,
-            guilds,
-        };
+            userStats: statsRows,
+            startTimestamps: tsRows,
+            dailyStats: dailyRows,
+            guildName: (gid) => intr.client.guilds.cache.get(gid)?.name ?? null,
+        });
+        const guilds = payload.guilds;
 
         const json = Buffer.from(JSON.stringify(payload, null, 2), 'utf-8');
         const baseName = `gandhi-export-${intr.user.id}-${scope}`;

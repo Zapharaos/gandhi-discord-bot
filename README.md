@@ -165,8 +165,21 @@ Endpoints (all `/api/*` require an authenticated session cookie):
 | `GET /api/me` | Current user + their guilds (with `hasData` / `isAdmin` flags) |
 | `GET /api/stats/global` · `GET /api/stats/guild/:guildId` | Aggregated stats (with live session folded in) |
 | `GET /api/timeline?guildId=&stat=&from=&to=` | Daily series for the heatmap |
+| `GET /api/export?guildId=&format=json\|csv` | Download the user's data (JSON = all tables, CSV = long-format daily stats) |
+| `GET /api/admin/guild/:id/overview` · `.../members` · `.../timeline` | Server-wide admin view (requires admin on the guild) |
 | `WS /ws` | Authenticated browser stream (live voice events) |
 | `WS /internal/events?token=` | Internal endpoint the bot pushes events to |
+
+Admin routes require the caller to have `ADMINISTRATOR` / `MANAGE_GUILD` on the
+target guild (from the Discord `guilds` OAuth scope). **Privacy policy:** members
+who enabled private mode are counted in the server-wide totals but never named in
+the leaderboard or per-member list — a `hiddenCount` reports how many were
+withheld.
+
+Live updates flow bot → web-api → browser: set `WEB_INTERNAL_WS_URL`
+(e.g. `ws://web-api:3001/internal/events`) and a shared `INTERNAL_WS_TOKEN` on the
+bot to enable it. Leaving `WEB_INTERNAL_WS_URL` unset makes the bot run
+standalone — the dashboard still works, just without real-time pushes.
 
 ## Web front-end (`apps/web-ui`)
 
@@ -186,6 +199,34 @@ docker compose up web-ui  # or serve it with nginx (reverse-proxies to web-api)
 In the nginx-fronted (Docker) setup the SPA is served **same-origin** with the
 API, so no CORS is needed; point `WEB_BASE_URL` / `WEB_FRONTEND_URL` at the
 front-end's public origin (e.g. `http://localhost:8080`).
+
+## Security & deployment
+
+The web service is built to run behind a TLS-terminating reverse proxy and to
+expose the smallest possible surface:
+
+- **Read-only database.** `web-api` opens the SQLite file read-only
+  (`PRAGMA query_only`); the bot is the sole writer and enables WAL, so the two
+  processes never contend. They only need to share the `./data` volume — deploy
+  them on the same host, independently of each other.
+- **Secrets.** Generate strong values for `SESSION_SECRET` (cookie signing) and
+  `INTERNAL_WS_TOKEN` (bot → web-api event channel), e.g. `openssl rand -hex 32`.
+  Never commit them; they are read from the environment.
+- **TLS & cookies.** Put a reverse proxy (Caddy, Traefik, nginx) in front,
+  terminating HTTPS. Set `WEB_BASE_URL` / `WEB_FRONTEND_URL` to the public
+  `https://` origin — the session cookie is then issued `Secure`, `HttpOnly`,
+  `SameSite=Lax` and signed. The service already sets `trustProxy`.
+- **Hardening built in.** Security headers ([helmet](https://github.com/fastify/fastify-helmet)),
+  rate limiting (300 req/min per IP, `/health` exempt), a capped body size, and
+  JSON-schema validation on all inputs. Errors return a generic shape and never
+  leak internals.
+- **Least-privilege data access.** Every `/api/*` route is scoped to the
+  authenticated user and only ever returns that user's own data. The `guilds`
+  OAuth scope is used solely to flag which servers the user may administer (for
+  the upcoming admin view). Sessions live in memory only — a `web-api` restart
+  just means users log in again.
+- **OAuth redirect URI** must exactly match `${WEB_BASE_URL}/auth/callback` in
+  the Discord Developer Portal.
 
 ## Tests
 

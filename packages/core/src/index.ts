@@ -9,6 +9,8 @@
 // they are re-exported here under distinct aliases to avoid a name collision.
 
 export * from './types/db';
+export * from './ws/protocol';
+export * from './services/export';
 export * from './utils/time';
 export * from './utils/number';
 export * from './utils/database';

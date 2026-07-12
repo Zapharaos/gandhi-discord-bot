@@ -15,6 +15,14 @@
       "types": "./dist/types/db.d.ts",
       "default": "./dist/types/db.js"
     },
+    "./ws/protocol": {
+      "types": "./dist/ws/protocol.d.ts",
+      "default": "./dist/ws/protocol.js"
+    },
+    "./services/export": {
+      "types": "./dist/services/export.d.ts",
+      "default": "./dist/services/export.js"
+    },
     "./utils/time": {
       "types": "./dist/utils/time.d.ts",
       "default": "./dist/utils/time.js"

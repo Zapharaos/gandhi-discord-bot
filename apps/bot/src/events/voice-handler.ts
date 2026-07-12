@@ -14,6 +14,29 @@ import {Logger} from "@services/logger";
 import Logs from "../../lang/logs.json";
 import {StartTimestampsModel} from "@gandhi/core/models/database/start_timestamps";
 import {UserStatsController} from "@controllers/user-stats";
+import {webEvents} from "@services/web-event-publisher";
+import type {VoiceEventType} from "@gandhi/core/ws/protocol";
+
+/**
+ * Derive the live event(s) from a voice-state transition. Several dimensions can
+ * change at once (e.g. connecting while already muted), so this returns every
+ * change; the web dashboard uses them only as a signal to refresh.
+ */
+function deriveVoiceEvents(oldState: VoiceState, newState: VoiceState): VoiceEventType[] {
+    const events: VoiceEventType[] = [];
+
+    if (oldState.channelId !== newState.channelId) {
+        if (!oldState.channelId && newState.channelId) events.push('connect');
+        else if (oldState.channelId && !newState.channelId) events.push('disconnect');
+        else events.push('switch');
+    }
+    if (oldState.mute !== newState.mute) events.push(newState.mute ? 'mute' : 'unmute');
+    if (oldState.deaf !== newState.deaf) events.push(newState.deaf ? 'deafen' : 'undeafen');
+    if (oldState.selfVideo !== newState.selfVideo) events.push(newState.selfVideo ? 'camera_on' : 'camera_off');
+    if (oldState.streaming !== newState.streaming) events.push(newState.streaming ? 'screen_on' : 'screen_off');
+
+    return events;
+}
 
 export class VoiceHandler implements EventHandler {
 
@@ -71,6 +94,15 @@ export class VoiceHandler implements EventHandler {
         const settings = new SettingsProps(statsEnabled, logsEnabled, logChannel);
 
         const props = new VoiceProps(oldState, newState, guild.id, user.id, userName, startTimestamps, settings, Date.now());
+
+        // Push live events to the web dashboard (best-effort; only for tracked
+        // users, so opted-out users' activity is never broadcast).
+        if (statsEnabled) {
+            const now = Date.now();
+            for (const type of deriveVoiceEvents(oldState, newState)) {
+                webEvents.publish({ guildId: guild.id, userId: user.id, type, timestamp: now });
+            }
+        }
 
         for (const voice of this.voices) {
             try {
