@@ -1,0 +1,25 @@
+/* Visit https://aka.ms/tsconfig to read more about this file */
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "outDir": "./dist",
+
+    "plugins": [
+      {
+        "transform": "typescript-transform-paths"
+      }
+    ],
+
+    "paths": {
+      "@commands/*": ["src/commands/*"],
+      "@constants/*": ["src/constants/*"],
+      "@controllers/*": ["src/controllers/*"],
+      "@events/*": ["src/events/*"],
+      "@utils/*": ["src/utils/*"],
+      "@models/*": ["src/models/*"],
+      "@services/*": ["src/services/*"]
+    }
+  },
+  "exclude": [ "dist", "node_modules", "tests", "scripts" ]
+}

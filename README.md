@@ -97,6 +97,19 @@ For the `scope` option, the default is the current server; choosing "all servers
 
 First follow the official Discord documentation [here](https://discord.com/developers/docs/quick-start/getting-started) to setup a bot, get the credentials and update the .env file.
 
+This repository is an [npm workspaces](https://docs.npmjs.com/cli/using-npm/workspaces) monorepo:
+
+```
+packages/core   # @gandhi/core — shared pure domain layer (DB types, models, helpers)
+apps/bot        # the Discord bot (depends on @gandhi/core)
+```
+
+The shared `data/`, `var/` and `.env` live at the repository root, and the root
+`package.json` scripts (`build`, `start`, `migrate`, …) are the canonical entry
+points — run them from the repo root so `dotenv` and the SQLite path resolve
+correctly. This layout lets a future web service (`apps/*`) reuse `@gandhi/core`
+and be deployed independently of the bot.
+
 This project uses Node and optionally Docker.
 
 To run the bot with Docker (recommended), use the following command:
@@ -115,7 +128,7 @@ npm run start # To build and run the project
 
 ## Tests
 
-The project uses [Jest](https://jestjs.io/) (via `ts-jest`) for unit tests. Test files live in `tests/` and follow the `*.test.ts` naming convention.
+The project uses [Jest](https://jestjs.io/) (via `ts-jest`) for unit tests. Test files live in `apps/bot/tests/` and follow the `*.test.ts` naming convention.
 
 ```bash
 npm test              # Run all tests with a coverage report
@@ -125,7 +138,7 @@ npx jest --watch      # Re-run tests on change
 
 `npm test` runs Jest with `--coverage`, producing a `coverage/` report (including `coverage/lcov.info`, which is uploaded to [Codecov](https://about.codecov.io/) in CI).
 
-The suite covers the pure business-logic layer — the utilities (`src/utils`) and the database models (`src/models/database`), which include the time math, live-stat aggregation and voice-state transitions. Controllers and services are intentionally excluded from the unit tests, as they require a live SQLite binding; they are better exercised through integration tests.
+The suite covers the pure business-logic layer — the bot utilities (`apps/bot/src/utils`) and the shared `@gandhi/core` helpers and database models (`packages/core/src`), which include the time math, live-stat aggregation and voice-state transitions. Controllers and services are intentionally excluded from the unit tests, as they require a live SQLite binding; they are better exercised through integration tests.
 
 Tests run automatically in CI on every pull request against `main` or `develop` (see [`.github/workflows/node.yml`](.github/workflows/node.yml)), alongside linting and the build. All three must pass before merging.
 

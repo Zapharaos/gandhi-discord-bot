@@ -1,6 +1,10 @@
 services:
   bot:
-    build: .
+    build:
+      # Build from the monorepo root so the image can install the whole npm
+      # workspace graph and compile @gandhi/core before the bot.
+      context: .
+      dockerfile: apps/bot/Dockerfile
     environment:
       # Keep the runtime in UTC so day bucketing and date rendering stay consistent.
       - TZ=UTC
@@ -15,7 +19,7 @@ services:
         - -c
         - |
             npm run migrate
-            node --enable-source-maps /app/dist/src/index.js
+            node --enable-source-maps /app/apps/bot/dist/src/index.js
 
 volumes:
   data:

@@ -1,0 +1,55 @@
+{
+  "name": "@gandhi/core",
+  "version": "2.2.1",
+  "description": "Shared pure domain layer (types, models, helpers) for the Gandhi bot and web service",
+  "author": "Matthieu FREITAG",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./types/db": {
+      "types": "./dist/types/db.d.ts",
+      "default": "./dist/types/db.js"
+    },
+    "./utils/time": {
+      "types": "./dist/utils/time.d.ts",
+      "default": "./dist/utils/time.js"
+    },
+    "./utils/number": {
+      "types": "./dist/utils/number.d.ts",
+      "default": "./dist/utils/number.js"
+    },
+    "./utils/database": {
+      "types": "./dist/utils/database.d.ts",
+      "default": "./dist/utils/database.js"
+    },
+    "./models/database/user_stats": {
+      "types": "./dist/models/database/user_stats.d.ts",
+      "default": "./dist/models/database/user_stats.js"
+    },
+    "./models/database/start_timestamps": {
+      "types": "./dist/models/database/start_timestamps.d.ts",
+      "default": "./dist/models/database/start_timestamps.js"
+    },
+    "./models/database/daily_stats": {
+      "types": "./dist/models/database/daily_stats.d.ts",
+      "default": "./dist/models/database/daily_stats.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.json"
+  },
+  "dependencies": {
+    "kysely": "^0.27.6"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
