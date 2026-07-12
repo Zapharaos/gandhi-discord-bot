@@ -356,6 +356,31 @@ export class UserStatsController {
     }
 
     /**
+     * Returns every user_stats row linked to a user (right to access / portability).
+     * Scoped to guildID when provided, otherwise every server.
+     */
+    static async getUserData(userID: string, guildID?: string): Promise<UserStats[]> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return [];
+        }
+
+        try {
+            let query = db.selectFrom('user_stats').selectAll().where('user_id', '=', userID);
+            if (guildID) {
+                query = query.where('guild_id', '=', guildID);
+            }
+            const rows = await query.execute();
+            return rows as unknown as UserStats[];
+        } catch (err) {
+            await Logger.error(`Error exporting user_stats for user ${userID}${guildID ? ` in guild ${guildID}` : ' (all guilds)'}`, err);
+            return [];
+        }
+    }
+
+    /**
      * Erases a user's stats rows entirely (right to erasure). When guildID is
      * provided it is scoped to that server, otherwise every server is purged.
      * Removing the row also clears the user's settings, so they revert to the

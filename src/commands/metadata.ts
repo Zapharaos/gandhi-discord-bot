@@ -140,6 +140,24 @@ export const CommandMetadata: {
             },
         ],
     },
+    EXPORT: {
+        type: ApplicationCommandType.ChatInput,
+        name: 'export',
+        description: 'Export a copy of all data we hold about you as a JSON file',
+        dm_permission: true,
+        options: [
+            {
+                type: 3,
+                name: 'scope',
+                description: 'Which servers to export data from (default: this server)',
+                required: false,
+                choices: [
+                    { name: 'this server', value: 'server' },
+                    { name: 'all servers', value: 'global' },
+                ],
+            },
+        ],
+    },
     CLASH: {
         type: ApplicationCommandType.ChatInput,
         name: 'clash',

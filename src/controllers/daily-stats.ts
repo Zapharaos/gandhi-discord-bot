@@ -145,6 +145,31 @@ export class DailyStatsController {
     }
 
     /**
+     * Returns every daily_stats row linked to a user (right to access / portability).
+     * Scoped to guildID when provided, otherwise every server.
+     */
+    static async getUserData(userID: string, guildID?: string): Promise<DailyStats[]> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return [];
+        }
+
+        try {
+            let query = db.selectFrom('daily_stats').selectAll().where('user_id', '=', userID);
+            if (guildID) {
+                query = query.where('guild_id', '=', guildID);
+            }
+            const rows = await query.execute();
+            return rows as unknown as DailyStats[];
+        } catch (err) {
+            await Logger.error(`Error exporting daily_stats for user ${userID}${guildID ? ` in guild ${guildID}` : ' (all guilds)'}`, err);
+            return [];
+        }
+    }
+
+    /**
      * Erases a user's daily history (right to erasure). Scoped to guildID when
      * provided, otherwise every server. Returns the number of rows deleted.
      */
