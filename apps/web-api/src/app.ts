@@ -9,6 +9,7 @@ import { registerAuthRoutes } from './auth/routes';
 import { registerStatsRoutes } from './stats/routes';
 import { registerExportRoutes } from './export/routes';
 import { registerAdminRoutes } from './admin/routes';
+import { registerStatusRoutes } from './status/routes';
 import { registerWsRoutes } from './ws/routes';
 
 export async function buildApp(): Promise<FastifyInstance> {
@@ -80,6 +81,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     await registerStatsRoutes(app);
     await registerExportRoutes(app);
     await registerAdminRoutes(app);
+    await registerStatusRoutes(app);
     await registerWsRoutes(app);
 
     return app;

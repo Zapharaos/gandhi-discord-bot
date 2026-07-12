@@ -20,6 +20,15 @@ export interface DailyStats {
   user_id: string | null;
 }
 
+export interface BotStatus {
+  shard_id: number | null;
+  updated_at: number | null;
+  ready: number | null;
+  guild_count: number | null;
+  ws_ping: number | null;
+  started_at: number | null;
+}
+
 export interface Servers {
   guild_id: string | null;
   log_channel_id: string | null;
@@ -67,6 +76,7 @@ export interface UserStats {
 }
 
 export interface DB {
+  bot_status: BotStatus;
   daily_stats: DailyStats;
   servers: Servers;
   start_timestamps: StartTimestamps;

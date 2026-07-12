@@ -6,6 +6,7 @@ import {
   AdminOverviewResponse,
   AdminTimelineResponse,
   MeResponse,
+  ServiceStatus,
   StatsResponse,
   TimelineResponse,
   TimelineStat,
@@ -18,6 +19,10 @@ export class ApiService {
 
   me(): Observable<MeResponse> {
     return this.http.get<MeResponse>(`${this.base}/api/me`);
+  }
+
+  status(): Observable<ServiceStatus> {
+    return this.http.get<ServiceStatus>(`${this.base}/api/status`);
   }
 
   globalStats(): Observable<StatsResponse> {

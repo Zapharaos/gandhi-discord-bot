@@ -3,6 +3,10 @@
     "title": "Gandhi Stats",
     "logout": "Log out"
   },
+  "health": {
+    "online": "Bot online",
+    "offline": "Bot offline"
+  },
   "login": {
     "title": "Gandhi Stats",
     "subtitle": "Sign in to view your voice activity across your servers.",

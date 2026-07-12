@@ -103,3 +103,18 @@ export interface AdminTimelineResponse {
   stat: TimelineStat;
   points: TimelinePoint[];
 }
+
+export interface BotHealth {
+  online: boolean;
+  ready: boolean;
+  lastSeen: number | null;
+  guildCount: number;
+  wsPing: number | null;
+  uptimeMs: number | null;
+}
+
+export interface ServiceStatus {
+  web: boolean;
+  db: boolean;
+  bot: BotHealth;
+}

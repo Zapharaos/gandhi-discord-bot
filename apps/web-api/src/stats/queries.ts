@@ -1,6 +1,15 @@
 import type { Selectable } from 'kysely';
-import type { UserStats, StartTimestamps, DailyStats, Servers } from '@gandhi/core/types/db';
+import type { UserStats, StartTimestamps, DailyStats, Servers, BotStatus } from '@gandhi/core/types/db';
 import { getDb } from '../db';
+
+/** The bot's latest heartbeat row (single shard), or undefined if never written. */
+export async function getBotStatusRow(): Promise<BotStatus | undefined> {
+    return (await getDb()
+        .selectFrom('bot_status')
+        .selectAll()
+        .where('shard_id', '=', 0)
+        .executeTakeFirst()) as unknown as BotStatus | undefined;
+}
 
 // Thin read-only query layer. Mirrors the shapes the bot's controllers read, but
 // scoped to a single user and never writing — the web service is a pure reader.

@@ -32,6 +32,7 @@ import {CameraVoice} from "./voice/camera";
 import {ListInactivesCommand} from "@commands/utility/list-inactives";
 import {TaketimeCommand} from "@commands/fun/taketime";
 import {webEvents} from "@services/web-event-publisher";
+import {botHealth} from "@services/bot-health";
 
 dotenv.config();
 
@@ -124,6 +125,9 @@ async function start(): Promise<void> {
     );
 
     await bot.start();
+
+    // Heartbeat (DB) + HTTP /health server for liveness monitoring.
+    botHealth.start(client);
 }
 
 start().catch(error => {

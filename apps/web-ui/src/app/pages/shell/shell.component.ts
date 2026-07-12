@@ -1,10 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
-import { filter } from 'rxjs';
+import { catchError, filter, of, switchMap, timer } from 'rxjs';
 import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
 import { TranslatePipe } from '@ngx-translate/core';
+import { ApiService } from '@core/api/api.service';
+import { ServiceStatus } from '@core/api/models';
 import { AuthService } from '@core/auth/auth.service';
 import { LanguageService, SUPPORTED_LANGUAGES, Language } from '@core/i18n/language.service';
 
@@ -28,6 +31,22 @@ interface GuildOption {
           <i class="pi pi-chart-bar text-primary"></i>
           <span>{{ 'app.title' | translate }}</span>
         </div>
+
+        @if (status(); as st) {
+          <span
+            class="flex items-center gap-1.5 rounded-full border border-surface-700 px-2.5 py-1 text-xs"
+            [title]="botTooltip(st)"
+          >
+            <i
+              class="pi pi-circle-fill text-[0.6rem]"
+              [class.text-green-500]="st.bot.online"
+              [class.text-red-500]="!st.bot.online"
+            ></i>
+            <span class="text-surface-300">
+              {{ (st.bot.online ? 'health.online' : 'health.offline') | translate }}
+            </span>
+          </span>
+        }
 
         <div class="ml-auto flex items-center gap-2">
           <p-select
@@ -81,12 +100,20 @@ interface GuildOption {
 })
 export class ShellComponent {
   private readonly auth = inject(AuthService);
+  private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly language = inject(LanguageService);
 
   readonly languages = SUPPORTED_LANGUAGES;
   readonly currentLang = this.language.current;
   readonly selectedGuild = signal<string | null>(this.parseGuildId(this.router.url));
+
+  // Poll the stack status every 20s for the header health indicator; a failed
+  // request just yields null (indicator hidden) rather than erroring the shell.
+  readonly status = toSignal(
+    timer(0, 20000).pipe(switchMap(() => this.api.status().pipe(catchError(() => of(null))))),
+    { initialValue: null },
+  );
 
   readonly guildOptions = computed<GuildOption[]>(() => {
     const me = this.auth.me();
@@ -120,6 +147,14 @@ export class ShellComponent {
 
   goAdmin(guildId: string): void {
     this.router.navigate(['/admin', guildId]);
+  }
+
+  botTooltip(st: ServiceStatus): string {
+    if (!st.db) return 'Database unreachable';
+    const parts = [`${st.bot.guildCount} servers`];
+    if (st.bot.wsPing != null) parts.push(`${st.bot.wsPing} ms`);
+    if (st.bot.lastSeen != null) parts.push(`seen ${new Date(st.bot.lastSeen).toLocaleTimeString()}`);
+    return parts.join(' · ');
   }
 
   setLang(lang: Language): void {

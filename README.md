@@ -203,6 +203,7 @@ Endpoints (all `/api/*` require an authenticated session cookie):
 | Route | Purpose |
 |---|---|
 | `GET /auth/login` · `GET /auth/callback` · `POST /auth/logout` | Discord OAuth2 login/logout |
+| `GET /health` · `GET /api/status` | Liveness. `/health` = this service only (Docker probe); `/api/status` = whole stack (web + db + **bot**), **public** |
 | `GET /api/me` | Current user + their guilds (with `hasData` / `isAdmin` flags) |
 | `GET /api/stats/global` · `GET /api/stats/guild/:guildId` | Aggregated stats (with live session folded in) |
 | `GET /api/timeline?guildId=&stat=&from=&to=` | Daily series for the heatmap |
@@ -240,6 +241,40 @@ docker compose up web-ui  # or serve it with nginx (reverse-proxies to web-api)
 In the nginx-fronted (Docker) setup the SPA is served **same-origin** with the
 API, so no CORS is needed; point `WEB_BASE_URL` / `WEB_FRONTEND_URL` at the
 front-end's public origin (e.g. `http://localhost:8080`).
+
+## Health & monitoring
+
+Every service reports liveness, and the dashboard shows the bot's health directly:
+
+- **Bot** — serves `GET /health` on `PORT` (returns `503` until the Discord
+  client is ready, `200` after), used as its Docker healthcheck. It also writes a
+  heartbeat (guild count, gateway ping, uptime) to the `bot_status` table every
+  ~15s.
+- **web-api** — `GET /health` is its own liveness (Docker probe). `GET /api/status`
+  is a **public** endpoint that reports the whole stack: the web service, whether
+  the database is readable, and the bot's health (derived from the heartbeat —
+  "online" means ready *and* a heartbeat within the last 45s). It never 500s, so
+  it's a safe probe.
+- **web-ui** — a green/red **bot indicator** in the header polls `/api/status`
+  every 20s (hover for guild count, ping and last-seen time).
+
+`docker compose ps` shows all three services' healthcheck state.
+
+### Monitoring with Uptime Kuma
+
+The bot and the web-api each expose their own `/health` on a separate port, so
+they can be monitored as **two independent HTTP monitors** (expected status `200`):
+
+| Monitor | Same Docker network | Kuma outside the stack |
+|---|---|---|
+| Bot | `http://bot:3000/health` | `http://<host>:3000/health` |
+| web-api | `http://web-api:3001/health` | `http://<host>:3001/health` |
+
+If Uptime Kuma runs in the same compose/network, use the service names
+(`bot`, `web-api`) and you don't need to publish those ports publicly. Otherwise
+the ports (`PORT`, `WEB_PORT`) are already mapped to the host. The bot briefly
+returns `503` during startup (until the Discord client is ready) — that's
+expected, the monitor turns green once it's connected.
 
 ## Security & deployment
 

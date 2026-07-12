@@ -3,6 +3,10 @@
     "title": "Gandhi Stats",
     "logout": "Déconnexion"
   },
+  "health": {
+    "online": "Bot en ligne",
+    "offline": "Bot hors ligne"
+  },
   "login": {
     "title": "Gandhi Stats",
     "subtitle": "Connectez-vous pour consulter votre activité vocale sur vos serveurs.",

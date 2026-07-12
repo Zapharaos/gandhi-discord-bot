@@ -24,6 +24,14 @@ services:
         - |
             npm run migrate
             node --enable-source-maps /app/apps/bot/dist/src/index.js
+    healthcheck:
+      # The bot serves /health on ${PORT}; it returns 503 until the Discord
+      # client is ready, so give it a generous start period to log in.
+      test: ["CMD", "node", "-e", "fetch('http://localhost:${PORT}/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
 
   # Read-only web + WebSocket service. Deployable independently of the bot: it
   # shares only the SQLite file (opened read-only at the app level) and reaches
