@@ -8,6 +8,7 @@ services:
     environment:
       # Keep the runtime in UTC so day bucketing and date rendering stay consistent.
       - TZ=UTC
+      - NODE_ENV=production
       # Push live voice events to the web service over the internal WebSocket.
       - WEB_INTERNAL_WS_URL=ws://web-api:${WEB_PORT}/internal/events
       - INTERNAL_WS_TOKEN=${INTERNAL_WS_TOKEN}

@@ -119,25 +119,66 @@ and be deployed independently of the bot.
 
 This project uses Node and optionally Docker.
 
-To run the bot with Docker (recommended), use the following command:
+### The three services at a glance
+
+| Service | Folder | Default port | Role |
+|---|---|---|---|
+| `bot` | `apps/bot` | `3000` (`PORT`) | The Discord bot — the only process that **writes** to SQLite |
+| `web-api` | `apps/web-api` | `3001` (`WEB_PORT`) | Read-only HTTP + WebSocket API |
+| `web-ui` | `apps/web-ui` | `8080` (`WEB_UI_PORT`) prod / `4200` dev | Angular front-end |
+
+The bot works on its own; the web-api and web-ui are optional and can be added
+(and redeployed) independently.
+
+### 1. Configure
+
 ```bash
-docker compose build --progress=plain
-docker compose up
+cp .env.sample .env
+# then fill in the bot credentials and, if you want the web dashboard,
+# the "Web service" / "Web front-end" blocks (see the sections below).
 ```
 
-To run the bot without Docker, use the following command:
+### 2. Run everything with Docker (recommended)
+
+`docker compose up` builds and starts all three services and runs the DB
+migrations for you:
+
 ```bash
-npm run migrate # To setup the database and run the migrations
-npm run generate # To generate the database models for TypeScript
-npm run build # To build the project
-npm run start # To build and run the project
+docker compose build --progress=plain
+docker compose up            # bot + web-api + web-ui
+docker compose up bot        # or just the bot
 ```
+
+The dashboard is then at `http://localhost:${WEB_UI_PORT:-8080}`.
+
+### 3. Or run locally without Docker
+
+The bot alone:
+
+```bash
+npm install       # installs the workspace (core + bot + web-api)
+npm run migrate   # create the database and run migrations
+npm run generate  # (optional) regenerate the TS DB models after a schema change
+npm run start     # build @gandhi/core + the bot, then run it
+```
+
+To also run the web dashboard in dev, use three terminals from the repo root:
+
+```bash
+npm run start:web                 # terminal 1 — web-api on :3001
+cd apps/web-ui && npm install && npm start   # terminal 2 — Angular dev server on :4200
+# terminal 3 is your already-running bot (npm run start)
+```
+
+Open `http://localhost:4200` — the Angular dev server proxies `/api`, `/auth`
+and `/ws` to the web-api on `:3001` (see `apps/web-ui/proxy.conf.json`).
 
 ## Web service (`apps/web-api`)
 
 A read-only HTTP + WebSocket service (Fastify) that lets users view their own
-stats through a web front-end, with a per-server (admin) view coming next. It is
-deployed **independently of the bot**: it shares only the SQLite file — opened
+stats through a web front-end, plus a per-server (admin) view for server
+managers. It is deployed **independently of the bot**: it shares only the
+SQLite file — opened
 **read-only** at the app level, since the bot is the sole writer — and receives
 the bot's live events over an internal WebSocket. You can redeploy the web
 service without touching the bot, and vice versa.
