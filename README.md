@@ -48,6 +48,7 @@ For example:
 - `/usersettings stats:ON` - Opt-in to stats tracking for yourself
 - `/usersettings logs:ON` - Opt-in to event logs for yourself
 - `/usersettings stats:OFF` - Opt back out of stats tracking
+- `/usersettings logs:OFF` - Opt back out of event logs
 - `/usersettings private:ON` - Enable private mode (hide from others)
 
 **Note:** Both server and user settings must be enabled for a feature to work. The server must allow stats/logs *and* the user must have opted in; if either side has it disabled, the feature is disabled for that user.
@@ -72,6 +73,25 @@ The following commands are available:
 - `/rank [stat]` - Returns the server ranking for a specific stat (default: time connected).
 - `/heatmap [target] [target-all] [stat] [format]` - Returns the yearly calendar heatmap (default: yourself, time connected, png).
 - `/list-inactive [days]` - Returns the list of inactive users (default: 100 days).
+
+## Data & Privacy
+
+The bot only stores the minimum needed to produce statistics: aggregated per-user/per-guild counters and time totals (`user_stats`), a per-day activity history (`daily_stats`), and your personal settings. No message content is stored, and in-progress voice sessions (`start_timestamps`) are transient — that table is cleared on startup.
+
+**Opt-in by design.** Nothing about a user is recorded until *both* the server enables the feature *and* the user opts in via `/usersettings`. By default a user is not tracked.
+
+**Data preservation and lifecycle.** Your data lives only as long as it is relevant:
+- **Leaving a server:** when a member leaves (or is removed from) a guild, all data linked to that user on that guild — stats, daily history and start timestamps — is automatically deleted. Nothing is kept behind after you leave.
+- **Restart safety:** on startup the bot drops stale in-progress voice sessions instead of counting downtime as activity, so restarts never inflate your totals.
+- **Backups:** the database can be backed up on a schedule (see [Database Backups](#database-backups)). Backups are stored locally by the server operator and are the only place historical copies of the data may persist.
+
+**Your rights over your data.** Every user can inspect and manage their own data at any time, without needing an admin. All of these commands reply privately (only you see the response) and are scoped to either the current server or all servers you share with the bot:
+- `/myservers` — **list**: see every server where the bot holds data linked to you, and the tracking status for each. This is your data-access overview.
+- `/reset-stats [scope]` — **reset**: zero out your aggregated stats while keeping your settings and daily history. Asks for confirmation; the reset totals cannot be recovered.
+- `/delete-data [scope]` — **delete/erasure**: permanently remove *all* data linked to you (stats, daily history and settings). Asks for confirmation; you revert to the default "not tracked" state.
+- `/export [scope]` — **export/portability**: download a copy of everything the bot holds about you as a JSON file (gzip-compressed automatically if it is too large for a single Discord upload).
+
+For the `scope` option, the default is the current server; choosing "all servers" applies the action across every server you share with the bot (use it from a DM to act globally).
 
 ## Development
 
