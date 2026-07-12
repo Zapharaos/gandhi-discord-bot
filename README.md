@@ -76,13 +76,13 @@ The following commands are available:
 
 ## Data & Privacy
 
-The bot only stores the minimum needed to produce statistics: aggregated per-user/per-guild counters and time totals (`user_stats`), a per-day activity history (`daily_stats`), and your personal settings. No message content is stored, and in-progress voice sessions (`start_timestamps`) are transient — that table is cleared on startup.
+The bot only stores the minimum needed to produce statistics: aggregated per-user/per-guild counters and time totals (`user_stats`), a per-day activity history (`daily_stats`), and your personal settings. No message content is stored. In-progress voice sessions (`start_timestamps`) are transient live state — the elapsed time is committed to your stats only once the session ends (or on a graceful shutdown, see below).
 
 **Opt-in by design.** Nothing about a user is recorded until *both* the server enables the feature *and* the user opts in via `/usersettings`. By default a user is not tracked.
 
 **Data preservation and lifecycle.** Your data lives only as long as it is relevant:
 - **Leaving a server:** when a member leaves (or is removed from) a guild, all data linked to that user on that guild — stats, daily history and start timestamps — is automatically deleted. Nothing is kept behind after you leave.
-- **Restart safety:** on startup the bot drops stale in-progress voice sessions instead of counting downtime as activity, so restarts never inflate your totals.
+- **Restart safety:** restarts never inflate your totals. On a graceful shutdown (e.g. `SIGINT`/`SIGTERM`) the bot flushes in-progress sessions, saving the time elapsed so far. On startup it discards any stale live state (which would otherwise count downtime as activity) and re-seeds currently-connected members from "now" by scanning the voice channels. The net effect is that only the gap between stop and start is lost — never a whole session, and never inflated by the downtime. Sessions that could not be flushed (a crash or `SIGKILL`) are covered by the startup re-seed. This reconciliation only runs in production; in development the live state is preserved across restarts.
 - **Backups:** the database can be backed up on a schedule (see [Database Backups](#database-backups)). Backups are stored locally by the server operator and are the only place historical copies of the data may persist.
 
 **Your rights over your data.** Every user can inspect and manage their own data at any time, without needing an admin. All of these commands reply privately (only you see the response) and are scoped to either the current server or all servers you share with the bot:
@@ -112,6 +112,22 @@ npm run generate # To generate the database models for TypeScript
 npm run build # To build the project
 npm run start # To build and run the project
 ```
+
+## Tests
+
+The project uses [Jest](https://jestjs.io/) (via `ts-jest`) for unit tests. Test files live in `tests/` and follow the `*.test.ts` naming convention.
+
+```bash
+npm test              # Run all tests with a coverage report
+npx jest path/to/file # Run a single test file
+npx jest --watch      # Re-run tests on change
+```
+
+`npm test` runs Jest with `--coverage`, producing a `coverage/` report (including `coverage/lcov.info`, which is uploaded to [Codecov](https://about.codecov.io/) in CI).
+
+The suite covers the pure business-logic layer — the utilities (`src/utils`) and the database models (`src/models/database`), which include the time math, live-stat aggregation and voice-state transitions. Controllers and services are intentionally excluded from the unit tests, as they require a live SQLite binding; they are better exercised through integration tests.
+
+Tests run automatically in CI on every pull request against `main` or `develop` (see [`.github/workflows/node.yml`](.github/workflows/node.yml)), alongside linting and the build. All three must pass before merging.
 
 ## Database Backups
 
