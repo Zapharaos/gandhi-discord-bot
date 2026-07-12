@@ -297,24 +297,31 @@ export class UserStatsController {
         }
 
         try {
-            const updateData: Record<string, unknown> = { guild_id: guildID, user_id: userID };
+            // Only the settings explicitly provided are written back on conflict,
+            // so an existing user's other preferences are never clobbered.
+            const provided: Record<string, unknown> = {};
 
             if (settings.stats !== undefined) {
-                updateData.stats = settings.stats ? 1 : 0;
+                provided.stats = settings.stats ? 1 : 0;
             }
             if (settings.logs !== undefined) {
-                updateData.logs = settings.logs ? 1 : 0;
+                provided.logs = settings.logs ? 1 : 0;
             }
             if (settings.private !== undefined) {
-                updateData.private = settings.private ? 1 : 0;
+                provided.private = settings.private ? 1 : 0;
             }
+
+            // Opt-in model: when this is the user's first record, any stats/logs
+            // setting they did not explicitly turn on defaults to OFF, overriding
+            // the column default so users are never tracked without opting in.
+            const insertData = { guild_id: guildID, user_id: userID, stats: 0, logs: 0, ...provided };
 
             await db
                 .insertInto('user_stats')
-                .values(updateData)
+                .values(insertData)
                 .onConflict((oc) => oc
                     .columns(['guild_id', 'user_id'])
-                    .doUpdateSet(updateData)
+                    .doUpdateSet(provided)
                 )
                 .execute();
 

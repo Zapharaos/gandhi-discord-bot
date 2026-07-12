@@ -42,12 +42,15 @@ You can enable/disable stats tracking, enable/disable event logs, and set the lo
 Additionally, each user can configure their own personal settings:
 - `/usersettings [stats] [logs] [private]` - Configure your personal settings for stats tracking, event logs, and privacy.
 
+Stats and event logs are **opt-in per user**: by default you are not tracked, and you must explicitly enable each feature for yourself before anything is recorded. Both settings are independent.
+
 For example:
-- `/usersettings stats:OFF` - Opt-out of stats tracking for yourself
-- `/usersettings logs:OFF` - Opt-out of event logs for yourself
+- `/usersettings stats:ON` - Opt-in to stats tracking for yourself
+- `/usersettings logs:ON` - Opt-in to event logs for yourself
+- `/usersettings stats:OFF` - Opt back out of stats tracking
 - `/usersettings private:ON` - Enable private mode (hide from others)
 
-**Note:** Both server and user settings must be enabled for a feature to work. If either the server or the user has disabled stats/logs, the feature will be disabled for that user.
+**Note:** Both server and user settings must be enabled for a feature to work. The server must allow stats/logs *and* the user must have opted in; if either side has it disabled, the feature is disabled for that user.
 
 **Private Mode:** When enabled, other users cannot:
 - Target you with commands like `/stats`, `/biggusdickus`, or `/heatmap`
