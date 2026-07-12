@@ -50,5 +50,18 @@ services:
       - ./data:/app/data
     restart: unless-stopped
 
+  # Static Angular front-end served by nginx, which reverse-proxies /api, /auth
+  # and /ws to the web service so the SPA is same-origin (no CORS). Deployable
+  # on its own; rebuild/redeploy it without touching the bot or the API.
+  web-ui:
+    build:
+      context: apps/web-ui
+      dockerfile: Dockerfile
+    depends_on:
+      - web-api
+    ports:
+      - "${WEB_UI_PORT:-8080}:80"
+    restart: unless-stopped
+
 volumes:
   data:

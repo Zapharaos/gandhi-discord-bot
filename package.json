@@ -5,9 +5,11 @@
   "license": "MIT",
   "description": "Monorepo for the Gandhi Discord bot and its web service, sharing a common domain core",
   "private": true,
+  "comment:workspaces": "apps/web-ui is intentionally excluded: it is a self-contained Angular app with its own toolchain and node_modules, deployed as static assets independently of the Node backend.",
   "workspaces": [
-    "packages/*",
-    "apps/*"
+    "packages/core",
+    "apps/bot",
+    "apps/web-api"
   ],
   "scripts": {
     "build:core": "npm run build --workspace @gandhi/core",

@@ -1,0 +1,26 @@
+{
+  "app": {
+    "title": "Gandhi Stats",
+    "logout": "Déconnexion"
+  },
+  "login": {
+    "title": "Gandhi Stats",
+    "subtitle": "Connectez-vous pour consulter votre activité vocale sur vos serveurs.",
+    "button": "Se connecter avec Discord"
+  },
+  "dashboard": {
+    "live": "En direct",
+    "loading": "Chargement de vos stats…",
+    "activity": "Activité"
+  },
+  "stats": {
+    "connected": "Connecté",
+    "muted": "Muet",
+    "deafened": "Sourdine",
+    "screen": "Partage d'écran",
+    "camera": "Caméra",
+    "streak": "Série en cours",
+    "maxStreak": "Meilleure série",
+    "switches": "Changements de salon"
+  }
+}

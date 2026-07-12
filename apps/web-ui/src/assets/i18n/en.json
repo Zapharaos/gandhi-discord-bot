@@ -1,0 +1,26 @@
+{
+  "app": {
+    "title": "Gandhi Stats",
+    "logout": "Log out"
+  },
+  "login": {
+    "title": "Gandhi Stats",
+    "subtitle": "Sign in to view your voice activity across your servers.",
+    "button": "Sign in with Discord"
+  },
+  "dashboard": {
+    "live": "Live",
+    "loading": "Loading your stats…",
+    "activity": "Activity"
+  },
+  "stats": {
+    "connected": "Connected",
+    "muted": "Muted",
+    "deafened": "Deafened",
+    "screen": "Screen sharing",
+    "camera": "Camera",
+    "streak": "Current streak",
+    "maxStreak": "Best streak",
+    "switches": "Channel switches"
+  }
+}

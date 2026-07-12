@@ -103,7 +103,13 @@ This repository is an [npm workspaces](https://docs.npmjs.com/cli/using-npm/work
 packages/core   # @gandhi/core — shared pure domain layer (DB types, models, helpers)
 apps/bot        # the Discord bot (depends on @gandhi/core)
 apps/web-api    # @gandhi/web-api — read-only web + WebSocket service (depends on @gandhi/core)
+apps/web-ui     # Angular front-end (PrimeNG + Tailwind + ngx-translate); own toolchain
 ```
+
+`packages/core`, `apps/bot` and `apps/web-api` are npm workspaces installed from
+the repo root. `apps/web-ui` is intentionally **not** a workspace member — it is a
+self-contained Angular app with its own `node_modules` and toolchain, so install
+and build it from its own folder (`cd apps/web-ui && npm install`).
 
 The shared `data/`, `var/` and `.env` live at the repository root, and the root
 `package.json` scripts (`build`, `start`, `migrate`, …) are the canonical entry
@@ -161,6 +167,25 @@ Endpoints (all `/api/*` require an authenticated session cookie):
 | `GET /api/timeline?guildId=&stat=&from=&to=` | Daily series for the heatmap |
 | `WS /ws` | Authenticated browser stream (live voice events) |
 | `WS /internal/events?token=` | Internal endpoint the bot pushes events to |
+
+## Web front-end (`apps/web-ui`)
+
+An [Angular](https://angular.dev/) SPA (standalone components, PrimeNG + Tailwind,
+`ngx-translate` for en/fr) that renders the dashboard: per-server and global
+stat cards, a GitHub-style contribution heatmap, and live updates over the
+WebSocket. It talks only to `apps/web-api`.
+
+```bash
+cd apps/web-ui
+npm install
+npm start                 # dev server on :4200, proxies /api,/auth,/ws to :3001
+npm run build             # production build -> dist/gandhi-web-ui/browser
+docker compose up web-ui  # or serve it with nginx (reverse-proxies to web-api)
+```
+
+In the nginx-fronted (Docker) setup the SPA is served **same-origin** with the
+API, so no CORS is needed; point `WEB_BASE_URL` / `WEB_FRONTEND_URL` at the
+front-end's public origin (e.g. `http://localhost:8080`).
 
 ## Tests
 
