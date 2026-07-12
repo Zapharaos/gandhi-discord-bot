@@ -97,6 +97,13 @@ export const CommandMetadata: {
             },
         ],
     },
+    MY_SERVERS: {
+        type: ApplicationCommandType.ChatInput,
+        name: 'myservers',
+        description: 'List every server where we hold stats data linked to you',
+        dm_permission: true,
+        options: [],
+    },
     CLASH: {
         type: ApplicationCommandType.ChatInput,
         name: 'clash',

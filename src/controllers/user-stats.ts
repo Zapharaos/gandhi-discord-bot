@@ -45,6 +45,35 @@ export class UserStatsController {
         }
     }
 
+    static async getUserGuildEntries(userID: string): Promise<{ guildId: string; stats: boolean; logs: boolean; isPrivate: boolean }[]> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return [];
+        }
+
+        try {
+            const rows = await db
+                .selectFrom('user_stats')
+                .select(['guild_id', 'stats', 'logs', 'private'])
+                .where('user_id', '=', userID)
+                .execute();
+
+            Logger.debug(`Queried guild entries for user ${userID}: ${rows.length} found`);
+
+            return rows.map((row) => ({
+                guildId: row.guild_id as string,
+                stats: (row.stats as unknown as number) === 1,
+                logs: (row.logs as unknown as number) === 1,
+                isPrivate: (row.private as unknown as number) === 1,
+            }));
+        } catch (err) {
+            await Logger.error(`Error querying guild entries for user ${userID}`, err);
+            return [];
+        }
+    }
+
     static async getUsersInGuildByStat(guildID: string, stat: string): Promise<UserStats[]> {
         // Get the database instance
         const db = await getDb();

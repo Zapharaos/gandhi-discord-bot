@@ -1,9 +1,6 @@
 import { SlashCommandBuilder } from 'discord.js';
 import {entersState, getVoiceConnection, joinVoiceChannel, VoiceConnectionStatus} from '@discordjs/voice';
 
-// TODO : add command: enable recording at server level + each user must
-// TODO : add command: user must manually allow recording for security reasons
-
 export const data = new SlashCommandBuilder()
     .setName('join')
     .setDescription('Join the current voice-channel channel')
