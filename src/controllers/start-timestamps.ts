@@ -81,6 +81,32 @@ export class StartTimestampsController {
         }
     }
 
+    /**
+     * Returns every currently-active voice session across all guilds (start_connected != 0).
+     * Used to flush in-progress sessions to user_stats on graceful shutdown.
+     */
+    static async getAllActiveSessions(): Promise<StartTimestamps[]> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return [];
+        }
+
+        try {
+            const rows = await db
+                .selectFrom('start_timestamps')
+                .selectAll()
+                .where('start_connected', '!=', 0)
+                .execute();
+
+            return rows as unknown as StartTimestamps[];
+        } catch (err) {
+            await Logger.error('Error querying active voice sessions', err);
+            return [];
+        }
+    }
+
     static async setStartTimestamp(guildID: string, userID: string, stat: StartTsFields, timestamp: number): Promise<void> {
         // Get the database instance
         const db = await getDb();
