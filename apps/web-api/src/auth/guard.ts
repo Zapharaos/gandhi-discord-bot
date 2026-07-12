@@ -1,0 +1,32 @@
+import type { FastifyReply, FastifyRequest } from 'fastify';
+import { getSession, SESSION_COOKIE, type SessionData } from './sessions';
+
+// Augment Fastify's request with the resolved session so route handlers can read
+// it in a typed way once requireAuth has run.
+declare module 'fastify' {
+    interface FastifyRequest {
+        authSession?: SessionData;
+    }
+}
+
+/** Resolve the signed session cookie into a SessionData, or null. */
+export function resolveSession(request: FastifyRequest): SessionData | null {
+    const raw = request.cookies[SESSION_COOKIE];
+    if (!raw) return null;
+    const unsigned = request.unsignCookie(raw);
+    if (!unsigned.valid || !unsigned.value) return null;
+    return getSession(unsigned.value);
+}
+
+/**
+ * preHandler that rejects unauthenticated requests with 401. On success it
+ * attaches the session to request.authSession.
+ */
+export async function requireAuth(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+    const session = resolveSession(request);
+    if (!session) {
+        await reply.code(401).send({ error: 'unauthorized' });
+        return;
+    }
+    request.authSession = session;
+}

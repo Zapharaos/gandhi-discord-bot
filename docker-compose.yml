@@ -21,5 +21,34 @@ services:
             npm run migrate
             node --enable-source-maps /app/apps/bot/dist/src/index.js
 
+  # Read-only web + WebSocket service. Deployable independently of the bot: it
+  # shares only the SQLite file (opened read-only at the app level) and reaches
+  # the bot's live events over the internal WebSocket. Redeploy it without
+  # touching the bot, and vice versa.
+  web-api:
+    build:
+      context: .
+      dockerfile: apps/web-api/Dockerfile
+    environment:
+      - TZ=UTC
+      - NODE_ENV=production
+      - WEB_HOST=0.0.0.0
+      - WEB_PORT=${WEB_PORT}
+      - WEB_BASE_URL=${WEB_BASE_URL}
+      - WEB_FRONTEND_URL=${WEB_FRONTEND_URL}
+      - DATABASE_URL=data/gandhi-bot.db
+      - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
+      - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - INTERNAL_WS_TOKEN=${INTERNAL_WS_TOKEN}
+      - WEB_CORS_ORIGIN=${WEB_CORS_ORIGIN}
+    ports:
+      - "${WEB_PORT}:${WEB_PORT}"
+    volumes:
+      # Mounted read-write at the filesystem level (WAL needs to touch -wal/-shm),
+      # but the connection is opened read-only in code — the bot is the sole writer.
+      - ./data:/app/data
+    restart: unless-stopped
+
 volumes:
   data:

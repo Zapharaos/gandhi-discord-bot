@@ -102,6 +102,7 @@ This repository is an [npm workspaces](https://docs.npmjs.com/cli/using-npm/work
 ```
 packages/core   # @gandhi/core — shared pure domain layer (DB types, models, helpers)
 apps/bot        # the Discord bot (depends on @gandhi/core)
+apps/web-api    # @gandhi/web-api — read-only web + WebSocket service (depends on @gandhi/core)
 ```
 
 The shared `data/`, `var/` and `.env` live at the repository root, and the root
@@ -125,6 +126,41 @@ npm run generate # To generate the database models for TypeScript
 npm run build # To build the project
 npm run start # To build and run the project
 ```
+
+## Web service (`apps/web-api`)
+
+A read-only HTTP + WebSocket service (Fastify) that lets users view their own
+stats through a web front-end, with a per-server (admin) view coming next. It is
+deployed **independently of the bot**: it shares only the SQLite file — opened
+**read-only** at the app level, since the bot is the sole writer — and receives
+the bot's live events over an internal WebSocket. You can redeploy the web
+service without touching the bot, and vice versa.
+
+Setup:
+
+1. In the [Discord Developer Portal](https://discord.com/developers/applications),
+   under **OAuth2**, add the redirect URI `${WEB_BASE_URL}/auth/callback` and note
+   the **Client ID** / **Client Secret**.
+2. Fill the `# Web service` block in `.env` (see `.env.sample`): `WEB_BASE_URL`,
+   `WEB_FRONTEND_URL`, `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`,
+   `SESSION_SECRET`, `INTERNAL_WS_TOKEN`, and (dev only) `WEB_CORS_ORIGIN`.
+3. Run it:
+
+```bash
+docker compose up web-api      # with Docker (recommended)
+npm run start:web              # or directly (builds @gandhi/core first)
+```
+
+Endpoints (all `/api/*` require an authenticated session cookie):
+
+| Route | Purpose |
+|---|---|
+| `GET /auth/login` · `GET /auth/callback` · `POST /auth/logout` | Discord OAuth2 login/logout |
+| `GET /api/me` | Current user + their guilds (with `hasData` / `isAdmin` flags) |
+| `GET /api/stats/global` · `GET /api/stats/guild/:guildId` | Aggregated stats (with live session folded in) |
+| `GET /api/timeline?guildId=&stat=&from=&to=` | Daily series for the heatmap |
+| `WS /ws` | Authenticated browser stream (live voice events) |
+| `WS /internal/events?token=` | Internal endpoint the bot pushes events to |
 
 ## Tests
 
