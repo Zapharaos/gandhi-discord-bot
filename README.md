@@ -42,12 +42,15 @@ You can enable/disable stats tracking, enable/disable event logs, and set the lo
 Additionally, each user can configure their own personal settings:
 - `/usersettings [stats] [logs] [private]` - Configure your personal settings for stats tracking, event logs, and privacy.
 
+Stats and event logs are **opt-in per user**: by default you are not tracked, and you must explicitly enable each feature for yourself before anything is recorded. Both settings are independent.
+
 For example:
-- `/usersettings stats:OFF` - Opt-out of stats tracking for yourself
-- `/usersettings logs:OFF` - Opt-out of event logs for yourself
+- `/usersettings stats:ON` - Opt-in to stats tracking for yourself
+- `/usersettings logs:ON` - Opt-in to event logs for yourself
+- `/usersettings stats:OFF` - Opt back out of stats tracking
 - `/usersettings private:ON` - Enable private mode (hide from others)
 
-**Note:** Both server and user settings must be enabled for a feature to work. If either the server or the user has disabled stats/logs, the feature will be disabled for that user.
+**Note:** Both server and user settings must be enabled for a feature to work. The server must allow stats/logs *and* the user must have opted in; if either side has it disabled, the feature is disabled for that user.
 
 **Private Mode:** When enabled, other users cannot:
 - Target you with commands like `/stats`, `/biggusdickus`, or `/heatmap`
@@ -61,6 +64,10 @@ Now every user's actions in voice channels will be tracked and/or logged based o
 The following commands are available:
 - `/serversettings [stats] [logs] [logchannel]` - Configure server settings for stats tracking and event logs.
 - `/usersettings [stats] [logs] [private]` - Configure your personal settings for stats tracking, event logs, and privacy (private response).
+- `/myservers` - Lists every server where we hold stats data linked to you, with the tracking status for each (private response).
+- `/reset-stats [scope]` - Resets your stats to zero on this server or all servers; keeps your settings and daily history (private response, asks for confirmation).
+- `/delete-data [scope]` - Permanently deletes all data linked to you (stats, daily history, settings) on this server or all servers (private response, asks for confirmation).
+- `/export [scope]` - Exports a copy of all data linked to you as a JSON file, for this server or all servers (private response; gzip-compressed if large).
 - `/stats [user]` - Returns the stats for a specific user (default: yourself).
 - `/rank [stat]` - Returns the server ranking for a specific stat (default: time connected).
 - `/heatmap [target] [target-all] [stat] [format]` - Returns the yearly calendar heatmap (default: yourself, time connected, png).

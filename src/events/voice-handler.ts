@@ -41,10 +41,12 @@ export class VoiceHandler implements EventHandler {
         const serverStatsEnabled = (server.stats as unknown as number | null) == null || (server.stats as unknown as number) !== 0;
         const serverLogsEnabled = (server.logs as unknown as number | null) == null || (server.logs as unknown as number) !== 0;
 
-        // Check if stats or logs are enabled at user level (default to true if not set)
+        // Check if stats or logs are enabled at user level.
+        // Opt-in model: a user is only tracked once they have explicitly opted in
+        // (stats/logs === 1). No record, or an unset value, means opted-out.
         const userStats = await UserStatsController.getUserInGuild(guild.id, user.id);
-        const userStatsEnabled = !userStats || (userStats.stats as unknown as number | null) == null || (userStats.stats as unknown as number) !== 0;
-        const userLogsEnabled = !userStats || (userStats.logs as unknown as number | null) == null || (userStats.logs as unknown as number) !== 0;
+        const userStatsEnabled = !!userStats && (userStats.stats as unknown as number) === 1;
+        const userLogsEnabled = !!userStats && (userStats.logs as unknown as number) === 1;
 
         // Combine server and user settings (both must be enabled for the feature to work)
         const statsEnabled = serverStatsEnabled && userStatsEnabled;

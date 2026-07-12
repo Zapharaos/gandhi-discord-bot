@@ -97,6 +97,67 @@ export const CommandMetadata: {
             },
         ],
     },
+    MY_SERVERS: {
+        type: ApplicationCommandType.ChatInput,
+        name: 'myservers',
+        description: 'List every server where we hold stats data linked to you',
+        dm_permission: true,
+        options: [],
+    },
+    RESET_STATS: {
+        type: ApplicationCommandType.ChatInput,
+        name: 'reset-stats',
+        description: 'Reset your stats to zero (keeps settings and daily history)',
+        dm_permission: true,
+        options: [
+            {
+                type: 3,
+                name: 'scope',
+                description: 'Which servers to reset (default: this server)',
+                required: false,
+                choices: [
+                    { name: 'this server', value: 'server' },
+                    { name: 'all servers', value: 'global' },
+                ],
+            },
+        ],
+    },
+    DELETE_DATA: {
+        type: ApplicationCommandType.ChatInput,
+        name: 'delete-data',
+        description: 'Permanently delete all data we hold about you (stats, history, settings)',
+        dm_permission: true,
+        options: [
+            {
+                type: 3,
+                name: 'scope',
+                description: 'Which servers to delete data from (default: this server)',
+                required: false,
+                choices: [
+                    { name: 'this server', value: 'server' },
+                    { name: 'all servers', value: 'global' },
+                ],
+            },
+        ],
+    },
+    EXPORT: {
+        type: ApplicationCommandType.ChatInput,
+        name: 'export',
+        description: 'Export a copy of all data we hold about you as a JSON file',
+        dm_permission: true,
+        options: [
+            {
+                type: 3,
+                name: 'scope',
+                description: 'Which servers to export data from (default: this server)',
+                required: false,
+                choices: [
+                    { name: 'this server', value: 'server' },
+                    { name: 'all servers', value: 'global' },
+                ],
+            },
+        ],
+    },
     CLASH: {
         type: ApplicationCommandType.ChatInput,
         name: 'clash',

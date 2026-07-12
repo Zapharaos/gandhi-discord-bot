@@ -141,6 +141,59 @@ export class StartTimestampsController {
         }
     }
 
+    /**
+     * Returns every start_timestamps row linked to a user (right to access / portability).
+     * Scoped to guildID when provided, otherwise every server.
+     */
+    static async getUserData(userID: string, guildID?: string): Promise<StartTimestamps[]> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return [];
+        }
+
+        try {
+            let query = db.selectFrom('start_timestamps').selectAll().where('user_id', '=', userID);
+            if (guildID) {
+                query = query.where('guild_id', '=', guildID);
+            }
+            const rows = await query.execute();
+            return rows as unknown as StartTimestamps[];
+        } catch (err) {
+            await Logger.error(`Error exporting start_timestamps for user ${userID}${guildID ? ` in guild ${guildID}` : ' (all guilds)'}`, err);
+            return [];
+        }
+    }
+
+    /**
+     * Erases a user's live session timestamps (right to erasure). Scoped to
+     * guildID when provided, otherwise every server. Returns rows deleted.
+     */
+    static async deleteUserData(userID: string, guildID?: string): Promise<number> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return 0;
+        }
+
+        try {
+            let query = db.deleteFrom('start_timestamps').where('user_id', '=', userID);
+            if (guildID) {
+                query = query.where('guild_id', '=', guildID);
+            }
+            const result = await query.execute();
+            const affected = result.reduce((sum, r) => sum + Number(r.numDeletedRows ?? 0), 0);
+
+            Logger.debug(`Deleted start_timestamps for user ${userID}${guildID ? ` in guild ${guildID}` : ' (all guilds)'}: ${affected} row(s)`);
+            return affected;
+        } catch (err) {
+            await Logger.error(`Error deleting start_timestamps for user ${userID}${guildID ? ` in guild ${guildID}` : ' (all guilds)'}`, err);
+            return 0;
+        }
+    }
+
     static async deleteUserStartTimestamps(guildID: string, userID: string): Promise<void> {
         // Get the database instance
         const db = await getDb();
