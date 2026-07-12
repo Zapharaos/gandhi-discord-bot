@@ -285,6 +285,48 @@ export class UserStatsController {
         }
     }
 
+    /**
+     * Resets a user's aggregate stats back to zero while keeping their settings
+     * (stats/logs/private) and their daily history (daily_stats) intact.
+     * When guildID is provided the reset is scoped to that server, otherwise it
+     * applies to every server the user has stats on. Returns the number of rows reset.
+     */
+    static async resetUserStats(userID: string, guildID?: string): Promise<number> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return 0;
+        }
+
+        try {
+            const resetValues = {
+                time_connected: 0, time_muted: 0, time_deafened: 0, time_screen_sharing: 0, time_camera: 0,
+                last_activity: 0, daily_streak: 0,
+                max_connected: 0, max_muted: 0, max_deafened: 0, max_screen_sharing: 0, max_camera: 0, max_daily_streak: 0,
+                count_connected: 0, count_switch: 0, count_muted: 0, count_deafened: 0, count_screen_sharing: 0, count_camera: 0,
+            };
+
+            let query = db
+                .updateTable('user_stats')
+                .set(resetValues)
+                .where('user_id', '=', userID);
+
+            if (guildID) {
+                query = query.where('guild_id', '=', guildID);
+            }
+
+            const result = await query.execute();
+            const affected = result.reduce((sum, r) => sum + Number(r.numUpdatedRows ?? 0), 0);
+
+            Logger.debug(`Reset stats for user ${userID}${guildID ? ` in guild ${guildID}` : ' (all guilds)'}: ${affected} row(s)`);
+            return affected;
+        } catch (err) {
+            await Logger.error(`Error resetting stats for user ${userID}${guildID ? ` in guild ${guildID}` : ' (all guilds)'}`, err);
+            return 0;
+        }
+    }
+
     static async deleteUserStats(guildID: string, userID: string): Promise<void> {
         // Get the database instance
         const db = await getDb();

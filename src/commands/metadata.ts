@@ -104,6 +104,24 @@ export const CommandMetadata: {
         dm_permission: true,
         options: [],
     },
+    RESET_STATS: {
+        type: ApplicationCommandType.ChatInput,
+        name: 'reset-stats',
+        description: 'Reset your stats to zero (keeps settings and daily history)',
+        dm_permission: true,
+        options: [
+            {
+                type: 3,
+                name: 'scope',
+                description: 'Which servers to reset (default: this server)',
+                required: false,
+                choices: [
+                    { name: 'this server', value: 'server' },
+                    { name: 'all servers', value: 'global' },
+                ],
+            },
+        ],
+    },
     CLASH: {
         type: ApplicationCommandType.ChatInput,
         name: 'clash',

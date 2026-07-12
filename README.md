@@ -65,6 +65,7 @@ The following commands are available:
 - `/serversettings [stats] [logs] [logchannel]` - Configure server settings for stats tracking and event logs.
 - `/usersettings [stats] [logs] [private]` - Configure your personal settings for stats tracking, event logs, and privacy (private response).
 - `/myservers` - Lists every server where we hold stats data linked to you, with the tracking status for each (private response).
+- `/reset-stats [scope]` - Resets your stats to zero on this server or all servers; keeps your settings and daily history (private response, asks for confirmation).
 - `/stats [user]` - Returns the stats for a specific user (default: yourself).
 - `/rank [stat]` - Returns the server ranking for a specific stat (default: time connected).
 - `/heatmap [target] [target-all] [stat] [format]` - Returns the yearly calendar heatmap (default: yourself, time connected, png).
