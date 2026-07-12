@@ -1,6 +1,9 @@
 services:
   bot:
     build: .
+    environment:
+      # Keep the runtime in UTC so day bucketing and date rendering stay consistent.
+      - TZ=UTC
     ports:
       - "${PORT}:${PORT}"
     volumes:

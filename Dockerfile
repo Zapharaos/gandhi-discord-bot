@@ -1,4 +1,10 @@
-FROM node:latest
+# Pin to an LTS release: 'latest' (Node 26+) has no better-sqlite3 prebuilt
+# binary and fails to compile it from source.
+FROM node:22
+
+# Run in UTC so the day bucketing (stored in UTC) and any local-time rendering
+# (formatDate, the heatmap calendar) stay consistent.
+ENV TZ=UTC
 
 # Install sqlite3
 RUN apt-get update && apt-get install -y sqlite3 chromium
