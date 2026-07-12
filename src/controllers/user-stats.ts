@@ -355,6 +355,36 @@ export class UserStatsController {
         }
     }
 
+    /**
+     * Erases a user's stats rows entirely (right to erasure). When guildID is
+     * provided it is scoped to that server, otherwise every server is purged.
+     * Removing the row also clears the user's settings, so they revert to the
+     * opt-out default. Returns the number of rows deleted.
+     */
+    static async deleteUserData(userID: string, guildID?: string): Promise<number> {
+        // Get the database instance
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return 0;
+        }
+
+        try {
+            let query = db.deleteFrom('user_stats').where('user_id', '=', userID);
+            if (guildID) {
+                query = query.where('guild_id', '=', guildID);
+            }
+            const result = await query.execute();
+            const affected = result.reduce((sum, r) => sum + Number(r.numDeletedRows ?? 0), 0);
+
+            Logger.debug(`Deleted user_stats for user ${userID}${guildID ? ` in guild ${guildID}` : ' (all guilds)'}: ${affected} row(s)`);
+            return affected;
+        } catch (err) {
+            await Logger.error(`Error deleting user_stats for user ${userID}${guildID ? ` in guild ${guildID}` : ' (all guilds)'}`, err);
+            return 0;
+        }
+    }
+
     static async updateUserSettings(
         guildID: string,
         userID: string,

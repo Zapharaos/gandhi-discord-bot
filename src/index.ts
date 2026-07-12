@@ -15,6 +15,7 @@ import {ServerSettingsCommand} from "@commands/utility/server-settings";
 import {UserSettingsCommand} from "@commands/utility/user-settings";
 import {MyServersCommand} from "@commands/utility/my-servers";
 import {ResetStatsCommand} from "@commands/utility/reset-stats";
+import {DeleteDataCommand} from "@commands/utility/delete-data";
 import {ClashCommand} from "@commands/fun/clash";
 import {BiggusdickusCommand} from "@commands/stats/biggusdickus";
 import {RankCommand} from "@commands/stats/rank";
@@ -83,6 +84,7 @@ async function start(): Promise<void> {
         new UserSettingsCommand(),
         new MyServersCommand(),
         new ResetStatsCommand(),
+        new DeleteDataCommand(),
         new ClashCommand(),
         new BiggusdickusCommand(),
         new RankCommand(),

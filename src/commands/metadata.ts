@@ -122,6 +122,24 @@ export const CommandMetadata: {
             },
         ],
     },
+    DELETE_DATA: {
+        type: ApplicationCommandType.ChatInput,
+        name: 'delete-data',
+        description: 'Permanently delete all data we hold about you (stats, history, settings)',
+        dm_permission: true,
+        options: [
+            {
+                type: 3,
+                name: 'scope',
+                description: 'Which servers to delete data from (default: this server)',
+                required: false,
+                choices: [
+                    { name: 'this server', value: 'server' },
+                    { name: 'all servers', value: 'global' },
+                ],
+            },
+        ],
+    },
     CLASH: {
         type: ApplicationCommandType.ChatInput,
         name: 'clash',
