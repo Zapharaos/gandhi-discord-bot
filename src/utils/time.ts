@@ -123,13 +123,14 @@ export class TimeUtils {
      * @returns {string} The formatted date string.
      */
     static formatDate(date: Date): string {
-        // Get day, month, year, hours, minutes, and seconds
-        const day = this.pad(date.getDate());  // Ensure 2 digits for the day
-        const month = this.pad(date.getMonth() + 1);  // Months are 0-indexed, so add 1
-        const year = date.getFullYear();
-        const hours = this.pad(date.getHours());  // Ensure 2 digits for hours
-        const minutes = this.pad(date.getMinutes());  // Ensure 2 digits for minutes
-        const seconds = this.pad(date.getSeconds());  // Ensure 2 digits for seconds
+        // Rendered in UTC to stay consistent with the UTC-based day bucketing,
+        // regardless of the host timezone.
+        const day = this.pad(date.getUTCDate());  // Ensure 2 digits for the day
+        const month = this.pad(date.getUTCMonth() + 1);  // Months are 0-indexed, so add 1
+        const year = date.getUTCFullYear();
+        const hours = this.pad(date.getUTCHours());  // Ensure 2 digits for hours
+        const minutes = this.pad(date.getUTCMinutes());  // Ensure 2 digits for minutes
+        const seconds = this.pad(date.getUTCSeconds());  // Ensure 2 digits for seconds
 
         // Combine all into the desired format
         return `${day}/${month}/${year}, ${hours}h${minutes}m${seconds}s`;

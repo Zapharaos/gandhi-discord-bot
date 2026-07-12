@@ -75,8 +75,8 @@ describe('TimeUtils', () => {
     });
 
     describe('formatDate', () => {
-        it('formats a date as DD/MM/YYYY, HHhMMmSSs', () => {
-            const date = new Date(2024, 0, 5, 9, 3, 7); // local time
+        it('formats a date as DD/MM/YYYY, HHhMMmSSs in UTC', () => {
+            const date = new Date(Date.UTC(2024, 0, 5, 9, 3, 7));
             expect(TimeUtils.formatDate(date)).toBe('05/01/2024, 09h03m07s');
         });
     });

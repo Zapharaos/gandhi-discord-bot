@@ -92,12 +92,8 @@ export class Heatmap {
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <script src="https://d3js.org/d3.v7.min.js"></script>
-                <script src="https://d3js.org/d3.v6.min.js"></script>
                 <script src="https://unpkg.com/cal-heatmap/dist/cal-heatmap.min.js"></script>
-    
                 <script src="https://unpkg.com/@popperjs/core@2/dist/umd/popper.min.js"></script>
-    
-                <script src="https://unpkg.com/cal-heatmap/dist/cal-heatmap.min.js"></script>
                 <script src="https://unpkg.com/cal-heatmap/dist/plugins/Tooltip.js"></script>
                 <script src="https://unpkg.com/cal-heatmap/dist/plugins/LegendLite.js"></script>
                 <script src="https://unpkg.com/cal-heatmap/dist/plugins/CalendarLabel.js"></script>
@@ -164,12 +160,13 @@ export class Heatmap {
                 const cal = new CalHeatmap();
                 let data = ` + JSON.stringify(this.data) + `;
         
-                // Define the date range for the heatmap
+                // Define the date range for the heatmap (computed in UTC to match the
+                // UTC day bucketing of the stored data).
                 const today = new Date();
                 const calStart = new Date();
-                calStart.setDate(today.getDate() - (51 * 7)); // Go back 51 weeks
-                while (calStart.getDay() !== 0) {  // Ensure it's a Sunday
-                    calStart.setDate(calStart.getDate() - 1);
+                calStart.setUTCDate(today.getUTCDate() - (51 * 7)); // Go back 51 weeks
+                while (calStart.getUTCDay() !== 0) {  // Ensure it's a Sunday
+                    calStart.setUTCDate(calStart.getUTCDate() - 1);
                 }
         
                 function getStartDate(date, dateHelper) {
@@ -177,7 +174,7 @@ export class Heatmap {
                     return firstOfMonth.isBefore(calStart) ? calStart : firstOfMonth.toDate();
                 }
                 function getEndDate(date, dateHelper) {
-                    const endOfMonth = dateHelper.date(new Date(date.getFullYear(), date.getMonth() + 1, 0));
+                    const endOfMonth = dateHelper.date(new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)));
                     return endOfMonth.isAfter(today) ? today : endOfMonth;
                 }
                 
@@ -335,7 +332,7 @@ export class Heatmap {
                             y: 'value',
                             defaultValue: 0,
                         },
-                        date: { start: calStart },
+                        date: { start: calStart, timezone: "UTC" },
                         theme: "dark",
                         scale: getHeatmapScale("` + this.stat + `", ` + this.isTargetAll + `),
                         range: 13,
