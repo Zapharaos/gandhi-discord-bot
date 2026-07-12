@@ -22,5 +22,16 @@
     "streak": "Série en cours",
     "maxStreak": "Meilleure série",
     "switches": "Changements de salon"
+  },
+  "admin": {
+    "badge": "Admin",
+    "members": "Membres",
+    "activeNow": "Actifs",
+    "totalConnected": "Temps connecté total",
+    "hidden": "Privés",
+    "topMembers": "Top membres",
+    "noMembers": "Aucun membre à afficher pour le moment.",
+    "hiddenNote": "{{count}} membre(s) privé(s) comptés dans les totaux mais masqués de cette liste.",
+    "serverActivity": "Activité du serveur"
   }
 }

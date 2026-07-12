@@ -22,5 +22,16 @@
     "streak": "Current streak",
     "maxStreak": "Best streak",
     "switches": "Channel switches"
+  },
+  "admin": {
+    "badge": "Admin",
+    "members": "Members",
+    "activeNow": "Active now",
+    "totalConnected": "Total connected",
+    "hidden": "Private",
+    "topMembers": "Top members",
+    "noMembers": "No members to show yet.",
+    "hiddenNote": "{{count}} private member(s) are counted in the totals but hidden from this list.",
+    "serverActivity": "Server activity"
   }
 }

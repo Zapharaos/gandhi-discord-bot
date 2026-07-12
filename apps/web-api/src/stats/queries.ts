@@ -34,6 +34,35 @@ export async function getDailyStatsRows(
     return (await query.orderBy('day_timestamp', 'asc').execute()) as unknown as DailyStats[];
 }
 
+// --- Guild-scoped reads (for the admin view: every member of a guild) ---
+
+export async function getGuildUserStatsRows(guildId: string): Promise<UserStats[]> {
+    return (await getDb()
+        .selectFrom('user_stats')
+        .selectAll()
+        .where('guild_id', '=', guildId)
+        .execute()) as unknown as UserStats[];
+}
+
+export async function getGuildStartTimestampsRows(guildId: string): Promise<StartTimestamps[]> {
+    return (await getDb()
+        .selectFrom('start_timestamps')
+        .selectAll()
+        .where('guild_id', '=', guildId)
+        .execute()) as unknown as StartTimestamps[];
+}
+
+export async function getGuildDailyStatsRows(
+    guildId: string,
+    from?: number,
+    to?: number,
+): Promise<DailyStats[]> {
+    let query = getDb().selectFrom('daily_stats').selectAll().where('guild_id', '=', guildId);
+    if (from !== undefined) query = query.where('day_timestamp', '>=', from);
+    if (to !== undefined) query = query.where('day_timestamp', '<=', to);
+    return (await query.orderBy('day_timestamp', 'asc').execute()) as unknown as DailyStats[];
+}
+
 /** Distinct guild ids where the user has any stored stats. */
 export async function getUserGuildIds(userId: string): Promise<string[]> {
     const rows = await getDb()

@@ -53,6 +53,16 @@ interface GuildOption {
             }
           </div>
 
+          @if (adminGuildId(); as gid) {
+            <p-button
+              severity="info"
+              icon="pi pi-shield"
+              [text]="true"
+              [label]="'admin.badge' | translate"
+              (onClick)="goAdmin(gid)"
+            />
+          }
+
           <p-button
             severity="secondary"
             icon="pi pi-sign-out"
@@ -89,6 +99,15 @@ export class ShellComponent {
     return options;
   });
 
+  // The admin shortcut only appears when the selected server is one the user
+  // administers (mirrors the server-side authorization).
+  readonly adminGuildId = computed<string | null>(() => {
+    const gid = this.selectedGuild();
+    if (!gid) return null;
+    const guild = this.auth.me()?.guilds.find((g) => g.id === gid);
+    return guild?.isAdmin ? gid : null;
+  });
+
   constructor() {
     this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
@@ -97,6 +116,10 @@ export class ShellComponent {
 
   onGuildChange(guildId: string | null): void {
     this.router.navigate(guildId ? ['/server', guildId] : ['/dashboard']);
+  }
+
+  goAdmin(guildId: string): void {
+    this.router.navigate(['/admin', guildId]);
   }
 
   setLang(lang: Language): void {

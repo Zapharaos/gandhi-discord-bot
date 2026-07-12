@@ -66,3 +66,40 @@ export interface TimelineResponse {
   stat: TimelineStat;
   points: TimelinePoint[];
 }
+
+export interface GuildMemberStats {
+  userId: string;
+  isLive: boolean;
+  time_connected: number;
+  time_muted: number;
+  time_deafened: number;
+  time_screen_sharing: number;
+  time_camera: number;
+  daily_streak: number;
+}
+
+export interface GuildOverview {
+  memberCount: number;
+  activeCount: number;
+  /** Members hidden from itemised views because they enabled private mode. */
+  hiddenCount: number;
+  totals: {
+    time_connected: number;
+    time_muted: number;
+    time_deafened: number;
+    time_screen_sharing: number;
+    time_camera: number;
+  };
+  topMembers: GuildMemberStats[];
+}
+
+export interface AdminOverviewResponse {
+  guildId: string;
+  overview: GuildOverview;
+}
+
+export interface AdminTimelineResponse {
+  guildId: string;
+  stat: TimelineStat;
+  points: TimelinePoint[];
+}

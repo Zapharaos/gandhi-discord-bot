@@ -30,3 +30,24 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply):
     }
     request.authSession = session;
 }
+
+/**
+ * preHandler (run after requireAuth) that authorizes admin-only guild routes:
+ * the user must have ADMINISTRATOR / MANAGE_GUILD on the `:guildId` param, as
+ * reported by Discord's `guilds` OAuth scope and cached in the session.
+ */
+export async function requireGuildAdmin(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+    const session = request.authSession ?? resolveSession(request);
+    if (!session) {
+        await reply.code(401).send({ error: 'unauthorized' });
+        return;
+    }
+    request.authSession = session;
+
+    const guildId = (request.params as { guildId?: string }).guildId;
+    const guild = session.guilds.find((g) => g.id === guildId);
+    if (!guild || !guild.isAdmin) {
+        await reply.code(403).send({ error: 'forbidden' });
+        return;
+    }
+}
