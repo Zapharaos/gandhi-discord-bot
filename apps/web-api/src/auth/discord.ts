@@ -30,6 +30,31 @@ interface DiscordPartialGuild {
     name: string;
     icon: string | null;
     permissions: string;
+    /** True when the user is the guild owner (implies full management rights). */
+    owner?: boolean;
+}
+
+/**
+ * OAuth2 URL to invite the bot to a server. Permissions default to a modest set
+ * (View Channels + Send Messages + Read Message History = 68608) so it can watch
+ * voice states and post logs; a server admin can adjust afterwards.
+ */
+export function buildBotInviteUrl(): string {
+    const config = loadConfig();
+    const params = new URLSearchParams({
+        client_id: config.discord.clientId,
+        scope: 'bot applications.commands',
+        permissions: '68608',
+    });
+    return `https://discord.com/oauth2/authorize?${params.toString()}`;
+}
+
+/**
+ * Build a renderable guild icon URL from its icon hash. Always requests the static
+ * PNG (even for animated `a_…` hashes) so server icons don't animate in the UI.
+ */
+export function discordIconUrl(guildId: string, iconHash: string): string {
+    return `https://cdn.discordapp.com/icons/${guildId}/${iconHash}.png`;
 }
 
 /** Build the Discord authorization URL the browser is redirected to. */
@@ -90,14 +115,16 @@ export async function fetchGuilds(accessToken: string): Promise<SessionGuild[]> 
     const guilds = (await res.json()) as DiscordPartialGuild[];
 
     return guilds.map((g) => {
-        let isAdmin = false;
+        // The guild owner always manages, regardless of the permission bitfield.
+        let isAdmin = g.owner === true;
         try {
             const perms = BigInt(g.permissions);
             isAdmin =
+                isAdmin ||
                 (perms & PERMISSION_ADMINISTRATOR) !== 0n ||
                 (perms & PERMISSION_MANAGE_GUILD) !== 0n;
         } catch {
-            isAdmin = false;
+            // keep the owner flag if permission parsing fails
         }
         return { id: g.id, name: g.name, icon: g.icon, isAdmin };
     });

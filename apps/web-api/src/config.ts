@@ -37,6 +37,8 @@ export interface Config {
     internalWsToken: string;
     /** Extra allowed CORS origin (e.g. the Angular dev server); empty to disable. */
     corsOrigin: string;
+    /** Discord user ids that are bot operators (BOT_ADMIN_IDS), for the bot-admin area. */
+    botAdminIds: string[];
 }
 
 let cached: Config | null = null;
@@ -61,6 +63,10 @@ export function loadConfig(): Config {
         sessionSecret: required('SESSION_SECRET'),
         internalWsToken: required('INTERNAL_WS_TOKEN'),
         corsOrigin: optional('WEB_CORS_ORIGIN', ''),
+        botAdminIds: optional('BOT_ADMIN_IDS', '')
+            .split(',')
+            .map((s) => s.trim())
+            .filter((s) => s.length > 0),
     };
 
     return cached;

@@ -1,7 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import { requireAuth, requireGuildAdmin } from '../auth/guard';
 import { TIMELINE_STATS, type TimelineStat } from '../stats/service';
-import { getGuildMembers, getGuildOverview, getGuildTimeline } from './service';
+import { getGuildMembers, getGuildOverview, getGuildTimeline, getMemberLookup } from './service';
+import { getServerSettings, updateServerSettings } from './settings';
 
 const guildIdPattern = '^[0-9]{5,25}$';
 const paramsSchema = {
@@ -32,6 +33,64 @@ export async function registerAdminRoutes(app: FastifyInstance): Promise<void> {
         async (request) => {
             const { guildId } = request.params;
             return { guildId, ...(await getGuildMembers(guildId)) };
+        },
+    );
+
+    // Look up one member's stats by Discord id (respects private mode).
+    app.get<{ Params: { guildId: string; userId: string } }>(
+        '/api/admin/guild/:guildId/member/:userId',
+        {
+            ...adminGuard,
+            schema: {
+                params: {
+                    type: 'object',
+                    required: ['guildId', 'userId'],
+                    properties: {
+                        guildId: { type: 'string', pattern: guildIdPattern },
+                        userId: { type: 'string', pattern: guildIdPattern },
+                    },
+                },
+            },
+        },
+        async (request) => {
+            const { guildId, userId } = request.params;
+            return getMemberLookup(guildId, userId);
+        },
+    );
+
+    // Server-level settings (log channel + stats/logs), managed by guild admins.
+    app.get<{ Params: { guildId: string } }>(
+        '/api/admin/guild/:guildId/settings',
+        { ...adminGuard, schema: { params: paramsSchema } },
+        async (request) => {
+            const { guildId } = request.params;
+            return { guildId, settings: await getServerSettings(guildId) };
+        },
+    );
+
+    app.patch<{
+        Params: { guildId: string };
+        Body: { stats?: boolean; logs?: boolean; logChannelId?: string | null };
+    }>(
+        '/api/admin/guild/:guildId/settings',
+        {
+            ...adminGuard,
+            schema: {
+                params: paramsSchema,
+                body: {
+                    type: 'object',
+                    additionalProperties: false,
+                    properties: {
+                        stats: { type: 'boolean' },
+                        logs: { type: 'boolean' },
+                        logChannelId: { type: ['string', 'null'], maxLength: 25 },
+                    },
+                },
+            },
+        },
+        async (request) => {
+            const { guildId } = request.params;
+            return { guildId, settings: await updateServerSettings(guildId, request.body) };
         },
     );
 

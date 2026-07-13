@@ -9,8 +9,10 @@ import {
     getGuildDailyStatsRows,
     getGuildStartTimestampsRows,
     getGuildUserStatsRows,
+    getUserStatsRows,
+    isUserPrivate,
 } from '../stats/queries';
-import type { TimelineStat, TimelinePoint } from '../stats/service';
+import { getAggregatedStats, type AggregatedStats, type TimelineStat, type TimelinePoint } from '../stats/service';
 
 const TOP_MEMBERS = 10;
 
@@ -24,7 +26,7 @@ export interface MemberEntry {
 // Build a per-member live model, carrying the private flag and current-session
 // state so the caller can apply the privacy policy: private members are counted
 // in server-wide totals but never itemised in the per-member list.
-async function loadMembers(guildId: string): Promise<MemberEntry[]> {
+export async function loadMembers(guildId: string): Promise<MemberEntry[]> {
     const now = Date.now();
     const [userRows, startRows] = await Promise.all([
         getGuildUserStatsRows(guildId),
@@ -143,6 +145,30 @@ export function buildMembersResult(members: MemberEntry[]): GuildMembersResult {
 
 export async function getGuildMembers(guildId: string): Promise<GuildMembersResult> {
     return buildMembersResult(await loadMembers(guildId));
+}
+
+export interface MemberLookup {
+    userId: string;
+    /** The user has data on this server. */
+    found: boolean;
+    /** The user enabled private mode — their detailed stats are withheld. */
+    private: boolean;
+    stats: AggregatedStats | null;
+}
+
+/**
+ * Admin lookup of one member's stats by Discord id. Honours the privacy policy:
+ * a private member is reported as private with NO detailed stats, even to admins.
+ */
+export async function getMemberLookup(guildId: string, userId: string): Promise<MemberLookup> {
+    const rows = await getUserStatsRows(userId, guildId);
+    if (rows.length === 0) {
+        return { userId, found: false, private: false, stats: null };
+    }
+    if (await isUserPrivate(userId, guildId)) {
+        return { userId, found: true, private: true, stats: null };
+    }
+    return { userId, found: true, private: false, stats: await getAggregatedStats(userId, guildId) };
 }
 
 /**

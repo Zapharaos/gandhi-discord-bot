@@ -5,7 +5,7 @@ import { logger } from '../logger';
 import { buildAuthorizeUrl, exchangeCode, fetchGuilds, fetchUser } from './discord';
 import { createSession, destroySession, SESSION_COOKIE } from './sessions';
 import { requireAuth, resolveSession } from './guard';
-import { getServersMeta, getUserGuildIds } from '../stats/queries';
+import { resolveUserGuilds } from '../me/guilds';
 
 const STATE_COOKIE = 'gandhi_oauth_state';
 
@@ -73,32 +73,10 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
         return { ok: true };
     });
 
-    // Current user + the guilds they can see. Each guild is annotated with whether
-    // the bot holds stats for the user there (hasData) and whether the user can
-    // administer it (isAdmin, from the Discord `guilds` scope).
+    // Current user + the guilds worth showing (bot present or the user has data),
+    // each annotated with hasData / botPresent / isAdmin and an icon URL.
     app.get('/api/me', { preHandler: requireAuth }, async (request) => {
         const session = request.authSession!;
-
-        const dataGuildIds = await getUserGuildIds(session.userId);
-        const dataGuildSet = new Set(dataGuildIds);
-
-        // Union of Discord guilds (membership + admin flag) and guilds where the
-        // user has data (they may have left a server but still own data there).
-        const byId = new Map<string, { id: string; name: string | null; icon: string | null; isAdmin: boolean; hasData: boolean }>();
-
-        for (const g of session.guilds) {
-            byId.set(g.id, { id: g.id, name: g.name, icon: g.icon, isAdmin: g.isAdmin, hasData: dataGuildSet.has(g.id) });
-        }
-
-        const missingMeta = dataGuildIds.filter((id) => !byId.has(id));
-        if (missingMeta.length > 0) {
-            const meta = await getServersMeta(missingMeta);
-            for (const id of missingMeta) {
-                const m = meta.get(id);
-                byId.set(id, { id, name: m?.guild_name ?? null, icon: m?.guild_icon ?? null, isAdmin: false, hasData: true });
-            }
-        }
-
         return {
             user: {
                 id: session.userId,
@@ -106,7 +84,9 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
                 globalName: session.globalName,
                 avatar: session.avatar,
             },
-            guilds: [...byId.values()].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '')),
+            // Bot operators (BOT_ADMIN_IDS) — distinct from Discord server admins.
+            isBotAdmin: config.botAdminIds.includes(session.userId),
+            guilds: await resolveUserGuilds(session),
         };
     });
 

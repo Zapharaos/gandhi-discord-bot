@@ -124,6 +124,43 @@ export async function getAggregatedStats(userId: string, guildId?: string): Prom
     return acc;
 }
 
+export interface SessionStats {
+    /** True when the user is currently connected to a voice channel. */
+    active: boolean;
+    /** Guild ids with an ongoing session (usually one). */
+    guildIds: string[];
+    /** Elapsed durations of the ONGOING session only (not the stored totals). */
+    stats: AggregatedStats;
+}
+
+/**
+ * The user's current voice session: how long they have been connected / muted /
+ * … right now. Computed straight from the live start timestamps (no streak or
+ * max logic, which only applies to stored totals).
+ */
+export async function getSessionStats(userId: string): Promise<SessionStats> {
+    const now = Date.now();
+    const startRows = await getStartTimestampsRows(userId);
+
+    const acc = emptyAggregate();
+    const guildIds: string[] = [];
+    const elapsed = (start: number): number => (start > 0 ? Math.max(0, now - start) : 0);
+
+    for (const row of startRows) {
+        const start = StartTimestampsModel.fromStartTimestamps(row);
+        if (!start.isActive()) continue;
+        if (row.guild_id) guildIds.push(row.guild_id);
+        acc.time_connected += elapsed(start.start_connected);
+        acc.time_muted += elapsed(start.start_muted);
+        acc.time_deafened += elapsed(start.start_deafened);
+        acc.time_screen_sharing += elapsed(start.start_screen_sharing);
+        acc.time_camera += elapsed(start.start_camera);
+    }
+
+    acc.isLive = guildIds.length > 0;
+    return { active: guildIds.length > 0, guildIds, stats: acc };
+}
+
 export interface TimelinePoint {
     /** UTC-midnight timestamp (ms) of the day bucket. */
     day: number;

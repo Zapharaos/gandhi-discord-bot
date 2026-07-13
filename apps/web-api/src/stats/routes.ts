@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { requireAuth } from '../auth/guard';
-import { getAggregatedStats, getTimeline, TIMELINE_STATS, type TimelineStat } from './service';
+import { getAggregatedStats, getSessionStats, getTimeline, TIMELINE_STATS, type TimelineStat } from './service';
 
 // Discord snowflakes are numeric ids; constrain params/queries so malformed input
 // is rejected with 400 by Fastify's validation before any handler runs.
@@ -11,6 +11,13 @@ export async function registerStatsRoutes(app: FastifyInstance): Promise<void> {
     app.get('/api/stats/global', { preHandler: requireAuth }, async (request) => {
         const session = request.authSession!;
         return { scope: 'global', stats: await getAggregatedStats(session.userId) };
+    });
+
+    // The user's current voice session (live), if any.
+    app.get('/api/stats/session', { preHandler: requireAuth }, async (request) => {
+        const session = request.authSession!;
+        const result = await getSessionStats(session.userId);
+        return { scope: 'session', ...result };
     });
 
     // Aggregate stats for a single server. Only ever returns the caller's own data.

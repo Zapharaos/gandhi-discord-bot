@@ -72,6 +72,30 @@ export async function getGuildDailyStatsRows(
     return (await query.orderBy('day_timestamp', 'asc').execute()) as unknown as DailyStats[];
 }
 
+export interface UserGuildSettings {
+    guildId: string;
+    stats: boolean;
+    logs: boolean;
+    isPrivate: boolean;
+}
+
+/** The user's per-guild opt-in settings (stats/logs/private), for guilds with a row. */
+export async function getUserSettingsRows(userId: string): Promise<UserGuildSettings[]> {
+    const rows = await getDb()
+        .selectFrom('user_stats')
+        .select(['guild_id', 'stats', 'logs', 'private'])
+        .where('user_id', '=', userId)
+        .execute();
+    return rows
+        .filter((r) => !!r.guild_id)
+        .map((r) => ({
+            guildId: r.guild_id as string,
+            stats: (r.stats as unknown as number | null) === 1,
+            logs: (r.logs as unknown as number | null) === 1,
+            isPrivate: (r.private as unknown as number | null) === 1,
+        }));
+}
+
 /** Distinct guild ids where the user has any stored stats. */
 export async function getUserGuildIds(userId: string): Promise<string[]> {
     const rows = await getDb()
@@ -83,16 +107,16 @@ export async function getUserGuildIds(userId: string): Promise<string[]> {
     return rows.map((r) => r.guild_id).filter((id): id is string => !!id);
 }
 
-/** Cached guild name/icon (populated by the bot) for the given guild ids. */
-export async function getServersMeta(
-    guildIds: string[],
-): Promise<Map<string, Pick<Selectable<Servers>, 'guild_name' | 'guild_icon' | 'stats'>>> {
-    const result = new Map<string, Pick<Selectable<Servers>, 'guild_name' | 'guild_icon' | 'stats'>>();
+export type ServerMeta = Pick<Selectable<Servers>, 'guild_name' | 'guild_icon' | 'stats' | 'bot_present'>;
+
+/** Cached guild name/icon/presence (populated by the bot) for the given guild ids. */
+export async function getServersMeta(guildIds: string[]): Promise<Map<string, ServerMeta>> {
+    const result = new Map<string, ServerMeta>();
     if (guildIds.length === 0) return result;
 
     const rows = await getDb()
         .selectFrom('servers')
-        .select(['guild_id', 'guild_name', 'guild_icon', 'stats'])
+        .select(['guild_id', 'guild_name', 'guild_icon', 'stats', 'bot_present'])
         .where('guild_id', 'in', guildIds)
         .execute();
 
@@ -102,10 +126,60 @@ export async function getServersMeta(
                 guild_name: row.guild_name,
                 guild_icon: row.guild_icon,
                 stats: row.stats,
+                bot_present: row.bot_present,
             });
         }
     }
     return result;
+}
+
+export interface UserIdentity {
+    username: string | null;
+    globalName: string | null;
+    avatar: string | null;
+}
+
+/** Cached Discord identities (username/global name/avatar), keyed by user id. */
+export async function getUsersByIds(userIds: string[]): Promise<Map<string, UserIdentity>> {
+    const result = new Map<string, UserIdentity>();
+    if (userIds.length === 0) return result;
+
+    const rows = await getDb()
+        .selectFrom('users')
+        .select(['user_id', 'username', 'global_name', 'avatar'])
+        .where('user_id', 'in', userIds)
+        .execute();
+
+    for (const row of rows) {
+        result.set(row.user_id, {
+            username: row.username,
+            globalName: row.global_name,
+            avatar: row.avatar,
+        });
+    }
+    return result;
+}
+
+export interface ServerSettingsRow {
+    logChannelId: string | null;
+    stats: boolean;
+    logs: boolean;
+}
+
+/** Server-level settings (log channel + stats/logs). Unset stats/logs default to ON, like the bot. */
+export async function getServerSettingsRow(guildId: string): Promise<ServerSettingsRow> {
+    const row = await getDb()
+        .selectFrom('servers')
+        .select(['log_channel_id', 'stats', 'logs'])
+        .where('guild_id', '=', guildId)
+        .executeTakeFirst();
+    const statsVal = row?.stats as unknown as number | null;
+    const logsVal = row?.logs as unknown as number | null;
+    return {
+        logChannelId: row?.log_channel_id ?? null,
+        stats: statsVal == null || statsVal !== 0,
+        logs: logsVal == null || logsVal !== 0,
+    };
 }
 
 /** True when the user has enabled private mode on the given guild. */
