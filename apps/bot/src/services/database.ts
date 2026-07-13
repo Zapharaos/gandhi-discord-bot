@@ -35,10 +35,12 @@ async function setupSqliteDialect(): Promise<SqliteDialect> {
 
     const sqlite = new SQLite(path.join(process.cwd(), defaultDbFilePath));
 
-    // WAL lets a separate reader process (the web service) read concurrently while
-    // the bot — the sole writer — keeps writing, without blocking each other.
-    // busy_timeout makes a writer wait briefly instead of failing on a transient lock.
-    sqlite.pragma('journal_mode = WAL');
+    // Rollback journal (DELETE), NOT WAL. WAL relies on a shared-memory index
+    // (-shm + mmap) that is unreliable on Windows/DrvFs bind mounts and can leave a
+    // stuck lock that hangs every writer. The classic rollback journal uses plain
+    // file locks, which work there; busy_timeout serialises the bot's writes against
+    // the web service's reads. (On a native/ext4 volume, WAL would be preferable.)
+    sqlite.pragma('journal_mode = DELETE');
     sqlite.pragma('busy_timeout = 5000');
     sqlite.pragma('foreign_keys = ON');
 

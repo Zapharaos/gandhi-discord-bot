@@ -87,6 +87,7 @@ export class ServerController {
         guildID: string,
         guildName: string | null,
         guildIcon: string | null,
+        ownerId?: string | null,
     ): Promise<void> {
         const db = await getDb();
         if (!db) {
@@ -94,7 +95,7 @@ export class ServerController {
             return;
         }
         try {
-            const values = { guild_name: guildName, guild_icon: guildIcon, bot_present: 1 };
+            const values = { guild_name: guildName, guild_icon: guildIcon, bot_present: 1, owner_id: ownerId ?? null };
             await db
                 .insertInto('servers')
                 .values({ guild_id: guildID, ...values })

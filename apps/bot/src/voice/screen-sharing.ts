@@ -39,7 +39,7 @@ export class ScreenSharingVoice implements Voice {
         if (VoiceStateUtils.startStreaming(props.oldState, props.newState)) {
             // Send message to log channel (only if logs are enabled)
             if (props.settings.serverlogs) {
-                await props.settings.logchannel.send(`📺 **${props.userName}** started screen sharing`);
+                await props.settings.logchannel?.send(`📺 **${props.userName}** started screen sharing`);
             }
             Logger.debug(`Screen sharing started for user: ${props.userName}`);
 
@@ -62,7 +62,7 @@ export class ScreenSharingVoice implements Voice {
 
                 // Send message to log channel (with or without time based on logs setting)
                 if (props.settings.serverlogs) {
-                    await props.settings.logchannel.send(`🛑 **${props.userName}** stopped screen sharing after **${TimeUtils.formatDuration(duration)}**`);
+                    await props.settings.logchannel?.send(`🛑 **${props.userName}** stopped screen sharing after **${TimeUtils.formatDuration(duration)}**`);
                 }
                 Logger.debug(`Screen sharing stopped for user: ${props.userName} after ${duration} ms`);
 
@@ -73,7 +73,7 @@ export class ScreenSharingVoice implements Voice {
 
             // Time was not tracked, send default message (only if logs are enabled)
             if (props.settings.serverlogs) {
-                await props.settings.logchannel.send(`🛑 **${props.userName}** stopped screen sharing`);
+                await props.settings.logchannel?.send(`🛑 **${props.userName}** stopped screen sharing`);
             }
             Logger.debug(`Screen sharing stopped for user: ${props.userName} but no start time was tracked`);
             return

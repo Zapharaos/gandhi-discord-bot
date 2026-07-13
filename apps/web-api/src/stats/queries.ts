@@ -96,6 +96,21 @@ export async function getUserSettingsRows(userId: string): Promise<UserGuildSett
         }));
 }
 
+/** Guild ids where the user has been granted the local "server manager" role. */
+export async function getUserLocalAdminGuildIds(userId: string): Promise<string[]> {
+    try {
+        const rows = await getDb()
+            .selectFrom('user_stats')
+            .select('guild_id')
+            .where('user_id', '=', userId)
+            .where('local_admin', '=', 1)
+            .execute();
+        return rows.map((r) => r.guild_id).filter((id): id is string => !!id);
+    } catch {
+        return []; // local_admin column may not exist yet (migration 16)
+    }
+}
+
 /** Distinct guild ids where the user has any stored stats. */
 export async function getUserGuildIds(userId: string): Promise<string[]> {
     const rows = await getDb()
@@ -160,6 +175,28 @@ export async function getUsersByIds(userIds: string[]): Promise<Map<string, User
     return result;
 }
 
+export interface GuildChannel {
+    channelId: string;
+    name: string | null;
+}
+
+/** The guild's cached text channels (populated by the bot), ordered by name. */
+export async function getGuildChannels(guildId: string): Promise<GuildChannel[]> {
+    try {
+        const rows = await getDb()
+            .selectFrom('channels')
+            .select(['channel_id', 'name'])
+            .where('guild_id', '=', guildId)
+            .execute();
+        return rows
+            .map((r) => ({ channelId: r.channel_id, name: r.name }))
+            .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
+    } catch {
+        // The `channels` table may not exist yet if the bot hasn't run migration 15.
+        return [];
+    }
+}
+
 export interface ServerSettingsRow {
     logChannelId: string | null;
     stats: boolean;
@@ -180,6 +217,35 @@ export async function getServerSettingsRow(guildId: string): Promise<ServerSetti
         stats: statsVal == null || statsVal !== 0,
         logs: logsVal == null || logsVal !== 0,
     };
+}
+
+/** Cached guild owner id (populated by the bot), or null. */
+export async function getServerOwnerId(guildId: string): Promise<string | null> {
+    try {
+        const row = await getDb()
+            .selectFrom('servers')
+            .select('owner_id')
+            .where('guild_id', '=', guildId)
+            .executeTakeFirst();
+        return row?.owner_id ?? null;
+    } catch {
+        return null; // owner_id column may not exist yet (migration 16)
+    }
+}
+
+/** True when the user has been granted the local "server manager" role on this guild. */
+export async function isUserLocalAdmin(userId: string, guildId: string): Promise<boolean> {
+    try {
+        const row = await getDb()
+            .selectFrom('user_stats')
+            .select('local_admin')
+            .where('user_id', '=', userId)
+            .where('guild_id', '=', guildId)
+            .executeTakeFirst();
+        return !!row && (row.local_admin as unknown as number | null) === 1;
+    } catch {
+        return false; // local_admin column may not exist yet (migration 16)
+    }
 }
 
 /** True when the user has enabled private mode on the given guild. */

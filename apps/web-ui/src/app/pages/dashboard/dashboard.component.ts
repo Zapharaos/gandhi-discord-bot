@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { NgTemplateOutlet } from '@angular/common';
 import { toObservable, toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -19,6 +18,7 @@ import { HeatmapComponent } from '@shared/heatmap/heatmap.component';
 import { RankingComponent } from '@shared/ranking/ranking.component';
 import { ActiveMembersComponent } from '@shared/active-members/active-members.component';
 import { ServerSettingsComponent } from '@shared/server-settings/server-settings.component';
+import { MemberAdminComponent } from '@shared/member-admin/member-admin.component';
 import { DurationPipe } from '@shared/pipes/duration.pipe';
 
 interface StatOption {
@@ -37,7 +37,6 @@ interface TabDef {
   selector: 'app-dashboard',
   standalone: true,
   imports: [
-    RouterLink,
     NgTemplateOutlet,
     FormsModule,
     SelectModule,
@@ -49,6 +48,7 @@ interface TabDef {
     RankingComponent,
     ActiveMembersComponent,
     ServerSettingsComponent,
+    MemberAdminComponent,
     DurationPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -132,13 +132,9 @@ interface TabDef {
           }
           @case ('settings') {
             <app-server-settings [guildId]="gid" />
-            <a
-              [routerLink]="['/admin', gid]"
-              class="mt-4 inline-flex items-center gap-2 rounded-lg border border-surface-700 bg-surface-800/60 px-3 py-1.5 text-sm font-medium text-surface-100 no-underline transition-colors hover:border-primary-500/40 hover:bg-primary-500/10 hover:text-primary-200"
-            >
-              <i class="pi pi-shield text-xs"></i>{{ 'admin.manage' | translate }}
-              <i class="pi pi-arrow-right text-xs opacity-70"></i>
-            </a>
+            <div class="mt-6">
+              <app-member-admin [guildId]="gid" />
+            </div>
           }
         }
       </div>
@@ -220,11 +216,12 @@ export class DashboardComponent {
     return this.auth.me()?.guilds.find((g) => g.id === gid) ?? null;
   });
 
-  /** True when viewing a server the current user administers — surfaces the settings tab. */
+  /** True when viewing a server the user manages (Discord admin/owner OR local manager). */
   readonly isGuildAdmin = computed(() => {
     const gid = this.guildId();
     if (!gid) return false;
-    return this.auth.me()?.guilds.find((g) => g.id === gid)?.isAdmin ?? false;
+    const g = this.auth.me()?.guilds.find((x) => x.id === gid);
+    return (g?.isAdmin ?? false) || (g?.localAdmin ?? false);
   });
 
   // Server-view tabs (Settings only for admins).

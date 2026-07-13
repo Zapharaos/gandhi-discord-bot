@@ -7,6 +7,7 @@ import {
   AdminOverviewResponse,
   AdminTimelineResponse,
   ConfigResponse,
+  GuildRosterResponse,
   MemberLookupResponse,
   MeResponse,
   RankingResponse,
@@ -124,6 +125,16 @@ export class ApiService {
 
   getServerSettings(guildId: string): Observable<ServerSettingsResponse> {
     return this.http.get<ServerSettingsResponse>(`${this.base}/api/admin/guild/${guildId}/settings`);
+  }
+
+  guildRoster(guildId: string): Observable<GuildRosterResponse> {
+    return this.http.get<GuildRosterResponse>(`${this.base}/api/admin/guild/${guildId}/roster`);
+  }
+
+  setMemberAdmin(guildId: string, userId: string, localAdmin: boolean): Observable<GuildRosterResponse> {
+    return this.http.patch<GuildRosterResponse>(`${this.base}/api/admin/guild/${guildId}/member/${userId}/admin`, {
+      localAdmin,
+    });
   }
 
   updateServerSettings(guildId: string, patch: ServerSettingsPatch): Observable<ServerSettingsResponse> {

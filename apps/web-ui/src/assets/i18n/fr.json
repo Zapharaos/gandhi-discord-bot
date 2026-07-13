@@ -192,7 +192,12 @@
       "logsHint": "Autoriser le bot à publier les événements vocaux dans le salon de logs.",
       "logChannel": "Salon de logs",
       "logChannelHint": "Colle l'ID du salon Discord où publier les logs. Active le Mode développeur dans Discord, puis clic droit sur un salon → Copier l'identifiant du salon.",
+      "logChannelHint2": "Choisis le salon où le bot publiera les logs vocaux.",
       "logChannelPlaceholder": "ID du salon (ex. 123456789012345678)",
+      "logChannelPlaceholder2": "Choisir un salon",
+      "logChannelError": "Ce salon est invalide ou le bot n'y a pas accès.",
+      "current": "Actuel :",
+      "noChannels": "Aucun salon synchronisé — vérifie que le bot est bien sur ce serveur.",
       "save": "Enregistrer",
       "clear": "Effacer",
       "saved": "Enregistré"
@@ -218,6 +223,21 @@
       "leaderboard": "Classement",
       "settings": "Paramètres"
     }
+  },
+  "members": {
+    "title": "Membres",
+    "total": "Total",
+    "private": "Privés",
+    "admins": "Gestionnaires",
+    "member": "Membre",
+    "lastActivity": "Dernière activité",
+    "never": "Jamais",
+    "search": "Rechercher par nom ou ID…",
+    "admin": "Gestionnaire",
+    "owner": "Propriétaire",
+    "adminTag": "Gestionnaire",
+    "privateTag": "Privé",
+    "empty": "Aucun membre à afficher."
   },
   "ranking": {
     "title": "Classement",

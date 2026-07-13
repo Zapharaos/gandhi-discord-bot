@@ -57,13 +57,13 @@ export class VoiceHandler implements EventHandler {
         const guild = newState.guild;
         const userName = newState.member?.nickname || user.displayName;
 
-        // Retrieve the server and log channel
+        // Retrieve the server row. A missing row means the server has no explicit
+        // config yet — server-level features then default to enabled.
         const server = await ServerController.getServer(guild.id);
-        if (!server || !server.log_channel_id) return;
 
         // Check if stats or logs are enabled at server level (default to true if not set)
-        const serverStatsEnabled = (server.stats as unknown as number | null) == null || (server.stats as unknown as number) !== 0;
-        const serverLogsEnabled = (server.logs as unknown as number | null) == null || (server.logs as unknown as number) !== 0;
+        const serverStatsEnabled = !server || (server.stats as unknown as number | null) == null || (server.stats as unknown as number) !== 0;
+        const serverLogsEnabled = !server || (server.logs as unknown as number | null) == null || (server.logs as unknown as number) !== 0;
 
         // Check if stats or logs are enabled at user level.
         // Opt-in model: a user is only tracked once they have explicitly opted in
@@ -72,15 +72,30 @@ export class VoiceHandler implements EventHandler {
         const userStatsEnabled = !!userStats && (userStats.stats as unknown as number) === 1;
         const userLogsEnabled = !!userStats && (userStats.logs as unknown as number) === 1;
 
-        // Combine server and user settings (both must be enabled for the feature to work)
+        // Stats/live tracking do NOT require a log channel — only logging does.
         const statsEnabled = serverStatsEnabled && userStatsEnabled;
-        const logsEnabled = serverLogsEnabled && userLogsEnabled;
 
-        // If both are disabled, return early
+        // Resolve the log channel (if any). Logging only happens when it exists.
+        let logChannel: TextChannel | null = null;
+        const logChannelId = server?.log_channel_id;
+        if (logChannelId) {
+            const ch = guild.channels.cache.get(logChannelId);
+            if (ch && ch.type === ChannelType.GuildText && ch instanceof TextChannel) {
+                logChannel = ch;
+            }
+        }
+        const logsEnabled = serverLogsEnabled && userLogsEnabled && logChannel !== null;
+
+        // Diagnostic: prints the exact decision inputs for every voice event so a
+        // "nothing happens" report can be traced from `docker compose logs bot`.
+        Logger.info(
+            `[voice] ${guild.id}/${user.id} serverStats=${serverStatsEnabled} serverLogs=${serverLogsEnabled} ` +
+            `userStats=${userStatsEnabled} userLogs=${userLogsEnabled} logChannelId=${logChannelId ?? 'none'} ` +
+            `logChannelResolved=${logChannel ? 'yes' : 'no'} => stats=${statsEnabled} logs=${logsEnabled}`,
+        );
+
+        // Nothing to do if neither stats nor logging apply to this user.
         if (!statsEnabled && !logsEnabled) return;
-
-        const logChannel = guild.channels.cache.get(server.log_channel_id);
-        if (!logChannel || logChannel.type !== ChannelType.GuildText || !(logChannel instanceof TextChannel)) return;
 
         // Update the user last activity and streak (only if stats are enabled)
         if (statsEnabled) {

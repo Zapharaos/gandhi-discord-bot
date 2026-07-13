@@ -39,7 +39,7 @@ export class CameraVoice implements Voice {
         if (VoiceStateUtils.startCamera(props.oldState, props.newState)) {
             // Send message to log channel (only if logs are enabled)
             if (props.settings.serverlogs) {
-                await props.settings.logchannel.send(`📷 **${props.userName}** turned on their camera`);
+                await props.settings.logchannel?.send(`📷 **${props.userName}** turned on their camera`);
             }
             Logger.debug(`Camera started for user: ${props.userName}`);
 
@@ -62,7 +62,7 @@ export class CameraVoice implements Voice {
 
                 // Send message to log channel (with or without time based on logs setting)
                 if (props.settings.serverlogs) {
-                    await props.settings.logchannel.send(`🙈 **${props.userName}** turned off their camera after **${TimeUtils.formatDuration(duration)}**`);
+                    await props.settings.logchannel?.send(`🙈 **${props.userName}** turned off their camera after **${TimeUtils.formatDuration(duration)}**`);
                 }
                 Logger.debug(`Camera stopped for user: ${props.userName} after ${duration} ms`);
 
@@ -73,7 +73,7 @@ export class CameraVoice implements Voice {
 
             // Time was not tracked, send default message (only if logs are enabled)
             if (props.settings.serverlogs) {
-                await props.settings.logchannel.send(`🙈 **${props.userName}** turned off their camera`);
+                await props.settings.logchannel?.send(`🙈 **${props.userName}** turned off their camera`);
             }
             Logger.debug(`Camera stopped for user: ${props.userName} but no start time was tracked`);
             return

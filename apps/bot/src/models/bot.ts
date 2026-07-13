@@ -3,6 +3,7 @@ import {
     AutocompleteInteraction,
     ButtonBuilder,
     ButtonStyle,
+    Channel,
     ChannelType,
     Client,
     CommandInteraction,
@@ -23,6 +24,7 @@ import {StartTimestampsController} from "@controllers/start-timestamps";
 import {DailyStatsController} from "@controllers/daily-stats";
 import {UserStatsController} from "@controllers/user-stats";
 import {ServerController} from "@controllers/server";
+import {ChannelController} from "@controllers/channel";
 import {StartTsFields} from "@gandhi/core/models/database/start_timestamps";
 import {UserStatsFields} from "@gandhi/core/models/database/user_stats";
 import {DatabaseUtils} from "@gandhi/core/utils/database";
@@ -115,6 +117,9 @@ export class Bot {
         this.client.on(Events.GuildUpdate, (_oldGuild: Guild, guild: Guild) => this.onGuildChange(guild));
         this.client.on(Events.GuildDelete, (guild: Guild) => this.onGuildDelete(guild));
         this.client.on(Events.MessageReactionAdd, (reaction, user) => this.onMessageReactionAdd(reaction, user));
+        this.client.on(Events.ChannelCreate, (channel) => this.onChannelChange(channel));
+        this.client.on(Events.ChannelUpdate, (_oldChannel, channel) => this.onChannelChange(channel));
+        this.client.on(Events.ChannelDelete, (channel) => this.onChannelDelete(channel));
     }
 
     private async login(token: string): Promise<void> {
@@ -159,17 +164,37 @@ export class Bot {
     private async syncAllGuilds(): Promise<void> {
         await ServerController.markAllGuildsAbsent();
         for (const guild of this.client.guilds.cache.values()) {
-            await ServerController.syncGuild(guild.id, guild.name, guild.iconURL());
+            await ServerController.syncGuild(guild.id, guild.name, guild.iconURL(), guild.ownerId);
+            await this.syncGuildChannels(guild);
         }
         Logger.info(`Synced ${this.client.guilds.cache.size} guild(s) into the servers table`);
     }
 
     private async onGuildChange(guild: Guild): Promise<void> {
         try {
-            await ServerController.syncGuild(guild.id, guild.name, guild.iconURL());
+            await ServerController.syncGuild(guild.id, guild.name, guild.iconURL(), guild.ownerId);
+            await this.syncGuildChannels(guild);
         } catch (error) {
             await Logger.error(`Failed to sync guild ${guild.id}`, error);
         }
+    }
+
+    /** Cache the guild's text channels so the web can validate/name a log channel. */
+    private async syncGuildChannels(guild: Guild): Promise<void> {
+        const channels = [...guild.channels.cache.values()]
+            .filter((c) => c.type === ChannelType.GuildText)
+            .map((c) => ({ id: c.id, name: c.name }));
+        await ChannelController.syncGuildChannels(guild.id, channels);
+    }
+
+    private async onChannelChange(channel: Channel): Promise<void> {
+        if (channel.type !== ChannelType.GuildText) return;
+        await ChannelController.upsertChannel(channel.guild.id, channel.id, channel.name);
+    }
+
+    private async onChannelDelete(channel: Channel): Promise<void> {
+        if (channel.type !== ChannelType.GuildText) return;
+        await ChannelController.removeChannel(channel.guild.id, channel.id);
     }
 
     /** Fired when the bot is actually added to a new guild (post-startup). */
@@ -310,6 +335,10 @@ export class Bot {
     }
 
     private async onVoiceState(oldState: VoiceState, newState: VoiceState): Promise<void> {
+        // Diagnostic: fires for EVERY voice state update, before any early return, so
+        // we can tell "no events received" apart from "handler skipped".
+        Logger.info(`[voice-event] received ready=${this.ready} guild=${newState.guild?.id ?? 'n/a'} user=${newState.member?.id ?? oldState.member?.id ?? 'n/a'}`);
+
         if (!this.ready) return;
 
         try {

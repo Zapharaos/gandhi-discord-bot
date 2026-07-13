@@ -3,6 +3,8 @@ import { requireAuth, requireGuildAdmin } from '../auth/guard';
 import { TIMELINE_STATS, type TimelineStat } from '../stats/service';
 import { getGuildMembers, getGuildOverview, getGuildTimeline, getMemberLookup } from './service';
 import { getServerSettings, updateServerSettings } from './settings';
+import { getGuildRoster, setLocalAdmin } from './roster';
+import { getServerOwnerId } from '../stats/queries';
 
 const guildIdPattern = '^[0-9]{5,25}$';
 const paramsSchema = {
@@ -58,6 +60,50 @@ export async function registerAdminRoutes(app: FastifyInstance): Promise<void> {
         },
     );
 
+    // Full member roster (identity, last activity, private/owner/local-admin flags).
+    app.get<{ Params: { guildId: string } }>(
+        '/api/admin/guild/:guildId/roster',
+        { ...adminGuard, schema: { params: paramsSchema } },
+        async (request) => {
+            const { guildId } = request.params;
+            return { guildId, ...(await getGuildRoster(guildId)) };
+        },
+    );
+
+    // Grant/revoke the local "server manager" role. OWNER ONLY (not other admins).
+    app.patch<{ Params: { guildId: string; userId: string }; Body: { localAdmin: boolean } }>(
+        '/api/admin/guild/:guildId/member/:userId/admin',
+        {
+            preHandler: [requireAuth],
+            schema: {
+                params: {
+                    type: 'object',
+                    required: ['guildId', 'userId'],
+                    properties: {
+                        guildId: { type: 'string', pattern: guildIdPattern },
+                        userId: { type: 'string', pattern: guildIdPattern },
+                    },
+                },
+                body: {
+                    type: 'object',
+                    required: ['localAdmin'],
+                    additionalProperties: false,
+                    properties: { localAdmin: { type: 'boolean' } },
+                },
+            },
+        },
+        async (request, reply) => {
+            const session = request.authSession!;
+            const { guildId, userId } = request.params;
+            const ownerId = await getServerOwnerId(guildId);
+            if (!ownerId || session.userId !== ownerId) {
+                return reply.code(403).send({ error: 'owner_only' });
+            }
+            await setLocalAdmin(guildId, userId, request.body.localAdmin);
+            return { guildId, ...(await getGuildRoster(guildId)) };
+        },
+    );
+
     // Server-level settings (log channel + stats/logs), managed by guild admins.
     app.get<{ Params: { guildId: string } }>(
         '/api/admin/guild/:guildId/settings',
@@ -90,7 +136,8 @@ export async function registerAdminRoutes(app: FastifyInstance): Promise<void> {
         },
         async (request) => {
             const { guildId } = request.params;
-            return { guildId, settings: await updateServerSettings(guildId, request.body) };
+            const result = await updateServerSettings(guildId, request.body);
+            return { guildId, settings: result.settings, logChannelError: result.logChannelError ?? false };
         },
     );
 

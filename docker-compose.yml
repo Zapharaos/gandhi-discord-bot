@@ -19,7 +19,10 @@ services:
     ports:
       - "${PORT}:${PORT}"
     volumes:
-      - ./data:/app/data
+      # NATIVE Docker volume (ext4 in the VM) — NOT a Windows bind mount. SQLite
+      # cannot write reliably on a DrvFs/9p host mount (locks hang). Back up via a
+      # helper container reading this volume (see README / the backup command).
+      - gandhi-data:/app/data
       - ./var:/app/var
     restart: unless-stopped
     command:
@@ -62,9 +65,8 @@ services:
     ports:
       - "${WEB_PORT}:${WEB_PORT}"
     volumes:
-      # Mounted read-write at the filesystem level (WAL needs to touch -wal/-shm),
-      # but the connection is opened read-only in code — the bot is the sole writer.
-      - ./data:/app/data
+      # Same native volume as the bot (shared DB, opened read-only in code).
+      - gandhi-data:/app/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:${WEB_PORT}/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
@@ -93,4 +95,4 @@ services:
       start_period: 10s
 
 volumes:
-  data:
+  gandhi-data:

@@ -26,7 +26,7 @@ export class MovementsVoice implements Voice {
 
             // Send message to log channel (only if logs are enabled)
             if (props.settings.serverlogs) {
-                await props.settings.logchannel.send(`➡️ **${props.userName}** joined **${props.newState.channel?.name}**`);
+                await props.settings.logchannel?.send(`➡️ **${props.userName}** joined **${props.newState.channel?.name}**`);
             }
             Logger.debug('User is joining a channel');
 
@@ -49,7 +49,7 @@ export class MovementsVoice implements Voice {
             if (!props.settings.serverstats || !props.userStartTs || props.userStartTs.start_connected === 0) {
                 // Send message to log channel (only if logs are enabled)
                 if (props.settings.serverlogs) {
-                    await props.settings.logchannel.send(`⬅️ **${props.userName}** left **${props.oldState.channel?.name}**`);
+                    await props.settings.logchannel?.send(`⬅️ **${props.userName}** left **${props.oldState.channel?.name}**`);
                 }
                 Logger.debug('User is leaving a channel but no start time was tracked');
             }
@@ -59,7 +59,7 @@ export class MovementsVoice implements Voice {
 
                 // Send message to log channel (with or without time based on logs setting)
                 if (props.settings.serverlogs) {
-                    await props.settings.logchannel.send(`⬅️ **${props.userName}** left **${props.oldState.channel?.name}** after **${TimeUtils.formatDuration(duration)}**`);
+                    await props.settings.logchannel?.send(`⬅️ **${props.userName}** left **${props.oldState.channel?.name}** after **${TimeUtils.formatDuration(duration)}**`);
                 }
                 Logger.debug(`User is leaving a channel after ${duration} ms`);
 
@@ -121,7 +121,7 @@ export class MovementsVoice implements Voice {
 
             // Send message to log channel (only if logs are enabled)
             if (props.settings.serverlogs) {
-                await props.settings.logchannel.send(`🔄 **${props.userName}** switched from **${props.oldState.channel?.name}** to **${props.newState.channel?.name}**`);
+                await props.settings.logchannel?.send(`🔄 **${props.userName}** switched from **${props.oldState.channel?.name}** to **${props.newState.channel?.name}**`);
             }
             Logger.debug('User is switching channels');
         }

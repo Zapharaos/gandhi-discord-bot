@@ -39,7 +39,7 @@ export class DeafenVoice implements Voice {
         if (VoiceStateUtils.startDeafen(props.oldState, props.newState)) {
             // Send message to log channel (only if logs are enabled)
             if (props.settings.serverlogs) {
-                await props.settings.logchannel.send(`🔇 **${props.userName}** deafened themselves`);
+                await props.settings.logchannel?.send(`🔇 **${props.userName}** deafened themselves`);
             }
             Logger.debug(`Deafen for user: ${props.userName}`);
 
@@ -62,7 +62,7 @@ export class DeafenVoice implements Voice {
 
                 // Send message to log channel (with or without time based on logs setting)
                 if (props.settings.serverlogs) {
-                    await props.settings.logchannel.send(`🔊 **${props.userName}** undeafened themselves after **${TimeUtils.formatDuration(duration)}**`);
+                    await props.settings.logchannel?.send(`🔊 **${props.userName}** undeafened themselves after **${TimeUtils.formatDuration(duration)}**`);
                 }
                 Logger.debug(`Deafen stopped for user: ${props.userName} after ${duration} ms`);
 
@@ -73,7 +73,7 @@ export class DeafenVoice implements Voice {
 
             // Time was not tracked, send default message (only if logs are enabled)
             if (props.settings.serverlogs) {
-                await props.settings.logchannel.send(`🔊 **${props.userName}** undeafened themselves`);
+                await props.settings.logchannel?.send(`🔊 **${props.userName}** undeafened themselves`);
             }
             Logger.debug(`Deafen stopped for user: ${props.userName} but no start time was tracked`);
             return

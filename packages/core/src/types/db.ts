@@ -37,6 +37,7 @@ export interface Servers {
   guild_name: string | null;
   guild_icon: string | null;
   bot_present: Generated<number | null>;
+  owner_id: string | null;
 }
 
 export interface StartTimestamps {
@@ -59,6 +60,7 @@ export interface UserStats {
   daily_streak: Generated<number | null>;
   guild_id: string | null;
   last_activity: Generated<number | null>;
+  local_admin: Generated<number | null>;
   logs: Generated<number | null>;
   max_camera: Generated<number | null>;
   max_connected: Generated<number | null>;
@@ -84,8 +86,15 @@ export interface Users {
   updated_at: number | null;
 }
 
+export interface Channels {
+  guild_id: string;
+  channel_id: string;
+  name: string | null;
+}
+
 export interface DB {
   bot_status: BotStatus;
+  channels: Channels;
   daily_stats: DailyStats;
   servers: Servers;
   start_timestamps: StartTimestamps;

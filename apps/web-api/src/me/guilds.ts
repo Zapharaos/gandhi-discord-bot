@@ -1,12 +1,15 @@
 import type { SessionData } from '../auth/sessions';
 import { discordIconUrl } from '../auth/discord';
-import { getServersMeta, getUserGuildIds } from '../stats/queries';
+import { getServersMeta, getUserGuildIds, getUserLocalAdminGuildIds } from '../stats/queries';
 
 export interface UserGuild {
     id: string;
     name: string | null;
     icon: string | null;
+    /** Discord Manage-Server / Administrator / owner. */
     isAdmin: boolean;
+    /** Granted the local "server manager" role in the DB (owner-assigned). */
+    localAdmin: boolean;
     hasData: boolean;
     botPresent: boolean;
 }
@@ -17,8 +20,12 @@ export interface UserGuild {
  * agree on which servers a user can see/configure.
  */
 export async function resolveUserGuilds(session: SessionData): Promise<UserGuild[]> {
-    const dataGuildIds = await getUserGuildIds(session.userId);
+    const [dataGuildIds, localAdminIds] = await Promise.all([
+        getUserGuildIds(session.userId),
+        getUserLocalAdminGuildIds(session.userId),
+    ]);
     const dataGuildSet = new Set(dataGuildIds);
+    const localAdminSet = new Set(localAdminIds);
     const sessionById = new Map(session.guilds.map((g) => [g.id, g]));
 
     const allIds = [...new Set([...sessionById.keys(), ...dataGuildIds])];
@@ -38,6 +45,7 @@ export async function resolveUserGuilds(session: SessionData): Promise<UserGuild
             name: s?.name ?? m?.guild_name ?? null,
             icon,
             isAdmin: s?.isAdmin ?? false,
+            localAdmin: localAdminSet.has(id),
             hasData,
             botPresent,
         });

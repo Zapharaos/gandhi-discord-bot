@@ -39,7 +39,7 @@ export class MuteVoice implements Voice {
         if (VoiceStateUtils.startMute(props.oldState, props.newState)) {
             // Send message to log channel (only if logs are enabled)
             if (props.settings.serverlogs) {
-                await props.settings.logchannel.send(`🙊️ **${props.userName}** muted their microphone`);
+                await props.settings.logchannel?.send(`🙊️ **${props.userName}** muted their microphone`);
             }
             Logger.debug(`Mute for user: ${props.userName}`);
 
@@ -62,7 +62,7 @@ export class MuteVoice implements Voice {
 
                 // Send message to log channel (with or without time based on logs setting)
                 if (props.settings.serverlogs) {
-                    await props.settings.logchannel.send(`🎙️ **${props.userName}** unmuted their microphone after **${TimeUtils.formatDuration(duration)}**`);
+                    await props.settings.logchannel?.send(`🎙️ **${props.userName}** unmuted their microphone after **${TimeUtils.formatDuration(duration)}**`);
                 }
                 Logger.debug(`Mute stopped for user: ${props.userName} after ${duration} ms`);
 
@@ -73,7 +73,7 @@ export class MuteVoice implements Voice {
 
             // Time was not tracked, send default message (only if logs are enabled)
             if (props.settings.serverlogs) {
-                await props.settings.logchannel.send(`🎙️ **${props.userName}** unmuted their microphone`);
+                await props.settings.logchannel?.send(`🎙️ **${props.userName}** unmuted their microphone`);
             }
             Logger.debug(`Mute stopped for user: ${props.userName} but no start time was tracked`);
             return

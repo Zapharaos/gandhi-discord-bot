@@ -192,7 +192,12 @@
       "logsHint": "Allow the bot to post voice events in the log channel.",
       "logChannel": "Log channel",
       "logChannelHint": "Paste the Discord channel ID where logs should be posted. Enable Developer Mode in Discord, then right-click a channel → Copy Channel ID.",
+      "logChannelHint2": "Pick the channel where the bot should post voice logs.",
       "logChannelPlaceholder": "Channel ID (e.g. 123456789012345678)",
+      "logChannelPlaceholder2": "Select a channel",
+      "logChannelError": "That channel isn't valid or the bot can't see it.",
+      "current": "Current:",
+      "noChannels": "No channels synced yet — make sure the bot is in this server.",
       "save": "Save",
       "clear": "Clear",
       "saved": "Saved"
@@ -218,6 +223,21 @@
       "leaderboard": "Leaderboard",
       "settings": "Settings"
     }
+  },
+  "members": {
+    "title": "Members",
+    "total": "Total",
+    "private": "Private",
+    "admins": "Managers",
+    "member": "Member",
+    "lastActivity": "Last activity",
+    "never": "Never",
+    "search": "Search by name or ID…",
+    "admin": "Manager",
+    "owner": "Owner",
+    "adminTag": "Manager",
+    "privateTag": "Private",
+    "empty": "No members to show."
   },
   "ranking": {
     "title": "Leaderboard",

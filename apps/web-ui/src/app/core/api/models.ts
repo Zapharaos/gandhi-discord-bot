@@ -7,6 +7,8 @@ export interface MeGuild {
   /** Ready-to-render icon URL, or null. */
   icon: string | null;
   isAdmin: boolean;
+  /** Granted the local "server manager" role (owner-assigned). */
+  localAdmin: boolean;
   hasData: boolean;
   botPresent: boolean;
 }
@@ -159,8 +161,15 @@ export interface ActiveMembersResponse {
   members: ActiveMember[];
 }
 
+export interface GuildChannel {
+  channelId: string;
+  name: string | null;
+}
+
 export interface ServerSettings {
   logChannelId: string | null;
+  logChannelName: string | null;
+  channels: GuildChannel[];
   stats: boolean;
   logs: boolean;
 }
@@ -168,6 +177,27 @@ export interface ServerSettings {
 export interface ServerSettingsResponse {
   guildId: string;
   settings: ServerSettings;
+  /** Set on a save that rejected an invalid log-channel id. */
+  logChannelError?: boolean;
+}
+
+export interface RosterMember {
+  userId: string;
+  name: string | null;
+  avatar: string | null;
+  lastActivity: number;
+  isPrivate: boolean;
+  isOwner: boolean;
+  localAdmin: boolean;
+}
+
+export interface GuildRosterResponse {
+  guildId: string;
+  ownerId: string | null;
+  total: number;
+  privateCount: number;
+  adminCount: number;
+  members: RosterMember[];
 }
 
 export interface ServerSettingsPatch {

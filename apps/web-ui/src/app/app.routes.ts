@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 
 import { authGuard } from '@core/auth/auth.guard';
 import { guestGuard } from '@core/auth/guest.guard';
-import { adminGuard } from '@core/auth/admin.guard';
 import { botAdminGuard } from '@core/auth/bot-admin.guard';
 
 export const routes: Routes = [
@@ -44,11 +43,6 @@ export const routes: Routes = [
         path: 'server/:guildId',
         loadComponent: () =>
           import('@pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),
-      },
-      {
-        path: 'admin/:guildId',
-        canActivate: [adminGuard],
-        loadComponent: () => import('@pages/admin/admin.component').then((m) => m.AdminComponent),
       },
       {
         path: 'profile',
