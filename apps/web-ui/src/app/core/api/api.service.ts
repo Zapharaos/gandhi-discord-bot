@@ -3,10 +3,19 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '@environments/environment';
 import {
+  ActiveMembersResponse,
   AdminOverviewResponse,
   AdminTimelineResponse,
+  ConfigResponse,
+  MemberLookupResponse,
   MeResponse,
+  RankingResponse,
+  ServerSettingsPatch,
+  ServerSettingsResponse,
   ServiceStatus,
+  SessionStatsResponse,
+  SettingsPatch,
+  SettingsResponse,
   StatsResponse,
   TimelineResponse,
   TimelineStat,
@@ -25,8 +34,24 @@ export class ApiService {
     return this.http.get<ServiceStatus>(`${this.base}/api/status`);
   }
 
+  config(): Observable<ConfigResponse> {
+    return this.http.get<ConfigResponse>(`${this.base}/api/config`);
+  }
+
+  getSettings(): Observable<SettingsResponse> {
+    return this.http.get<SettingsResponse>(`${this.base}/api/settings`);
+  }
+
+  updateSettings(patch: SettingsPatch): Observable<SettingsResponse> {
+    return this.http.patch<SettingsResponse>(`${this.base}/api/settings`, patch);
+  }
+
   globalStats(): Observable<StatsResponse> {
     return this.http.get<StatsResponse>(`${this.base}/api/stats/global`);
+  }
+
+  sessionStats(): Observable<SessionStatsResponse> {
+    return this.http.get<SessionStatsResponse>(`${this.base}/api/stats/session`);
   }
 
   guildStats(guildId: string): Observable<StatsResponse> {
@@ -64,5 +89,44 @@ export class ApiService {
     return this.http.get<AdminTimelineResponse>(`${this.base}/api/admin/guild/${guildId}/timeline`, {
       params,
     });
+  }
+
+  adminMember(guildId: string, userId: string): Observable<MemberLookupResponse> {
+    return this.http.get<MemberLookupResponse>(`${this.base}/api/admin/guild/${guildId}/member/${userId}`);
+  }
+
+  guildRanking(
+    guildId: string,
+    stat?: TimelineStat | 'daily_streak',
+    from?: number,
+    to?: number,
+    activeOnly?: boolean,
+    sort?: 'value' | 'percent' | 'max' | 'count',
+  ): Observable<RankingResponse> {
+    let params = new HttpParams();
+    if (stat) params = params.set('stat', stat);
+    if (from !== undefined) params = params.set('from', from);
+    if (to !== undefined) params = params.set('to', to);
+    if (activeOnly) params = params.set('activeOnly', true);
+    if (sort) params = params.set('sort', sort);
+    return this.http.get<RankingResponse>(`${this.base}/api/stats/guild/${guildId}/ranking`, { params });
+  }
+
+  guildTimeline(guildId: string, stat?: TimelineStat): Observable<AdminTimelineResponse> {
+    let params = new HttpParams();
+    if (stat) params = params.set('stat', stat);
+    return this.http.get<AdminTimelineResponse>(`${this.base}/api/stats/guild/${guildId}/timeline`, { params });
+  }
+
+  guildActiveMembers(guildId: string): Observable<ActiveMembersResponse> {
+    return this.http.get<ActiveMembersResponse>(`${this.base}/api/stats/guild/${guildId}/active`);
+  }
+
+  getServerSettings(guildId: string): Observable<ServerSettingsResponse> {
+    return this.http.get<ServerSettingsResponse>(`${this.base}/api/admin/guild/${guildId}/settings`);
+  }
+
+  updateServerSettings(guildId: string, patch: ServerSettingsPatch): Observable<ServerSettingsResponse> {
+    return this.http.patch<ServerSettingsResponse>(`${this.base}/api/admin/guild/${guildId}/settings`, patch);
   }
 }

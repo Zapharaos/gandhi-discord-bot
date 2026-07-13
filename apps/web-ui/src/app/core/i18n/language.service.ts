@@ -11,6 +11,8 @@ const STORAGE_KEY = 'gandhi.lang';
 export class LanguageService {
   private readonly translate = inject(TranslateService);
   readonly current = signal<Language>(DEFAULT_LANGUAGE);
+  /** Flips to true once a translation file has loaded, so instant() is reliable. */
+  readonly ready = signal(false);
 
   /** Resolve the initial language from storage or the browser, then apply it. */
   init(): void {
@@ -21,7 +23,10 @@ export class LanguageService {
   }
 
   use(lang: Language): void {
-    this.translate.use(lang);
+    this.translate.use(lang).subscribe({
+      next: () => this.ready.set(true),
+      error: () => this.ready.set(true),
+    });
     this.current.set(lang);
     localStorage.setItem(STORAGE_KEY, lang);
   }

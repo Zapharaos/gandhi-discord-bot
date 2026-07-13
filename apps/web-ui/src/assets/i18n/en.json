@@ -1,21 +1,161 @@
 {
   "app": {
-    "title": "Gandhi Stats",
+    "title": "Gandhi Bot",
     "logout": "Log out"
   },
   "health": {
     "online": "Bot online",
-    "offline": "Bot offline"
+    "offline": "Bot offline",
+    "servers": "servers",
+    "uptime": "Uptime",
+    "lastSeen": "Last seen"
+  },
+  "botAdmin": {
+    "nav": "Administration",
+    "title": "Administration",
+    "soon": "Nothing here yet — this is the bot-operator area."
+  },
+  "nav": {
+    "view": "View",
+    "session": "Current session",
+    "stats": "Dashboard",
+    "total": "Total",
+    "servers": "Servers",
+    "addServer": "Add to a server",
+    "profile": "Profile"
+  },
+  "support": {
+    "nav": "Support",
+    "title": "Support",
+    "intro": "Guides to get the most out of the bot.",
+    "back": "Back to support",
+    "backApp": "Back to app",
+    "signIn": "Sign in",
+    "addBot": {
+      "title": "Add the bot to a server",
+      "summary": "Invite Gandhi to your Discord server in a few clicks.",
+      "intro": "Gandhi tracks voice activity and turns it into stats. Here's how to bring it to your server.",
+      "step1": "You need the “Manage Server” permission on the Discord server.",
+      "step2": "Click “Add to your server” below — it opens Discord's authorization page.",
+      "step3": "Pick your server from the list and confirm the permissions.",
+      "step4": "Back in Discord, opt in to start tracking. Learn how to manage what's tracked:",
+      "invite": "Add to your server",
+      "disclaimer": "Gandhi only requests the permissions it needs to read voice states and post logs — nothing more. It never reads your messages, and members are only tracked once they opt in.",
+      "permsNote": "It only requests the permissions it needs to read voice states and post logs."
+    },
+    "commands": {
+      "title": "Commands",
+      "summary": "The slash commands you can use in Discord.",
+      "intro": "Type these in any channel where the bot is present.",
+      "stats": "Show your voice activity stats.",
+      "heatmap": "Render your activity as a heatmap image.",
+      "rank": "See the server leaderboard.",
+      "userSettings": "Manage your own tracking preferences (opt-in, private mode).",
+      "serverSettings": "Server admins: configure tracking, logs and the log channel.",
+      "export": "Download everything the bot holds about you.",
+      "deleteData": "Erase all your data on a server (or everywhere).",
+      "resetStats": "Reset your stats to zero, keeping your settings.",
+      "myServers": "List the servers where you have data.",
+      "arguments": "Arguments",
+      "args": {
+        "target": "A member to target (default: yourself).",
+        "targetAll": "Aggregate every member of the server.",
+        "stat": "Which stat to use (default: time connected).",
+        "statValues": "Values:",
+        "format": "Reply format (e.g. PNG or JSON).",
+        "scope": "This server, or all servers.",
+        "toggle": "Turn it on or off.",
+        "togglePrivate": "Turn private mode on or off.",
+        "logchannel": "The text channel used for logs."
+      }
+    },
+    "prefs": {
+      "title": "Preferences & consent",
+      "summary": "What the bot tracks, and how you stay in control.",
+      "intro": "The bot only tracks you once you opt in — and you can change everything at any time.",
+      "stats": { "title": "Stats tracking (opt-in)", "body": "Off by default. When on, the bot records your voice durations to build your stats." },
+      "logs": { "title": "Event logging (opt-in)", "body": "When on, the bot posts your voice events (join, mute, …) in the server's log channel." },
+      "private": { "title": "Private mode", "body": "Hides you from leaderboards and other members' views, while still counting in anonymous server totals." },
+      "consent": { "title": "Your consent", "body": "Both the server and your personal settings must be enabled for any tracking to happen — so you're never tracked without agreeing." },
+      "manage": "Manage all of this from your",
+      "profileLink": "profile",
+      "signInLink": "profile (sign in)",
+      "viaCommand": "In Discord:"
+    },
+    "data": {
+      "title": "Your personal data",
+      "summary": "Access, export and erase the data the bot holds.",
+      "intro": "You are always in control of your data.",
+      "openDashboard": "Open the dashboard",
+      "access": { "title": "Access & export", "body": "Use /export or the dashboard to download all your data as JSON or CSV." },
+      "erase": { "title": "Erasure", "body": "Use /delete-data to permanently erase your data on a server, or everywhere." },
+      "reset": { "title": "Reset", "body": "Use /reset-stats to zero your stats while keeping your settings and history." },
+      "what": { "title": "What is stored", "body": "Only your Discord user id and aggregate voice durations per server — never message content." }
+    }
+  },
+  "lang": {
+    "en": "English",
+    "fr": "Français"
+  },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "Your language and tracking preferences.",
+    "discordId": "Discord ID",
+    "copy": "Copy",
+    "language": "Language",
+    "languageHint": "Choose the language of the dashboard.",
+    "prefs": "Preferences",
+    "prefsHint": "Control what the bot tracks and shows about you.",
+    "allServers": "All servers",
+    "allServersHint": "applies everywhere at once",
+    "perServer": "Per server",
+    "server": "Server",
+    "matrixHint": "Use the “All servers” row to change a setting everywhere, or toggle it per server.",
+    "noServers": "You don't share any server with the bot yet.",
+    "support": "Help & support",
+    "supportHint": "Guides on adding the bot, commands, preferences and your data."
+  },
+  "settings": {
+    "stats": {
+      "label": "Track my stats",
+      "desc": "Let the bot record your voice activity (opt-in)."
+    },
+    "logs": {
+      "label": "Log my events",
+      "desc": "Let the bot post your voice events in the server's log channel."
+    },
+    "private": {
+      "label": "Private mode",
+      "desc": "Hide me from leaderboards and other members' views."
+    }
+  },
+  "session": {
+    "none": "You are not in a voice channel right now.",
+    "subtitle": "Your ongoing voice session",
+    "live": {
+      "title": "You're live now",
+      "subtitle": "You're in a voice channel — this session is being tracked."
+    }
+  },
+  "heatmap": {
+    "none": "No activity",
+    "less": "Less",
+    "more": "More"
   },
   "login": {
-    "title": "Gandhi Stats",
+    "title": "Gandhi Bot",
     "subtitle": "Sign in to view your voice activity across your servers.",
     "button": "Sign in with Discord"
   },
   "dashboard": {
     "live": "Live",
     "loading": "Loading your stats…",
-    "activity": "Activity"
+    "activity": "Activity",
+    "serverActivity": "Server activity",
+    "scopeMe": "Me",
+    "scopeServer": "Server",
+    "subtitleTotal": "Across every server you share with the bot",
+    "subtitleServer": "Your activity on this server"
   },
   "stats": {
     "connected": "Connected",
@@ -24,11 +164,17 @@
     "screen": "Screen sharing",
     "camera": "Camera",
     "streak": "Current streak",
+    "streakTitle": "Streak",
     "maxStreak": "Best streak",
-    "switches": "Channel switches"
+    "switches": "Channel switches",
+    "share": "Share",
+    "sessions": "Sessions",
+    "longest": "Longest"
   },
   "admin": {
     "badge": "Admin",
+    "manage": "Manage server",
+    "backToServer": "Back to server",
     "members": "Members",
     "activeNow": "Active now",
     "totalConnected": "Total connected",
@@ -36,6 +182,71 @@
     "topMembers": "Top members",
     "noMembers": "No members to show yet.",
     "hiddenNote": "{{count}} private member(s) are counted in the totals but hidden from this list.",
-    "serverActivity": "Server activity"
+    "serverActivity": "Server activity",
+    "settings": {
+      "title": "Server settings",
+      "hint": "Configure how the bot tracks and logs on this server. These are server-wide — each member still opts in for themselves.",
+      "stats": "Stats tracking",
+      "statsHint": "Allow the bot to record voice activity on this server.",
+      "logs": "Event logging",
+      "logsHint": "Allow the bot to post voice events in the log channel.",
+      "logChannel": "Log channel",
+      "logChannelHint": "Paste the Discord channel ID where logs should be posted. Enable Developer Mode in Discord, then right-click a channel → Copy Channel ID.",
+      "logChannelPlaceholder": "Channel ID (e.g. 123456789012345678)",
+      "save": "Save",
+      "clear": "Clear",
+      "saved": "Saved"
+    },
+    "lookup": {
+      "title": "Look up a member",
+      "hint": "Enter a Discord user ID to see their stats on this server.",
+      "placeholder": "Discord user ID",
+      "search": "Search",
+      "notFound": "No data for this user on this server.",
+      "private": "This member enabled private mode — their stats are hidden."
+    }
+  },
+  "active": {
+    "title": "Active now",
+    "empty": "No one is in a voice channel right now."
+  },
+  "server": {
+    "tabs": {
+      "stats": "My stats",
+      "activity": "Activity",
+      "live": "Live",
+      "leaderboard": "Leaderboard",
+      "settings": "Settings"
+    }
+  },
+  "ranking": {
+    "title": "Leaderboard",
+    "you": "You",
+    "empty": "No ranked members yet.",
+    "emptyNow": "No one is active right now.",
+    "serverTotal": "Server total",
+    "pickRange": "Pick a range",
+    "activeOnly": "Active only",
+    "measureHint": "What to rank and show",
+    "labelStat": "Stat",
+    "labelPeriod": "Period",
+    "labelMeasure": "Sort by",
+    "colMember": "Member",
+    "colTotal": "Total",
+    "measure": {
+      "value": "Total",
+      "percent": "Share",
+      "max": "Longest",
+      "count": "Sessions"
+    },
+    "serverActivity": "Server activity",
+    "period": {
+      "all": "All time",
+      "year": "This year",
+      "month": "This month",
+      "week": "This week",
+      "today": "Today",
+      "custom": "Custom"
+    }
   }
 }

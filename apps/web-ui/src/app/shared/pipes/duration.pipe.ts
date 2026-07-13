@@ -7,7 +7,10 @@ import { Pipe, PipeTransform } from '@angular/core';
 @Pipe({ name: 'duration', standalone: true })
 export class DurationPipe implements PipeTransform {
   transform(ms: number | null | undefined): string {
-    if (!ms || ms <= 0) return '0m';
+    if (!ms || ms <= 0) return '0s';
+
+    // Sub-minute durations show seconds, so brief sessions never read as "0m".
+    if (ms < 60_000) return `${Math.floor(ms / 1000)}s`;
 
     const totalMinutes = Math.floor(ms / 60000);
     const days = Math.floor(totalMinutes / 1440);

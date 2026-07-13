@@ -18,3 +18,20 @@ body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
+
+/* --- Compact PrimeNG controls ---
+   Unlayered rules win over PrimeNG's layered styles. The dropdown panel/options
+   don't inherit the trigger's `size="small"`, so shrink them explicitly. */
+.p-select-label {
+  padding-block: 0.35rem;
+  font-size: 0.8125rem;
+}
+.p-select-overlay .p-select-option {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8125rem;
+}
+.p-select-overlay .p-select-header,
+.p-select-overlay .p-select-filter {
+  padding-block: 0.3rem;
+  font-size: 0.8125rem;
+}

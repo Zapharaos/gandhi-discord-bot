@@ -1,21 +1,161 @@
 {
   "app": {
-    "title": "Gandhi Stats",
+    "title": "Gandhi Bot",
     "logout": "Déconnexion"
   },
   "health": {
     "online": "Bot en ligne",
-    "offline": "Bot hors ligne"
+    "offline": "Bot hors ligne",
+    "servers": "serveurs",
+    "uptime": "En ligne depuis",
+    "lastSeen": "Vu"
+  },
+  "botAdmin": {
+    "nav": "Administration",
+    "title": "Administration",
+    "soon": "Rien ici pour l'instant — c'est l'espace des admins du bot."
+  },
+  "nav": {
+    "view": "Vue",
+    "session": "Session actuelle",
+    "stats": "Tableau de bord",
+    "total": "Total",
+    "servers": "Serveurs",
+    "addServer": "Ajouter à un serveur",
+    "profile": "Profil"
+  },
+  "support": {
+    "nav": "Support",
+    "title": "Support",
+    "intro": "Des guides pour tirer le meilleur du bot.",
+    "back": "Retour au support",
+    "backApp": "Retour à l'app",
+    "signIn": "Se connecter",
+    "addBot": {
+      "title": "Ajouter le bot à un serveur",
+      "summary": "Invite Gandhi sur ton serveur Discord en quelques clics.",
+      "intro": "Gandhi suit l'activité vocale et la transforme en statistiques. Voici comment l'ajouter à ton serveur.",
+      "step1": "Il te faut la permission « Gérer le serveur » sur le serveur Discord.",
+      "step2": "Clique sur « Ajouter à ton serveur » ci-dessous — ça ouvre la page d'autorisation de Discord.",
+      "step3": "Choisis ton serveur dans la liste et confirme les permissions.",
+      "step4": "De retour sur Discord, active le suivi pour commencer. Découvre comment gérer ce qui est suivi :",
+      "invite": "Ajouter à ton serveur",
+      "disclaimer": "Gandhi ne demande que les permissions nécessaires pour lire les états vocaux et publier les logs — rien de plus. Il ne lit jamais tes messages, et les membres ne sont suivis qu'après avoir donné leur accord.",
+      "permsNote": "Il ne demande que les permissions nécessaires pour lire les états vocaux et publier les logs."
+    },
+    "commands": {
+      "title": "Commandes",
+      "summary": "Les commandes slash utilisables sur Discord.",
+      "intro": "Tape-les dans n'importe quel salon où le bot est présent.",
+      "stats": "Affiche tes statistiques d'activité vocale.",
+      "heatmap": "Génère ton activité sous forme d'image heatmap.",
+      "rank": "Voir le classement du serveur.",
+      "userSettings": "Gérer tes préférences de suivi (opt-in, mode privé).",
+      "serverSettings": "Admins serveur : configurer le suivi, les logs et le salon de logs.",
+      "export": "Télécharger tout ce que le bot détient sur toi.",
+      "deleteData": "Effacer toutes tes données sur un serveur (ou partout).",
+      "resetStats": "Remettre tes stats à zéro, en gardant tes réglages.",
+      "myServers": "Lister les serveurs où tu as des données.",
+      "arguments": "Arguments",
+      "args": {
+        "target": "Un membre à cibler (défaut : toi-même).",
+        "targetAll": "Agréger tous les membres du serveur.",
+        "stat": "La stat à utiliser (défaut : temps connecté).",
+        "statValues": "Valeurs :",
+        "format": "Format de réponse (ex. PNG ou JSON).",
+        "scope": "Ce serveur, ou tous les serveurs.",
+        "toggle": "Activer ou désactiver.",
+        "togglePrivate": "Activer ou désactiver le mode privé.",
+        "logchannel": "Le salon texte utilisé pour les logs."
+      }
+    },
+    "prefs": {
+      "title": "Préférences & consentement",
+      "summary": "Ce que le bot suit, et comment tu gardes le contrôle.",
+      "intro": "Le bot ne te suit qu'après ton opt-in — et tu peux tout changer à tout moment.",
+      "stats": { "title": "Suivi des stats (opt-in)", "body": "Désactivé par défaut. Activé, le bot enregistre tes durées vocales pour bâtir tes stats." },
+      "logs": { "title": "Journalisation (opt-in)", "body": "Activé, le bot publie tes événements vocaux (join, mute, …) dans le salon de logs du serveur." },
+      "private": { "title": "Mode privé", "body": "Te masque des classements et des vues des autres membres, tout en comptant dans les totaux anonymes du serveur." },
+      "consent": { "title": "Ton consentement", "body": "Le réglage serveur ET ton réglage personnel doivent être activés pour tout suivi — tu n'es jamais suivi sans accord." },
+      "manage": "Gère tout ça depuis ton",
+      "profileLink": "profil",
+      "signInLink": "profil (connexion)",
+      "viaCommand": "Sur Discord :"
+    },
+    "data": {
+      "title": "Tes données personnelles",
+      "summary": "Accéder, exporter et effacer les données détenues.",
+      "intro": "Tu gardes toujours le contrôle de tes données.",
+      "openDashboard": "Ouvrir le tableau de bord",
+      "access": { "title": "Accès & export", "body": "Utilise /export ou le tableau de bord pour télécharger toutes tes données en JSON ou CSV." },
+      "erase": { "title": "Effacement", "body": "Utilise /delete-data pour effacer définitivement tes données sur un serveur, ou partout." },
+      "reset": { "title": "Réinitialisation", "body": "Utilise /reset-stats pour remettre tes stats à zéro en gardant tes réglages et ton historique." },
+      "what": { "title": "Ce qui est stocké", "body": "Uniquement ton ID Discord et les durées vocales agrégées par serveur — jamais le contenu des messages." }
+    }
+  },
+  "lang": {
+    "en": "English",
+    "fr": "Français"
+  },
+  "profile": {
+    "title": "Profil",
+    "subtitle": "Ta langue et tes préférences de suivi.",
+    "discordId": "ID Discord",
+    "copy": "Copier",
+    "language": "Langue",
+    "languageHint": "Choisis la langue du tableau de bord.",
+    "prefs": "Préférences",
+    "prefsHint": "Contrôle ce que le bot suit et affiche à ton sujet.",
+    "allServers": "Tous les serveurs",
+    "allServersHint": "s'applique partout d'un coup",
+    "perServer": "Par serveur",
+    "server": "Serveur",
+    "matrixHint": "Utilise la ligne « Tous les serveurs » pour changer un réglage partout, ou serveur par serveur.",
+    "noServers": "Tu ne partages encore aucun serveur avec le bot.",
+    "support": "Aide & support",
+    "supportHint": "Guides sur l'ajout du bot, les commandes, les préférences et tes données."
+  },
+  "settings": {
+    "stats": {
+      "label": "Suivre mes stats",
+      "desc": "Autoriser le bot à enregistrer ton activité vocale (opt-in)."
+    },
+    "logs": {
+      "label": "Journaliser mes événements",
+      "desc": "Autoriser le bot à publier tes événements vocaux dans le salon de logs."
+    },
+    "private": {
+      "label": "Mode privé",
+      "desc": "Me masquer des classements et des vues des autres membres."
+    }
+  },
+  "session": {
+    "none": "Tu n'es dans aucun salon vocal pour le moment.",
+    "subtitle": "Ta session vocale en cours",
+    "live": {
+      "title": "Tu es en direct",
+      "subtitle": "Tu es dans un salon vocal — cette session est suivie."
+    }
+  },
+  "heatmap": {
+    "none": "Aucune activité",
+    "less": "Moins",
+    "more": "Plus"
   },
   "login": {
-    "title": "Gandhi Stats",
+    "title": "Gandhi Bot",
     "subtitle": "Connectez-vous pour consulter votre activité vocale sur vos serveurs.",
     "button": "Se connecter avec Discord"
   },
   "dashboard": {
     "live": "En direct",
     "loading": "Chargement de vos stats…",
-    "activity": "Activité"
+    "activity": "Activité",
+    "serverActivity": "Activité du serveur",
+    "scopeMe": "Moi",
+    "scopeServer": "Serveur",
+    "subtitleTotal": "Sur tous les serveurs que tu partages avec le bot",
+    "subtitleServer": "Ton activité sur ce serveur"
   },
   "stats": {
     "connected": "Connecté",
@@ -24,11 +164,17 @@
     "screen": "Partage d'écran",
     "camera": "Caméra",
     "streak": "Série en cours",
+    "streakTitle": "Série",
     "maxStreak": "Meilleure série",
-    "switches": "Changements de salon"
+    "switches": "Changements de salon",
+    "share": "Part",
+    "sessions": "Sessions",
+    "longest": "Plus longue"
   },
   "admin": {
     "badge": "Admin",
+    "manage": "Gérer le serveur",
+    "backToServer": "Retour au serveur",
     "members": "Membres",
     "activeNow": "Actifs",
     "totalConnected": "Temps connecté total",
@@ -36,6 +182,71 @@
     "topMembers": "Top membres",
     "noMembers": "Aucun membre à afficher pour le moment.",
     "hiddenNote": "{{count}} membre(s) privé(s) comptés dans les totaux mais masqués de cette liste.",
-    "serverActivity": "Activité du serveur"
+    "serverActivity": "Activité du serveur",
+    "settings": {
+      "title": "Configuration du serveur",
+      "hint": "Configure comment le bot suit et journalise sur ce serveur. C'est valable pour tout le serveur — chaque membre reste maître de son opt-in.",
+      "stats": "Suivi des stats",
+      "statsHint": "Autoriser le bot à enregistrer l'activité vocale sur ce serveur.",
+      "logs": "Journalisation",
+      "logsHint": "Autoriser le bot à publier les événements vocaux dans le salon de logs.",
+      "logChannel": "Salon de logs",
+      "logChannelHint": "Colle l'ID du salon Discord où publier les logs. Active le Mode développeur dans Discord, puis clic droit sur un salon → Copier l'identifiant du salon.",
+      "logChannelPlaceholder": "ID du salon (ex. 123456789012345678)",
+      "save": "Enregistrer",
+      "clear": "Effacer",
+      "saved": "Enregistré"
+    },
+    "lookup": {
+      "title": "Rechercher un membre",
+      "hint": "Entre un ID utilisateur Discord pour voir ses stats sur ce serveur.",
+      "placeholder": "ID utilisateur Discord",
+      "search": "Rechercher",
+      "notFound": "Aucune donnée pour cet utilisateur sur ce serveur.",
+      "private": "Ce membre a activé le mode privé — ses stats sont masquées."
+    }
+  },
+  "active": {
+    "title": "Actifs maintenant",
+    "empty": "Personne n'est dans un salon vocal pour le moment."
+  },
+  "server": {
+    "tabs": {
+      "stats": "Mes stats",
+      "activity": "Activité",
+      "live": "En direct",
+      "leaderboard": "Classement",
+      "settings": "Paramètres"
+    }
+  },
+  "ranking": {
+    "title": "Classement",
+    "you": "Toi",
+    "empty": "Aucun membre classé pour l'instant.",
+    "emptyNow": "Personne n'est actif pour le moment.",
+    "serverTotal": "Total du serveur",
+    "pickRange": "Choisir une période",
+    "activeOnly": "Actifs seulement",
+    "measureHint": "Ce qu'on classe et affiche",
+    "labelStat": "Stat",
+    "labelPeriod": "Période",
+    "labelMeasure": "Trier par",
+    "colMember": "Membre",
+    "colTotal": "Total",
+    "measure": {
+      "value": "Total",
+      "percent": "Part",
+      "max": "Plus longue",
+      "count": "Sessions"
+    },
+    "serverActivity": "Activité du serveur",
+    "period": {
+      "all": "Depuis le début",
+      "year": "Cette année",
+      "month": "Ce mois-ci",
+      "week": "Cette semaine",
+      "today": "Aujourd'hui",
+      "custom": "Personnalisé"
+    }
   }
 }
