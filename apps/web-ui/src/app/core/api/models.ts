@@ -136,6 +136,7 @@ export interface RankEntry {
 export type RankSort = 'value' | 'percent' | 'max' | 'count';
 /** A rankable stat: any voice-time stat, or the daily streak (in days). */
 export type RankStat = TimelineStat | 'daily_streak';
+export type CardStat = RankStat | 'count_switch';
 
 export interface RankingResponse {
   guildId: string;

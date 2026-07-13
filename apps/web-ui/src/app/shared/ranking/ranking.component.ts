@@ -22,7 +22,7 @@ const DAY = 86_400_000;
 @Component({
   selector: 'app-ranking',
   standalone: true,
-  imports: [NgClass, FormsModule, SelectModule, DatePickerModule, TranslatePipe, DurationPipe, StatIconComponent],
+  imports: [NgClass, FormsModule, SelectModule, DatePickerModule, TranslatePipe, StatIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">

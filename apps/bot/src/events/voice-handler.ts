@@ -113,14 +113,7 @@ export class VoiceHandler implements EventHandler {
 
         const props = new VoiceProps(oldState, newState, guild.id, user.id, userName, startTimestamps, settings, Date.now());
 
-        // Push live events to the web dashboard (best-effort; only for tracked
-        // users, so opted-out users' activity is never broadcast).
-        if (statsEnabled) {
-            const now = Date.now();
-            for (const type of deriveVoiceEvents(oldState, newState)) {
-                webEvents.publish({ guildId: guild.id, userId: user.id, type, timestamp: now });
-            }
-        }
+        const liveEventTypes = statsEnabled ? deriveVoiceEvents(oldState, newState) : [];
 
         for (const voice of this.voices) {
             try {
@@ -139,6 +132,15 @@ export class VoiceHandler implements EventHandler {
                         .replaceAll('{GUILD_ID}', guild?.id),
                     error
                 );
+            }
+        }
+
+        // Notify the web dashboard after DB writes so the API reflects the new
+        // state when browsers refresh in response to these events.
+        if (liveEventTypes.length > 0) {
+            const now = Date.now();
+            for (const type of liveEventTypes) {
+                webEvents.publish({ guildId: guild.id, userId: user.id, type, timestamp: now });
             }
         }
     }

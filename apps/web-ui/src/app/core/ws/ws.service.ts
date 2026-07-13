@@ -89,11 +89,12 @@ export class WsService {
       else if (msg.type === 'guild_activity') this.guildActivity.next({ guildId: msg.guildId });
     };
 
-    socket.onclose = () => {
+    socket.onclose = (event) => {
       this.connected.set(false);
       this.socket = null;
       this.stopHeartbeat();
-      if (!this.closedByUser) {
+      // 1008 = unauthorized — don't reconnect (no session or session expired).
+      if (!this.closedByUser && event.code !== 1008) {
         // Jittered backoff so a server restart doesn't trigger a reconnect stampede.
         const jitter = 0.8 + Math.random() * 0.4;
         setTimeout(() => this.open(), Math.round(this.reconnectDelay * jitter));

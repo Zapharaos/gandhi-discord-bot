@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { RankStat } from '@core/api/models';
+import { CardStat } from '@core/api/models';
 
 /**
  * Inline (Lucide-style) SVG glyph for a voice stat. Uses proper mic-off / volume-x
@@ -55,10 +55,16 @@ import { RankStat } from '@core/api/models';
           <!-- zap -->
           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
         }
+        @case ('count_switch') {
+          <!-- refresh-cw -->
+          <polyline points="23 4 23 10 17 10" />
+          <polyline points="1 20 1 14 7 14" />
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+        }
       }
     </svg>
   `,
 })
 export class StatIconComponent {
-  readonly stat = input.required<RankStat>();
+  readonly stat = input.required<CardStat>();
 }

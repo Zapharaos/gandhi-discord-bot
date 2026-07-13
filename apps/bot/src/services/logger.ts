@@ -35,9 +35,14 @@ const transportDev = pino.transport({
 
 let logger = pino({
     level: isProduction ? "info" : "debug", // More verbose in dev, minimal in prod
-    formatters: {
-        level: (label) => ({ level: label }),
-    },
+    // A custom level formatter is only supported with a SINGLE transport target;
+    // with the prod multi-target transport pino silently drops every log line
+    // (empty files, empty stdout). Only apply it to the single-target dev transport.
+    ...(isProduction ? {} : {
+        formatters: {
+            level: (label: string) => ({ level: label }),
+        },
+    }),
 }, isProduction ? transportProd : transportDev);
 
 export class Logger {

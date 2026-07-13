@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, signal } f
 import { NgTemplateOutlet } from '@angular/common';
 import { toObservable, toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { combineLatest, startWith, Subject, switchMap, map, auditTime, of, catchError } from 'rxjs';
+import { combineLatest, merge, startWith, Subject, switchMap, map, auditTime, of, catchError } from 'rxjs';
 import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
@@ -76,24 +76,6 @@ interface TabDef {
       }
     </header>
 
-    <!-- Live voice session, surfaced right in the dashboard (total + per-server). -->
-    @if (liveSession(); as ls) {
-      <div class="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-green-500/30 bg-green-500/10 p-4">
-        <span class="relative flex h-2.5 w-2.5 shrink-0">
-          <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
-          <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500"></span>
-        </span>
-        <div class="min-w-0">
-          <div class="text-sm font-semibold text-surface-100">{{ 'session.live.title' | translate }}</div>
-          <div class="text-xs text-surface-400">{{ 'session.live.subtitle' | translate }}</div>
-        </div>
-        <div class="ml-auto flex items-center gap-2 text-sm">
-          <i class="pi pi-clock text-surface-500"></i>
-          <span class="font-mono text-surface-100">{{ ls.stats.time_connected | duration }}</span>
-        </div>
-      </div>
-    }
-
     @if (guildId(); as gid) {
       <!-- Server view: tabbed. -->
       <nav class="mt-6 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-surface-800">
@@ -157,14 +139,14 @@ interface TabDef {
         </div>
       } @else if (stats(); as s) {
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          <app-stat-card icon="pi-clock" [label]="'stats.connected' | translate" [value]="s.time_connected | duration" [metrics]="metricsFor(s.time_connected, s.time_connected, s.count_connected, s.max_connected, false)" />
-          <app-stat-card icon="pi-microphone" [label]="'stats.muted' | translate" [value]="s.time_muted | duration" [metrics]="metricsFor(s.time_muted, s.time_connected, s.count_muted, s.max_muted, true)" />
-          <app-stat-card icon="pi-volume-off" [label]="'stats.deafened' | translate" [value]="s.time_deafened | duration" [metrics]="metricsFor(s.time_deafened, s.time_connected, s.count_deafened, s.max_deafened, true)" />
-          <app-stat-card icon="pi-desktop" [label]="'stats.screen' | translate" [value]="s.time_screen_sharing | duration" [metrics]="metricsFor(s.time_screen_sharing, s.time_connected, s.count_screen_sharing, s.max_screen_sharing, true)" />
-          <app-stat-card icon="pi-video" [label]="'stats.camera' | translate" [value]="s.time_camera | duration" [metrics]="metricsFor(s.time_camera, s.time_connected, s.count_camera, s.max_camera, true)" />
+          <app-stat-card stat="time_connected" [label]="'stats.connected' | translate" [value]="s.time_connected | duration" [liveMs]="liveSession()?.stats?.time_connected ?? null" [metrics]="metricsFor(s.time_connected, s.time_connected, s.count_connected, s.max_connected, false)" />
+          <app-stat-card stat="time_muted" [label]="'stats.muted' | translate" [value]="s.time_muted | duration" [liveMs]="liveSession()?.stats?.time_muted ?? null" [metrics]="metricsFor(s.time_muted, s.time_connected, s.count_muted, s.max_muted, true)" />
+          <app-stat-card stat="time_deafened" [label]="'stats.deafened' | translate" [value]="s.time_deafened | duration" [liveMs]="liveSession()?.stats?.time_deafened ?? null" [metrics]="metricsFor(s.time_deafened, s.time_connected, s.count_deafened, s.max_deafened, true)" />
+          <app-stat-card stat="time_screen_sharing" [label]="'stats.screen' | translate" [value]="s.time_screen_sharing | duration" [liveMs]="liveSession()?.stats?.time_screen_sharing ?? null" [metrics]="metricsFor(s.time_screen_sharing, s.time_connected, s.count_screen_sharing, s.max_screen_sharing, true)" />
+          <app-stat-card stat="time_camera" [label]="'stats.camera' | translate" [value]="s.time_camera | duration" [liveMs]="liveSession()?.stats?.time_camera ?? null" [metrics]="metricsFor(s.time_camera, s.time_connected, s.count_camera, s.max_camera, true)" />
           @if (!isSession()) {
-            <app-stat-card icon="pi-bolt" [label]="'stats.streakTitle' | translate" [value]="s.daily_streak + ' d'" [metrics]="[{ labelKey: 'stats.maxStreak', value: s.max_daily_streak + ' d' }]" />
-            <app-stat-card icon="pi-sync" [label]="'stats.switches' | translate" [value]="s.count_switch.toString()" />
+            <app-stat-card stat="daily_streak" [label]="'stats.streakTitle' | translate" [value]="s.daily_streak + ' d'" [metrics]="[{ labelKey: 'stats.maxStreak', value: s.max_daily_streak + ' d' }]" />
+            <app-stat-card stat="count_switch" [label]="'stats.switches' | translate" [value]="s.count_switch.toString()" />
           }
         </div>
       } @else {
@@ -334,9 +316,11 @@ export class DashboardComponent {
   });
 
   constructor() {
-    // Live: re-fetch (throttled) whenever a voice event lands for a room we're in,
-    // and once on every (re)connect to catch up on anything missed during a gap.
-    this.ws.events.pipe(auditTime(1500), takeUntilDestroyed()).subscribe(() => this.refresh$.next());
+    // Live: re-fetch (throttled) on own voice events, guild-wide activity pings,
+    // and on every (re)connect to catch up on anything missed during a gap.
+    merge(this.ws.events, this.ws.guildActivity)
+      .pipe(auditTime(500), takeUntilDestroyed())
+      .subscribe(() => this.refresh$.next());
     this.ws.opened.pipe(takeUntilDestroyed()).subscribe(() => this.refresh$.next());
   }
 

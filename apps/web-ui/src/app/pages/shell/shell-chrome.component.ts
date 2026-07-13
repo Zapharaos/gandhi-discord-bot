@@ -2,12 +2,13 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { NgTemplateOutlet } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { catchError, filter, map, of, switchMap } from 'rxjs';
+import { auditTime, catchError, filter, map, merge, of, switchMap } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ApiService } from '@core/api/api.service';
 import { ServiceStatus } from '@core/api/models';
 import { AuthService } from '@core/auth/auth.service';
 import { VisibilityService } from '@core/visibility/visibility.service';
+import { WsService } from '@core/ws/ws.service';
 
 interface ServerLink {
   id: string;
@@ -79,12 +80,6 @@ interface ServerLink {
         >
           <i class="pi pi-objects-column w-5 text-center text-primary-400 transition-transform group-hover:scale-110"></i>
           <span class="flex-1">{{ 'nav.stats' | translate }}</span>
-          @if (liveActive()) {
-            <span class="relative flex h-2 w-2" [title]="'dashboard.live' | translate">
-              <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
-              <span class="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
-            </span>
-          }
         </a>
       </div>
 
@@ -217,6 +212,7 @@ export class ShellChromeComponent {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly visibility = inject(VisibilityService);
+  private readonly ws = inject(WsService);
 
   readonly mobileOpen = signal(false);
 
@@ -226,9 +222,14 @@ export class ShellChromeComponent {
   );
 
   // Current voice session: whether the user is live, and in which guilds — drives
-  // the pulse dots next to the Dashboard item and any server they're active in.
+  // the pulse dots next to servers in the sidebar. Refreshes on poll AND on any
+  // voice event so the dots appear/disappear immediately when a session starts/ends.
   readonly session = toSignal(
-    this.visibility.pollTimer(20000).pipe(
+    merge(
+      this.visibility.pollTimer(20000),
+      merge(this.ws.events, this.ws.guildActivity).pipe(auditTime(500)),
+      this.ws.opened,
+    ).pipe(
       switchMap(() =>
         this.api.sessionStats().pipe(
           map((r) => ({ active: r.active, guildIds: r.guildIds })),
@@ -238,8 +239,6 @@ export class ShellChromeComponent {
     ),
     { initialValue: { active: false, guildIds: [] as string[] } },
   );
-  readonly liveActive = computed(() => this.session().active);
-
   readonly servers = computed<ServerLink[]>(() =>
     (this.auth.me()?.guilds ?? []).map((g) => ({
       id: g.id,
