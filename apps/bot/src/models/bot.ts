@@ -1,10 +1,14 @@
 import {
+    ActionRowBuilder,
     AutocompleteInteraction,
+    ButtonBuilder,
+    ButtonStyle,
     ChannelType,
     Client,
     CommandInteraction,
+    EmbedBuilder,
     Events, Guild, GuildMember,
-    Interaction, PartialGuildMember, VoiceState,
+    Interaction, PartialGuildMember, PermissionFlagsBits, TextChannel, VoiceState,
     MessageReaction, User as DiscordUser, PartialMessageReaction, PartialUser
 } from 'discord.js';
 
@@ -107,7 +111,7 @@ export class Bot {
         this.client.on(Events.InteractionCreate, (intr: Interaction) => this.onInteraction(intr));
         this.client.on(Events.VoiceStateUpdate, (oldState: VoiceState, newState: VoiceState) => this.onVoiceState(oldState, newState));
         this.client.on(Events.GuildMemberRemove, (member: GuildMember | PartialGuildMember) => this.onGuildMemberRemove(member));
-        this.client.on(Events.GuildCreate, (guild: Guild) => this.onGuildChange(guild));
+        this.client.on(Events.GuildCreate, (guild: Guild) => this.onGuildJoin(guild));
         this.client.on(Events.GuildUpdate, (_oldGuild: Guild, guild: Guild) => this.onGuildChange(guild));
         this.client.on(Events.GuildDelete, (guild: Guild) => this.onGuildDelete(guild));
         this.client.on(Events.MessageReactionAdd, (reaction, user) => this.onMessageReactionAdd(reaction, user));
@@ -166,6 +170,78 @@ export class Bot {
         } catch (error) {
             await Logger.error(`Failed to sync guild ${guild.id}`, error);
         }
+    }
+
+    /** Fired when the bot is actually added to a new guild (post-startup). */
+    private async onGuildJoin(guild: Guild): Promise<void> {
+        await this.onGuildChange(guild);
+        // GuildCreate also fires for every cached guild during startup; only greet
+        // on a genuine join (i.e. once the client is ready).
+        if (!this.ready) return;
+        try {
+            await this.sendWelcomeMessage(guild);
+        } catch (error) {
+            await Logger.error(`Failed to send welcome message in guild ${guild.id}`, error);
+        }
+    }
+
+    /** Post a one-time intro with a link to the web dashboard when joining a server. */
+    private async sendWelcomeMessage(guild: Guild): Promise<void> {
+        const channel = this.pickWelcomeChannel(guild);
+        if (!channel) return;
+
+        const webUrl = process.env.WEB_BASE_URL;
+        const lines = [
+            'I turn voice activity into stats, leaderboards and heatmaps.',
+            '',
+            '• **Members** opt in with `/user-settings` — nothing is tracked until you do.',
+            '• **Server admins** configure tracking, logs and the log channel with `/server-settings`.',
+        ];
+        if (webUrl) lines.push(`• Explore everything on the web dashboard: ${webUrl}`);
+
+        const me = guild.members.me;
+        const canEmbed = me != null && channel.permissionsFor(me)?.has(PermissionFlagsBits.EmbedLinks) === true;
+
+        if (!canEmbed) {
+            // Fall back to plain text where the bot can't post embeds.
+            await channel.send({ content: `**Thanks for adding Gandhi!** 🎉\n${lines.join('\n')}` });
+            return;
+        }
+
+        const embed = new EmbedBuilder()
+            .setColor(0x5865f2)
+            .setTitle('Thanks for adding Gandhi! 🎉')
+            .setDescription(lines.join('\n'));
+
+        const components: ActionRowBuilder<ButtonBuilder>[] = [];
+        if (webUrl) {
+            components.push(
+                new ActionRowBuilder<ButtonBuilder>().addComponents(
+                    new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel('Open the dashboard').setURL(webUrl),
+                ),
+            );
+        }
+
+        await channel.send({ embeds: [embed], components });
+    }
+
+    /** The system channel if the bot can post there, else the first sendable text channel. */
+    private pickWelcomeChannel(guild: Guild): TextChannel | null {
+        const me = guild.members.me;
+        if (!me) return null;
+
+        const canSend = (ch: TextChannel): boolean =>
+            ch.permissionsFor(me)?.has([PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]) === true;
+
+        const system = guild.systemChannel;
+        if (system && canSend(system)) return system;
+
+        return (
+            guild.channels.cache
+                .filter((ch): ch is TextChannel => ch.type === ChannelType.GuildText && canSend(ch as TextChannel))
+                .sort((a, b) => a.rawPosition - b.rawPosition)
+                .first() ?? null
+        );
     }
 
     private async onGuildDelete(guild: Guild): Promise<void> {
