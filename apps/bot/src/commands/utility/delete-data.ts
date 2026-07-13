@@ -10,8 +10,6 @@ import {
 import {Command, CommandDeferType} from "@commands/commands";
 import {InteractionUtils} from "@utils/interaction";
 import {UserStatsController} from "@controllers/user-stats";
-import {DailyStatsController} from "@controllers/daily-stats";
-import {StartTimestampsController} from "@controllers/start-timestamps";
 
 export class DeleteDataCommand implements Command {
     public names = ['delete-data'];
@@ -66,10 +64,9 @@ export class DeleteDataCommand implements Command {
 
         const targetGuild = scope === 'global' ? undefined : guildId!;
 
-        // Purge every table that holds data linked to the user.
-        const deletedStats = await UserStatsController.deleteUserData(intr.user.id, targetGuild);
-        await DailyStatsController.deleteUserData(intr.user.id, targetGuild);
-        await StartTimestampsController.deleteUserData(intr.user.id, targetGuild);
+        // Purge every table that holds data linked to the user (stats, daily
+        // history, live sessions, and the identity cache once nothing remains).
+        const { deletedGuilds: deletedStats } = await UserStatsController.deleteUserData(intr.user.id, targetGuild);
 
         if (deletedStats === 0) {
             await btn.update({ content: `ℹ️ Nothing to delete — we hold no data about you on ${scopeLabel}.`, components: [] });

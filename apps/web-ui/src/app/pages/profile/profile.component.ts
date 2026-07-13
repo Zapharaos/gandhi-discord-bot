@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { ApiService } from '@core/api/api.service';
 import { GuildSettings } from '@core/api/models';
@@ -154,6 +154,115 @@ type Flag = 'stats' | 'logs' | 'private';
       }
     </section>
 
+    <!-- Your data (GDPR: export / reset / delete) -->
+    <section class="mt-6 rounded-2xl border border-surface-800 bg-surface-900 p-5">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-base font-semibold text-surface-0">{{ 'profile.data.title' | translate }}</h2>
+          <p class="text-sm text-surface-400">{{ 'profile.data.hint' | translate }}</p>
+        </div>
+        <p-select
+          [options]="scopeOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="dataScope()"
+          (ngModelChange)="setDataScope($event)"
+          size="small"
+          [style]="{ minWidth: '12rem' }"
+        />
+      </div>
+
+      @if (dataMessage(); as msg) {
+        <p class="mt-4 rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-300">
+          <i class="pi pi-check-circle mr-1.5"></i>{{ msg.key | translate: msg.params }}
+        </p>
+      }
+
+      <!-- Export -->
+      <div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-surface-800 p-4">
+        <div class="min-w-0">
+          <h3 class="font-medium text-surface-100">{{ 'profile.data.export.title' | translate }}</h3>
+          <p class="text-sm text-surface-400">{{ 'profile.data.export.desc' | translate }}</p>
+        </div>
+        <div class="flex gap-2">
+          <p-button size="small" icon="pi pi-download" label="JSON" [outlined]="true" (onClick)="exportData('json')" />
+          <p-button size="small" icon="pi pi-download" label="CSV" [outlined]="true" (onClick)="exportData('csv')" />
+        </div>
+      </div>
+
+      <!-- Reset -->
+      <div class="mt-3 rounded-xl border border-surface-800 p-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="min-w-0">
+            <h3 class="font-medium text-surface-100">{{ 'profile.data.reset.title' | translate }}</h3>
+            <p class="text-sm text-surface-400">{{ 'profile.data.reset.desc' | translate }}</p>
+          </div>
+          <p-button
+            size="small"
+            severity="danger"
+            [outlined]="true"
+            icon="pi pi-refresh"
+            [label]="'profile.data.reset.button' | translate"
+            [disabled]="dataBusy()"
+            (onClick)="startConfirm('reset')"
+          />
+        </div>
+        @if (confirming() === 'reset') {
+          <div class="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3">
+            <p class="text-sm text-red-200">{{ 'profile.data.reset.confirm' | translate: { scope: scopeLabel() } }}</p>
+            <div class="mt-3 flex gap-2">
+              <p-button size="small" severity="danger" [label]="'profile.data.confirm' | translate" [loading]="dataBusy()" (onClick)="confirmReset()" />
+              <p-button size="small" severity="secondary" [text]="true" [label]="'profile.data.cancel' | translate" [disabled]="dataBusy()" (onClick)="cancelConfirm()" />
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Delete -->
+      <div class="mt-3 rounded-xl border border-red-500/30 p-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="min-w-0">
+            <h3 class="font-medium text-red-300">{{ 'profile.data.delete.title' | translate }}</h3>
+            <p class="text-sm text-surface-400">{{ 'profile.data.delete.desc' | translate }}</p>
+          </div>
+          <p-button
+            size="small"
+            severity="danger"
+            icon="pi pi-trash"
+            [label]="'profile.data.delete.button' | translate"
+            [disabled]="dataBusy()"
+            (onClick)="startConfirm('delete')"
+          />
+        </div>
+        @if (confirming() === 'delete') {
+          <div class="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3">
+            <p class="text-sm text-red-200">{{ 'profile.data.delete.confirm' | translate: { scope: scopeLabel() } }}</p>
+            <p class="mt-2 text-xs text-surface-400">{{ 'profile.data.delete.logsNote' | translate }}</p>
+            <label class="mt-3 block text-xs text-surface-300">{{ 'profile.data.delete.typeToConfirm' | translate }}</label>
+            <input
+              type="text"
+              class="mt-1 w-48 rounded-lg border border-surface-700 bg-surface-950 px-3 py-1.5 font-mono text-sm text-surface-100 outline-none focus:border-red-400"
+              [ngModel]="deleteInput()"
+              (ngModelChange)="deleteInput.set($event)"
+              placeholder="DELETE"
+              autocomplete="off"
+            />
+            <div class="mt-3 flex gap-2">
+              <p-button
+                size="small"
+                severity="danger"
+                [label]="'profile.data.delete.button' | translate"
+                [loading]="dataBusy()"
+                [disabled]="deleteInput() !== 'DELETE'"
+                (onClick)="confirmDelete()"
+              />
+              <p-button size="small" severity="secondary" [text]="true" [label]="'profile.data.cancel' | translate" [disabled]="dataBusy()" (onClick)="cancelConfirm()" />
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
     <!-- Support shortcut -->
     <a
       routerLink="/support"
@@ -174,6 +283,7 @@ export class ProfileComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly language = inject(LanguageService);
+  private readonly translate = inject(TranslateService);
 
   readonly currentLang = this.language.current;
   readonly flags: Flag[] = ['stats', 'logs', 'private'];
@@ -223,6 +333,81 @@ export class ProfileComponent implements OnInit {
 
   logout(): void {
     void this.auth.logout();
+  }
+
+  // --- Your data (GDPR) ---
+
+  /** '' = every server, otherwise a guild id. */
+  readonly dataScope = signal('');
+  readonly confirming = signal<'reset' | 'delete' | null>(null);
+  readonly deleteInput = signal('');
+  readonly dataBusy = signal(false);
+  readonly dataMessage = signal<{ key: string; params?: Record<string, unknown> } | null>(null);
+
+  // Depends on currentLang() so the "All servers" label follows language switches.
+  readonly scopeOptions = computed(() => {
+    this.currentLang();
+    return [
+      { value: '', label: this.translate.instant('profile.allServers') as string },
+      ...this.settings().map((g) => ({ value: g.guildId, label: g.name || g.guildId })),
+    ];
+  });
+
+  readonly scopeLabel = computed(
+    () => this.scopeOptions().find((o) => o.value === this.dataScope())?.label ?? '',
+  );
+
+  setDataScope(value: string): void {
+    this.dataScope.set(value);
+    this.cancelConfirm();
+  }
+
+  exportData(format: 'json' | 'csv'): void {
+    window.location.href = this.api.exportUrl(format, this.dataScope() || undefined);
+  }
+
+  startConfirm(action: 'reset' | 'delete'): void {
+    this.confirming.set(action);
+    this.deleteInput.set('');
+    this.dataMessage.set(null);
+  }
+
+  cancelConfirm(): void {
+    this.confirming.set(null);
+    this.deleteInput.set('');
+  }
+
+  confirmReset(): void {
+    this.dataBusy.set(true);
+    this.api.resetStats(this.dataScope() || undefined).subscribe({
+      next: (r) => {
+        this.dataBusy.set(false);
+        this.cancelConfirm();
+        this.dataMessage.set({ key: 'profile.data.reset.done', params: { count: r.reset } });
+        this.api.getSettings().subscribe((s) => this.settings.set(s.guilds));
+      },
+      error: () => this.dataBusy.set(false),
+    });
+  }
+
+  confirmDelete(): void {
+    if (this.deleteInput() !== 'DELETE') return;
+    const guildId = this.dataScope() || undefined;
+    this.dataBusy.set(true);
+    this.api.deleteData(guildId).subscribe({
+      next: (r) => {
+        if (!guildId) {
+          // Global erasure ends the session server-side; finish the logout locally.
+          void this.auth.logout();
+          return;
+        }
+        this.dataBusy.set(false);
+        this.cancelConfirm();
+        this.dataMessage.set({ key: 'profile.data.delete.done', params: { count: r.deleted } });
+        this.api.getSettings().subscribe((s) => this.settings.set(s.guilds));
+      },
+      error: () => this.dataBusy.set(false),
+    });
   }
 
   private save(patch: Record<string, unknown>): void {

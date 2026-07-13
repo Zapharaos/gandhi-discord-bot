@@ -7,6 +7,8 @@ import {
   AdminOverviewResponse,
   AdminTimelineResponse,
   ConfigResponse,
+  GdprDeleteResponse,
+  GdprResetResponse,
   GuildRosterResponse,
   MemberLookupResponse,
   MeResponse,
@@ -57,6 +59,18 @@ export class ApiService {
 
   guildStats(guildId: string): Observable<StatsResponse> {
     return this.http.get<StatsResponse>(`${this.base}/api/stats/guild/${guildId}`);
+  }
+
+  /** Reset the caller's aggregate stats (GDPR); scoped to one server or all. */
+  resetStats(guildId?: string): Observable<GdprResetResponse> {
+    return this.http.post<GdprResetResponse>(`${this.base}/api/gdpr/reset`, guildId ? { guildId } : {});
+  }
+
+  /** Erase everything held about the caller (GDPR); scoped to one server or all. */
+  deleteData(guildId?: string): Observable<GdprDeleteResponse> {
+    return this.http.delete<GdprDeleteResponse>(`${this.base}/api/gdpr/data`, {
+      body: guildId ? { guildId } : {},
+    });
   }
 
   /** Full-page URL for a data export download (the browser handles the download). */

@@ -59,9 +59,9 @@ export class DataComponent {
     command: string | null;
     link: { path: string; labelKey: string } | null;
   }[] = [
-    { key: 'access', icon: 'pi-download', command: '/export', link: { path: '/dashboard', labelKey: 'support.data.openDashboard' } },
-    { key: 'erase', icon: 'pi-trash', command: '/delete-data', link: null },
-    { key: 'reset', icon: 'pi-refresh', command: '/reset-stats', link: null },
+    { key: 'access', icon: 'pi-download', command: '/export', link: { path: '/profile', labelKey: 'support.data.openProfile' } },
+    { key: 'erase', icon: 'pi-trash', command: '/delete-data', link: { path: '/profile', labelKey: 'support.data.openProfile' } },
+    { key: 'reset', icon: 'pi-refresh', command: '/reset-stats', link: { path: '/profile', labelKey: 'support.data.openProfile' } },
     { key: 'what', icon: 'pi-eye', command: null, link: { path: '/support/preferences', labelKey: 'support.prefs.title' } },
   ];
 }

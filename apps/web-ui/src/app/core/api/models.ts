@@ -234,6 +234,18 @@ export interface SettingsPatch {
   private?: boolean;
 }
 
+export interface GdprResetResponse {
+  /** Number of servers whose aggregate stats were reset. */
+  reset: number;
+}
+
+export interface GdprDeleteResponse {
+  /** Number of servers whose data was erased. */
+  deleted: number;
+  /** True when the cached Discord identity (username/avatar) was purged too. */
+  identityPurged: boolean;
+}
+
 export interface BotHealth {
   online: boolean;
   ready: boolean;

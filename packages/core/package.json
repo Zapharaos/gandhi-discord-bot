@@ -23,6 +23,10 @@
       "types": "./dist/services/export.d.ts",
       "default": "./dist/services/export.js"
     },
+    "./services/gdpr": {
+      "types": "./dist/services/gdpr.d.ts",
+      "default": "./dist/services/gdpr.js"
+    },
     "./utils/time": {
       "types": "./dist/utils/time.d.ts",
       "default": "./dist/utils/time.js"

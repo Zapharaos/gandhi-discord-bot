@@ -38,10 +38,11 @@ export function getDb(): Kysely<DB> {
     return instance;
 }
 
-// A SEPARATE read-write connection used ONLY to persist the signed-in user's own
-// settings (opt-in flags). Every other code path uses the read-only connection
-// above. SQLite (WAL + busy_timeout) serialises the occasional write against the
-// bot's writes safely — see the README "Security & deployment" note.
+// A SEPARATE read-write connection used ONLY for the signed-in user's own rows:
+// their settings (opt-in flags) and their GDPR reset/erasure requests. Every
+// other code path uses the read-only connection above. SQLite (WAL +
+// busy_timeout) serialises the occasional write against the bot's writes safely
+// — see the README "Security & deployment" note.
 let writeInstance: Kysely<DB> | null = null;
 
 export function getWriteDb(): Kysely<DB> {

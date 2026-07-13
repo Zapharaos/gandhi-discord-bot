@@ -6,6 +6,7 @@ import {ExpressionBuilder} from "kysely";
 import {StatKey} from "@gandhi/core/models/database/user_stats";
 import {DatabaseUtils} from "@gandhi/core/utils/database";
 import {TimeUtils} from "@gandhi/core/utils/time";
+import * as Gdpr from "@gandhi/core/services/gdpr";
 
 export class UserStatsController {
 
@@ -300,24 +301,7 @@ export class UserStatsController {
         }
 
         try {
-            const resetValues = {
-                time_connected: 0, time_muted: 0, time_deafened: 0, time_screen_sharing: 0, time_camera: 0,
-                last_activity: 0, daily_streak: 0,
-                max_connected: 0, max_muted: 0, max_deafened: 0, max_screen_sharing: 0, max_camera: 0, max_daily_streak: 0,
-                count_connected: 0, count_switch: 0, count_muted: 0, count_deafened: 0, count_screen_sharing: 0, count_camera: 0,
-            };
-
-            let query = db
-                .updateTable('user_stats')
-                .set(resetValues)
-                .where('user_id', '=', userID);
-
-            if (guildID) {
-                query = query.where('guild_id', '=', guildID);
-            }
-
-            const result = await query.execute();
-            const affected = result.reduce((sum, r) => sum + Number(r.numUpdatedRows ?? 0), 0);
+            const affected = await Gdpr.resetUserStats(db, userID, guildID);
 
             Logger.debug(`Reset stats for user ${userID}${guildID ? ` in guild ${guildID}` : ' (all guilds)'}: ${affected} row(s)`);
             return affected;
@@ -381,32 +365,28 @@ export class UserStatsController {
     }
 
     /**
-     * Erases a user's stats rows entirely (right to erasure). When guildID is
-     * provided it is scoped to that server, otherwise every server is purged.
-     * Removing the row also clears the user's settings, so they revert to the
-     * opt-out default. Returns the number of rows deleted.
+     * Erases every row we hold about a user (right to erasure): user_stats
+     * (which also clears their settings, so they revert to the opt-out
+     * default), daily_stats, start_timestamps, and — once no data remains on
+     * any server — the users identity-cache row. When guildID is provided the
+     * erasure is scoped to that server, otherwise every server is purged.
      */
-    static async deleteUserData(userID: string, guildID?: string): Promise<number> {
+    static async deleteUserData(userID: string, guildID?: string): Promise<Gdpr.DeleteUserDataResult> {
         // Get the database instance
         const db = await getDb();
         if (!db) {
             await Logger.error(Logs.error.databaseNotFound);
-            return 0;
+            return { deletedGuilds: 0, identityPurged: false };
         }
 
         try {
-            let query = db.deleteFrom('user_stats').where('user_id', '=', userID);
-            if (guildID) {
-                query = query.where('guild_id', '=', guildID);
-            }
-            const result = await query.execute();
-            const affected = result.reduce((sum, r) => sum + Number(r.numDeletedRows ?? 0), 0);
+            const result = await Gdpr.deleteUserData(db, userID, guildID);
 
-            Logger.debug(`Deleted user_stats for user ${userID}${guildID ? ` in guild ${guildID}` : ' (all guilds)'}: ${affected} row(s)`);
-            return affected;
+            Logger.debug(`Deleted data for user ${userID}${guildID ? ` in guild ${guildID}` : ' (all guilds)'}: ${result.deletedGuilds} server(s), identity purged: ${result.identityPurged}`);
+            return result;
         } catch (err) {
-            await Logger.error(`Error deleting user_stats for user ${userID}${guildID ? ` in guild ${guildID}` : ' (all guilds)'}`, err);
-            return 0;
+            await Logger.error(`Error deleting data for user ${userID}${guildID ? ` in guild ${guildID}` : ' (all guilds)'}`, err);
+            return { deletedGuilds: 0, identityPurged: false };
         }
     }
 

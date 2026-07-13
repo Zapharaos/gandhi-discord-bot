@@ -87,9 +87,10 @@
       "summary": "Accéder, exporter et effacer les données détenues.",
       "intro": "Tu gardes toujours le contrôle de tes données.",
       "openDashboard": "Ouvrir le tableau de bord",
-      "access": { "title": "Accès & export", "body": "Utilise /export ou le tableau de bord pour télécharger toutes tes données en JSON ou CSV." },
-      "erase": { "title": "Effacement", "body": "Utilise /delete-data pour effacer définitivement tes données sur un serveur, ou partout." },
-      "reset": { "title": "Réinitialisation", "body": "Utilise /reset-stats pour remettre tes stats à zéro en gardant tes réglages et ton historique." },
+      "openProfile": "Gérer depuis ton profil",
+      "access": { "title": "Accès & export", "body": "Télécharge toutes tes données en JSON ou CSV depuis ton profil, ou avec /export sur Discord." },
+      "erase": { "title": "Effacement", "body": "Efface définitivement tes données sur un serveur, ou partout, depuis ton profil ou avec /delete-data." },
+      "reset": { "title": "Réinitialisation", "body": "Remets tes stats à zéro en gardant tes réglages et ton historique, depuis ton profil ou avec /reset-stats." },
       "what": { "title": "Ce qui est stocké", "body": "Uniquement ton ID Discord et les durées vocales agrégées par serveur — jamais le contenu des messages." }
     }
   },
@@ -113,7 +114,33 @@
     "matrixHint": "Utilise la ligne « Tous les serveurs » pour changer un réglage partout, ou serveur par serveur.",
     "noServers": "Tu ne partages encore aucun serveur avec le bot.",
     "support": "Aide & support",
-    "supportHint": "Guides sur l'ajout du bot, les commandes, les préférences et tes données."
+    "supportHint": "Guides sur l'ajout du bot, les commandes, les préférences et tes données.",
+    "data": {
+      "title": "Tes données",
+      "hint": "Exporte, réinitialise ou efface définitivement les données que le bot détient sur toi.",
+      "confirm": "Confirmer",
+      "cancel": "Annuler",
+      "export": {
+        "title": "Exporter tes données",
+        "desc": "Télécharge tout ce que nous détenons sur toi (stats, historique quotidien, réglages)."
+      },
+      "reset": {
+        "title": "Réinitialiser tes stats",
+        "desc": "Remet tes stats agrégées à zéro. Tes réglages et ton historique quotidien sont conservés.",
+        "button": "Réinitialiser",
+        "confirm": "Tes stats sur {{scope}} vont être remises à zéro. Les totaux ne pourront pas être récupérés. Continuer ?",
+        "done": "Tes stats ont été réinitialisées ({{count}} serveur(s))."
+      },
+      "delete": {
+        "title": "Supprimer tes données",
+        "desc": "Efface définitivement tout sur le périmètre choisi — stats, historique quotidien et réglages. Tu reviens au réglage par défaut (non suivi).",
+        "button": "Supprimer",
+        "confirm": "Toutes les données que nous détenons sur toi sur {{scope}} vont être définitivement supprimées. C'est irréversible.",
+        "logsNote": "Les messages de logs déjà publiés dans les salons ne sont pas affectés — demande à un admin du serveur de les retirer si besoin.",
+        "typeToConfirm": "Tape DELETE pour confirmer",
+        "done": "Tes données ont été définitivement supprimées ({{count}} serveur(s))."
+      }
+    }
   },
   "settings": {
     "stats": {

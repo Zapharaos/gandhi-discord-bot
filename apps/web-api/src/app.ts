@@ -12,6 +12,7 @@ import { registerAdminRoutes } from './admin/routes';
 import { registerRankingRoutes } from './ranking/routes';
 import { registerStatusRoutes } from './status/routes';
 import { registerSettingsRoutes } from './settings/routes';
+import { registerGdprRoutes } from './gdpr/routes';
 import { registerWsRoutes } from './ws/routes';
 
 export async function buildApp(): Promise<FastifyInstance> {
@@ -57,7 +58,7 @@ export async function buildApp(): Promise<FastifyInstance> {
         await app.register(cors, {
             origin: config.corsOrigin,
             credentials: true,
-            methods: ['GET', 'POST'],
+            methods: ['GET', 'POST', 'PATCH', 'DELETE'],
         });
     }
 
@@ -86,6 +87,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     await registerRankingRoutes(app);
     await registerStatusRoutes(app);
     await registerSettingsRoutes(app);
+    await registerGdprRoutes(app);
     await registerWsRoutes(app);
 
     return app;

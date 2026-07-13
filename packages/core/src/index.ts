@@ -11,6 +11,7 @@
 export * from './types/db';
 export * from './ws/protocol';
 export * from './services/export';
+export * from './services/gdpr';
 export * from './utils/time';
 export * from './utils/number';
 export * from './utils/database';

@@ -87,9 +87,10 @@
       "summary": "Access, export and erase the data the bot holds.",
       "intro": "You are always in control of your data.",
       "openDashboard": "Open the dashboard",
-      "access": { "title": "Access & export", "body": "Use /export or the dashboard to download all your data as JSON or CSV." },
-      "erase": { "title": "Erasure", "body": "Use /delete-data to permanently erase your data on a server, or everywhere." },
-      "reset": { "title": "Reset", "body": "Use /reset-stats to zero your stats while keeping your settings and history." },
+      "openProfile": "Manage in your profile",
+      "access": { "title": "Access & export", "body": "Download all your data as JSON or CSV from your profile, or with /export in Discord." },
+      "erase": { "title": "Erasure", "body": "Permanently erase your data on a server, or everywhere, from your profile or with /delete-data." },
+      "reset": { "title": "Reset", "body": "Zero your stats while keeping your settings and history, from your profile or with /reset-stats." },
       "what": { "title": "What is stored", "body": "Only your Discord user id and aggregate voice durations per server — never message content." }
     }
   },
@@ -113,7 +114,33 @@
     "matrixHint": "Use the “All servers” row to change a setting everywhere, or toggle it per server.",
     "noServers": "You don't share any server with the bot yet.",
     "support": "Help & support",
-    "supportHint": "Guides on adding the bot, commands, preferences and your data."
+    "supportHint": "Guides on adding the bot, commands, preferences and your data.",
+    "data": {
+      "title": "Your data",
+      "hint": "Export, reset or permanently erase the data the bot holds about you.",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "export": {
+        "title": "Export your data",
+        "desc": "Download everything we hold about you (stats, daily history, settings)."
+      },
+      "reset": {
+        "title": "Reset your stats",
+        "desc": "Set your aggregate stats back to zero. Your settings and daily history are kept.",
+        "button": "Reset",
+        "confirm": "Your stats on {{scope}} will be reset to zero. The totals cannot be recovered. Continue?",
+        "done": "Your stats were reset ({{count}} server(s))."
+      },
+      "delete": {
+        "title": "Delete your data",
+        "desc": "Permanently erase everything on the selected scope — stats, daily history and settings. You revert to the default (not tracked).",
+        "button": "Delete",
+        "confirm": "This will permanently delete all data we hold about you on {{scope}}. This cannot be undone.",
+        "logsNote": "Log messages already posted in server channels are not affected — ask a server admin to remove them if needed.",
+        "typeToConfirm": "Type DELETE to confirm",
+        "done": "Your data was permanently deleted ({{count}} server(s))."
+      }
+    }
   },
   "settings": {
     "stats": {
