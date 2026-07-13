@@ -145,7 +145,11 @@
   "login": {
     "title": "Gandhi Bot",
     "subtitle": "Connectez-vous pour consulter votre activité vocale sur vos serveurs.",
-    "button": "Se connecter avec Discord"
+    "button": "Se connecter avec Discord",
+    "legalPrefix": "En vous connectant, vous acceptez nos",
+    "legalTerms": "Conditions d'utilisation",
+    "legalAnd": "et notre",
+    "legalPrivacy": "Politique de confidentialité"
   },
   "dashboard": {
     "live": "En direct",
@@ -267,6 +271,377 @@
       "week": "Cette semaine",
       "today": "Aujourd'hui",
       "custom": "Personnalisé"
+    }
+  },
+  "public": {
+    "backHome": "Accueil"
+  },
+  "landing": {
+    "meta": {
+      "title": "Gandhi Bot — Statistiques d'activité vocale pour Discord"
+    },
+    "nav": {
+      "features": "Fonctionnalités",
+      "commands": "Commandes",
+      "privacy": "Confidentialité",
+      "signIn": "Se connecter"
+    },
+    "hero": {
+      "badge": "Confidentialité d'abord · opt-in par conception",
+      "title": "Transformez le temps vocal Discord en",
+      "titleAccent": "statistiques élégantes.",
+      "subtitle": "Gandhi mesure la vie de votre communauté en vocal — temps connecté, séries, partages d'écran et plus — et en fait un tableau de bord en direct, une heatmap annuelle et des classements de serveur.",
+      "ctaInvite": "Ajouter à Discord",
+      "ctaSignIn": "Ouvrir le tableau de bord",
+      "reassurance": "Gratuit · aucun message n'est jamais lu · chaque membre doit donner son accord."
+    },
+    "features": {
+      "kicker": "Ce que ça fait",
+      "title": "Tout ce qui se passe dans vos salons vocaux",
+      "subtitle": "D'une simple connexion à une année d'activité — Gandhi le mesure, et uniquement si tout le monde est d'accord.",
+      "voice": {
+        "title": "Suivi de l'activité vocale",
+        "desc": "Temps connecté, muet, sourdine, partage d'écran et caméra — capturés en direct depuis les états vocaux."
+      },
+      "heatmap": {
+        "title": "Heatmap annuelle",
+        "desc": "Un calendrier de contributions façon GitHub de votre activité, par membre ou pour tout un serveur."
+      },
+      "leaderboard": {
+        "title": "Classements de serveur",
+        "desc": "Classez les membres par temps, séries ou sessions — avec des mises à jour en direct."
+      },
+      "privacy": {
+        "title": "Confidentialité par conception",
+        "desc": "Double opt-in, mode privé, et export ou suppression de toutes vos données en une commande."
+      }
+    },
+    "demo": {
+      "kicker": "Heatmap d'activité",
+      "title": "Une année d'activité vocale, d'un coup d'œil",
+      "subtitle": "Chaque jour passé en vocal illumine le calendrier. Survolez une case dans le vrai tableau de bord pour voir les totaux exacts.",
+      "calendar": "Activité · 2026",
+      "leaderboard": "Classement du serveur",
+      "p1": "Vues par membre et par serveur",
+      "p2": "Séries et records personnels",
+      "p3": "Mises à jour en direct via WebSocket",
+      "lbKicker": "Classements",
+      "lbTitle": "Grimpez dans le classement de votre serveur",
+      "lbSubtitle": "Classez les membres par temps connecté, séries ou sessions — le classement se met à jour en direct quand les gens entrent et sortent du vocal.",
+      "lbP1": "Classé par temps, série ou sessions",
+      "lbP2": "Classement en direct via WebSocket",
+      "lbP3": "Le mode privé vous retire du classement"
+    },
+    "commands": {
+      "kicker": "Commandes slash",
+      "title": "Tout, directement depuis Discord",
+      "subtitle": "Pas besoin du tableau de bord — gérez vos stats et vos données avec une commande slash.",
+      "channel": "général",
+      "stats": "Affiche vos statistiques d'activité vocale.",
+      "heatmap": "Génère votre activité sous forme d'image heatmap.",
+      "rank": "Affiche le classement du serveur.",
+      "userSettings": "Gérez vos préférences de suivi (opt-in, mode privé).",
+      "export": "Téléchargez tout ce que le bot détient sur vous (JSON/CSV).",
+      "deleteData": "Supprimez définitivement vos données sur un serveur ou partout."
+    },
+    "privacy": {
+      "kicker": "Vos données, vos règles",
+      "title": "Rien n'est suivi sans votre accord",
+      "subtitle": "Gandhi est pensé opt-in de bout en bout. Un serveur doit activer le suivi, et chaque membre doit donner son accord — sinon rien n'est enregistré à son sujet.",
+      "optIn": {
+        "title": "Double opt-in",
+        "desc": "Le serveur ET le membre doivent activer une fonction pour que quoi que ce soit soit enregistré."
+      },
+      "noContent": {
+        "title": "Aucun contenu de message",
+        "desc": "Uniquement des durées vocales et des horodatages — jamais ce que vous dites ou écrivez, jamais d'audio."
+      },
+      "control": {
+        "title": "Contrôle total",
+        "desc": "Exportez, réinitialisez ou supprimez vos données à tout moment, en une seule commande."
+      },
+      "readPolicy": "Lire la politique de confidentialité",
+      "manageData": "Gérer mes données"
+    },
+    "cta": {
+      "title": "Prêt à amener Gandhi sur votre serveur ?",
+      "subtitle": "Ajoutez le bot en quelques clics. Les membres gardent le contrôle, et vous obtenez les stats.",
+      "button": "Ajouter à Discord",
+      "learn": "Comment ça marche"
+    }
+  },
+  "footer": {
+    "tagline": "Statistiques d'activité vocale, confidentialité d'abord, pour les communautés Discord.",
+    "github": "Voir sur GitHub",
+    "rights": "Tous droits réservés.",
+    "madeBy": "Réalisé par",
+    "columns": {
+      "product": "Produit",
+      "help": "Support",
+      "legal": "Légal"
+    },
+    "links": {
+      "addBot": "Ajouter à Discord",
+      "dashboard": "Tableau de bord",
+      "support": "Centre d'aide",
+      "commands": "Commandes",
+      "preferences": "Préférences",
+      "data": "Vos données",
+      "terms": "Conditions d'utilisation",
+      "privacy": "Politique de confidentialité",
+      "notice": "Mentions légales",
+      "cookies": "Cookies"
+    }
+  },
+  "legal": {
+    "common": {
+      "lastUpdated": "Dernière mise à jour :",
+      "toc": "Sommaire",
+      "backToTop": "Haut de page"
+    },
+    "privacy": {
+      "kicker": "RGPD & vie privée",
+      "title": "Politique de confidentialité",
+      "updated": "13 juillet 2026",
+      "s1": {
+        "title": "Qui est responsable de vos données",
+        "p1": "Cette politique explique ce que Gandhi Bot (« le bot », « nous ») collecte, pourquoi, et les droits dont vous disposez. Le responsable du traitement est :",
+        "controller": "Responsable du traitement",
+        "contact": "Contact"
+      },
+      "s2": {
+        "title": "Quelles données nous collectons",
+        "p1": "Le bot stocke le minimum nécessaire pour produire des statistiques. Lorsque le suivi est actif pour vous, nous collectons :",
+        "items": [
+          "Votre identifiant Discord, ainsi que le pseudo/avatar exposés par Discord lors de votre connexion au tableau de bord.",
+          "Les identifiants des serveurs (guildes) que vous partagez avec le bot.",
+          "Les événements d'état vocal — connexion/déconnexion d'un salon, muet, sourdine, partage d'écran et caméra — avec leurs horodatages et durées.",
+          "Des compteurs et totaux de temps agrégés calculés à partir de ces événements, un historique d'activité quotidien et vos préférences personnelles."
+        ],
+        "noteTitle": "Nous ne stockons jamais le contenu des messages.",
+        "note": "Le bot ne lit pas vos messages et n'enregistre ni ne stocke jamais aucun audio."
+      },
+      "s3": {
+        "title": "Pourquoi nous traitons vos données",
+        "items": [
+          "Pour calculer et afficher vos statistiques d'activité vocale, heatmaps et classements de serveur.",
+          "Pour vous permettre, à vous et aux administrateurs de serveur, de gérer les préférences de suivi et de logs.",
+          "Pour assurer le fonctionnement du service en toute sécurité et diagnostiquer les problèmes techniques."
+        ]
+      },
+      "s4": {
+        "title": "Bases légales (art. 6 RGPD)",
+        "p1": "Nous nous appuyons sur les bases légales suivantes :",
+        "colTreatment": "Traitement",
+        "colBasis": "Base légale",
+        "colDetail": "Détails",
+        "rows": [
+          { "treatment": "Suivi et journalisation de l'activité vocale", "basis": "Consentement — art. 6(1)(a)", "detail": "Double opt-in : le serveur active la fonction et vous y consentez via /usersettings. Retirable à tout moment." },
+          { "treatment": "Compte et préférences du tableau de bord", "basis": "Contrat — art. 6(1)(b)", "detail": "Nécessaire pour vous connecter via Discord et afficher vos propres données." },
+          { "treatment": "Sécurité et prévention des abus", "basis": "Intérêt légitime — art. 6(1)(f)", "detail": "Journaux techniques minimaux pour assurer la fiabilité et la sécurité du service." }
+        ]
+      },
+      "s5": {
+        "title": "Où vos données sont stockées",
+        "p1": "Les données sont stockées dans une base SQLite sur des serveurs exploités par notre hébergeur, au sein de l'Union européenne.",
+        "host": "Hébergeur",
+        "location": "Localisation",
+        "locationValue": "Allemagne (Union européenne)"
+      },
+      "s6": {
+        "title": "Durées de conservation",
+        "p1": "Vos données ne vivent que le temps où elles sont pertinentes :",
+        "items": [
+          "Elles sont conservées tant que vous êtes membre d'un serveur et que le suivi est actif.",
+          "Le retrait via /usersettings arrête immédiatement toute collecte supplémentaire.",
+          "Quitter un serveur (ou en être retiré) supprime automatiquement toutes vos données liées à ce serveur.",
+          "Vous pouvez réinitialiser vos stats (/reset-stats) ou tout effacer définitivement (/delete-data) à tout moment.",
+          "Les sauvegardes faites par l'opérateur sont le seul endroit où des copies historiques peuvent brièvement subsister avant rotation."
+        ]
+      },
+      "s7": {
+        "title": "Qui peut accéder à vos données",
+        "p1": "Nous ne vendons pas vos données. Elles ne sont partagées qu'avec les prestataires strictement nécessaires au service :",
+        "colName": "Destinataire",
+        "colRole": "Rôle",
+        "colLocation": "Localisation",
+        "rows": [
+          { "name": "Hetzner Online GmbH", "role": "Hébergement de la base de données et de l'application", "location": "Allemagne (UE)" },
+          { "name": "Discord Inc.", "role": "Authentification (OAuth) et plateforme sur laquelle le bot s'exécute", "location": "États-Unis" }
+        ],
+        "note": "La connexion et l'usage de Discord sont également soumis à la politique de confidentialité de Discord."
+      },
+      "s8": {
+        "title": "Vos droits",
+        "p1": "En vertu du RGPD, vous pouvez exercer les droits suivants — la plupart directement depuis Discord, sans intervention d'un administrateur :",
+        "howLabel": "Comment :",
+        "rights": [
+          { "title": "Accès", "detail": "Voir chaque serveur où le bot détient des données sur vous et son statut de suivi.", "how": "/myservers, ou le tableau de bord." },
+          { "title": "Portabilité", "detail": "Télécharger une copie de toutes vos données dans un format portable.", "how": "/export (JSON ou CSV)." },
+          { "title": "Effacement", "detail": "Supprimer définitivement toutes les données liées à vous.", "how": "/delete-data (par serveur ou partout)." },
+          { "title": "Rectification / réinitialisation", "detail": "Remettre vos stats à zéro tout en conservant vos préférences.", "how": "/reset-stats." },
+          { "title": "Retrait du consentement", "detail": "Désactiver le suivi pour que rien de plus ne soit collecté.", "how": "/usersettings." },
+          { "title": "Opposition / limitation", "detail": "Nous demander d'arrêter ou de limiter un traitement précis.", "how": "Par email (ci-dessous)." }
+        ],
+        "contact": "Pour toute demande ou question sur vos données, contactez-nous à"
+      },
+      "s9": {
+        "title": "Sécurité",
+        "p1": "Nous appliquons des mesures techniques et organisationnelles raisonnables pour protéger vos données : accès restreint, serveur durci, et collecte limitée au strict nécessaire.",
+        "p2": "En cas de violation de données susceptible d'affecter vos droits, nous en informerons l'autorité de contrôle compétente et, lorsque requis, les utilisateurs concernés."
+      },
+      "s10": {
+        "title": "Cookies",
+        "p1": "Le tableau de bord n'utilise que des cookies strictement nécessaires. Consultez notre",
+        "link": "politique de cookies"
+      },
+      "s11": {
+        "title": "Modifications de cette politique",
+        "p1": "Nous pouvons mettre à jour cette politique pour refléter des évolutions du service ou de la loi. La date de « dernière mise à jour » ci-dessus reflète toujours la version en vigueur ; les changements importants seront signalés lorsque c'est possible."
+      },
+      "s12": {
+        "title": "Contact et réclamation",
+        "p1": "Vous pouvez contacter le responsable du traitement, ou introduire une réclamation auprès de la CNIL :",
+        "controllerTitle": "Responsable du traitement",
+        "cnilTitle": "CNIL (autorité de contrôle)",
+        "cnilText": "Vous avez le droit d'introduire une réclamation sur"
+      }
+    },
+    "terms": {
+      "kicker": "Contrat de service",
+      "title": "Conditions Générales d'Utilisation",
+      "updated": "13 juillet 2026",
+      "s1": {
+        "title": "Objet du service",
+        "p1": "Les présentes conditions régissent votre utilisation de Gandhi Bot et de son tableau de bord web, un service qui mesure l'activité vocale sur les serveurs Discord et la transforme en statistiques.",
+        "note": "Gandhi est un projet gratuit et amateur, fourni « en l'état », sans disponibilité ni niveau de service garantis."
+      },
+      "s2": {
+        "title": "Acceptation",
+        "p1": "En ajoutant le bot à un serveur, ou en vous connectant au tableau de bord, vous acceptez les présentes conditions. Si vous n'êtes pas d'accord, n'utilisez pas le service."
+      },
+      "s3": {
+        "title": "Éligibilité",
+        "p1": "Pour utiliser le service, vous devez :",
+        "items": [
+          "Respecter les Conditions d'utilisation et les Règles de Discord.",
+          "Atteindre l'âge minimum requis par Discord dans votre pays.",
+          "Disposer des permissions nécessaires sur un serveur avant d'y ajouter le bot."
+        ]
+      },
+      "s4": {
+        "title": "Vos responsabilités",
+        "p1": "En utilisant le service, vous vous engagez à :",
+        "items": [
+          "L'utiliser licitement et ne pas tenter de le perturber, le surcharger ou en abuser.",
+          "Ne pas l'utiliser pour harceler, surveiller ou profiler des membres contre leur gré.",
+          "Assumer la responsabilité de la configuration et de l'usage des données produites."
+        ]
+      },
+      "s5": {
+        "title": "Administrateurs de serveur",
+        "p1": "Si vous activez le suivi ou la journalisation sur un serveur que vous administrez, il vous incombe d'informer ses membres que leur activité vocale peut être enregistrée, et de disposer d'une base légale pour le faire.",
+        "p2": "Les membres conservent toujours leur propre interrupteur d'opt-in : rien n'est enregistré sur un membre qui n'a pas donné son accord, même si le serveur a activé une fonction."
+      },
+      "s6": {
+        "title": "Propriété intellectuelle",
+        "p1": "Le code source du bot est open source et mis à disposition sous la licence indiquée dans son dépôt :",
+        "repo": "sur GitHub"
+      },
+      "s7": {
+        "title": "Limitation de responsabilité",
+        "p1": "Le service est fourni sans garantie d'aucune sorte. Dans les limites permises par la loi, nous ne pouvons être tenus responsables d'une perte de données, d'une interruption de service ou d'un dommage indirect résultant de son usage.",
+        "p2": "Vous restez responsable de votre propre usage du service et du respect des règles applicables à votre communauté."
+      },
+      "s8": {
+        "title": "Suspension et résiliation",
+        "p1": "Nous pouvons suspendre ou interrompre le service, en tout ou partie, à tout moment — par exemple pour maintenance, en cas d'abus, ou si le projet prend fin. Vous pouvez cesser de l'utiliser à tout moment en retirant le bot et en supprimant vos données."
+      },
+      "s9": {
+        "title": "Modifications des conditions",
+        "p1": "Nous pouvons mettre à jour ces conditions. La date de « dernière mise à jour » reflète la version en vigueur, et la poursuite de l'utilisation après une modification vaut acceptation des conditions mises à jour."
+      },
+      "s10": {
+        "title": "Droit applicable",
+        "p1": "Les présentes conditions sont régies par le droit français. Tout litige qui ne pourrait être résolu à l'amiable sera soumis aux tribunaux français compétents."
+      },
+      "s11": {
+        "title": "Contact",
+        "p1": "Pour toute question sur ces conditions, contactez-nous à"
+      }
+    },
+    "notice": {
+      "kicker": "Informations légales",
+      "title": "Mentions Légales",
+      "updated": "13 juillet 2026",
+      "authoritative": "Ces mentions sont fournies conformément à la loi n° 2004-575 du 21 juin 2004 (LCEN). La version française fait foi ; la version anglaise est une traduction de courtoisie.",
+      "s1": {
+        "title": "Éditeur",
+        "p1": "Ce site et Gandhi Bot sont édités par un développeur individuel, non professionnel :",
+        "publisher": "Éditeur",
+        "contact": "Contact",
+        "director": "Directeur de la publication",
+        "note": "En tant qu'éditeur particulier non professionnel, l'adresse postale n'est pas publiée et est conservée par l'hébergeur, conformément à l'art. 6-III-2 de la LCEN."
+      },
+      "s2": {
+        "title": "Hébergement",
+        "p1": "Le site et le service sont hébergés par :",
+        "host": "Hébergeur",
+        "address": "Adresse",
+        "website": "Site web"
+      },
+      "s3": {
+        "title": "Propriété intellectuelle",
+        "p1": "Le code source du bot est open source sous la licence indiquée dans son dépôt :",
+        "repo": "sur GitHub"
+      },
+      "s4": {
+        "title": "Responsabilité",
+        "p1": "L'éditeur s'efforce de maintenir les informations exactes, mais ne saurait être tenu responsable des omissions, inexactitudes ou d'une éventuelle indisponibilité du service."
+      },
+      "s5": {
+        "title": "Liens externes",
+        "p1": "Le site renvoie vers des services tiers (notamment Discord et GitHub). L'éditeur n'a aucun contrôle sur ces sites et décline toute responsabilité quant à leur contenu."
+      },
+      "s6": {
+        "title": "Voir aussi",
+        "p1": "Pour les données et les cookies, consultez :",
+        "terms": "Conditions d'utilisation",
+        "privacy": "Politique de confidentialité",
+        "cookies": "Politique de cookies"
+      }
+    },
+    "cookies": {
+      "kicker": "Transparence & RGPD",
+      "title": "Politique de cookies",
+      "updated": "13 juillet 2026",
+      "s1": {
+        "title": "Qu'est-ce qu'un cookie ?",
+        "p1": "Un cookie est un petit fichier stocké par votre navigateur. Un stockage local similaire peut aussi servir à mémoriser vos préférences. Cette page liste tout ce que le tableau de bord utilise."
+      },
+      "s2": {
+        "title": "Ce que nous utilisons",
+        "p1": "Le tableau de bord n'utilise que des éléments strictement nécessaires à son fonctionnement :",
+        "colName": "Nom",
+        "colType": "Type",
+        "colPurpose": "Finalité",
+        "colDuration": "Durée",
+        "rows": [
+          { "name": "gandhi_sid", "type": "Cookie de session", "purpose": "Vous maintient connecté au tableau de bord.", "duration": "7 jours" },
+          { "name": "gandhi_oauth_state", "type": "Cookie de session", "purpose": "Protège la connexion Discord (CSRF).", "duration": "10 minutes" },
+          { "name": "gandhi.lang", "type": "Stockage local", "purpose": "Mémorise la langue choisie.", "duration": "Jusqu'à effacement" }
+        ]
+      },
+      "s3": {
+        "title": "Aucun traçage, aucun cookie tiers",
+        "p1": "Nous n'utilisons aucun cookie d'analyse, de publicité ou tiers. Comme tous les éléments ci-dessus sont strictement nécessaires, aucune bannière de consentement n'est requise au titre des règles ePrivacy et des recommandations de la CNIL."
+      },
+      "s4": {
+        "title": "Vos choix et vos droits",
+        "p1": "Vous pouvez supprimer ces éléments à tout moment depuis les paramètres de votre navigateur, et vous déconnecter pour effacer le cookie de session. Bloquer les cookies nécessaires empêchera le tableau de bord de fonctionner.",
+        "p2": "Vous pouvez aussi introduire une réclamation auprès de la CNIL sur",
+        "contact": "Pour toute question, contactez-nous à"
+      }
     }
   }
 }

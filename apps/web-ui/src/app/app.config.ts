@@ -25,7 +25,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(
       routes,
       withComponentInputBinding(),
-      withInMemoryScrolling({ scrollPositionRestoration: 'top' }),
+      withInMemoryScrolling({ scrollPositionRestoration: 'top', anchorScrolling: 'enabled' }),
     ),
     // Required by PrimeNG overlays (p-select panel, etc.) to size/animate correctly.
     provideAnimationsAsync(),
