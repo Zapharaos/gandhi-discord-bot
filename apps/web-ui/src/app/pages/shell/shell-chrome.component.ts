@@ -140,6 +140,7 @@ interface ServerLink {
           <a
             routerLink="/bot-admin"
             routerLinkActive="!bg-primary-500/15 !text-primary-400 font-medium"
+            [routerLinkActiveOptions]="{ exact: true }"
             class="flex h-10 items-center gap-3 rounded-lg px-3 text-sm text-surface-400 transition-colors hover:bg-surface-800/60 hover:text-surface-100"
           >
             <i class="pi pi-cog w-5 text-center"></i>
@@ -147,38 +148,25 @@ interface ServerLink {
           </a>
         }
 
-        <!-- Bot health, tucked under the admin/support nav. Full details for operators only. -->
+        <!-- Bot health, one compact row. Operators click through to the health page. -->
         @if (status(); as st) {
           @if (isBotAdmin()) {
-            <div class="mt-1 rounded-xl border border-surface-800 bg-surface-800/30 p-3">
-              <div class="flex items-center gap-2">
-                <span class="relative flex h-2.5 w-2.5">
-                  @if (st.bot.online) {
-                    <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
-                  }
-                  <span class="relative inline-flex h-2.5 w-2.5 rounded-full" [class.bg-green-500]="st.bot.online" [class.bg-red-500]="!st.bot.online"></span>
-                </span>
-                <span class="text-sm font-medium text-surface-100">{{ (st.bot.online ? 'health.online' : 'health.offline') | translate }}</span>
-                @if (st.bot.online && st.bot.wsPing != null) {
-                  <span class="ml-auto text-[10px] font-medium uppercase tracking-wide text-surface-500">{{ st.bot.wsPing }} ms</span>
-                }
-              </div>
-              <div class="mt-2 flex flex-col gap-1 text-[11px] text-surface-500">
-                @if (st.bot.online) {
-                  <span class="flex items-center gap-1.5"><i class="pi pi-server text-[10px]"></i>{{ st.bot.guildCount }} {{ 'health.servers' | translate }}</span>
-                  <span class="flex items-center gap-1.5"><i class="pi pi-clock text-[10px]"></i>{{ 'health.uptime' | translate }} {{ uptimeLabel(st) }}</span>
-                }
-                <span class="flex items-center gap-1.5"><i class="pi pi-history text-[10px]"></i>{{ 'health.lastSeen' | translate }} {{ lastSeenLabel(st) }}</span>
-              </div>
-            </div>
+            <a
+              routerLink="/bot-admin/health"
+              routerLinkActive="!bg-primary-500/15 [&_.health-label]:!text-primary-400"
+              class="group mt-1 flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs transition-colors hover:bg-surface-800/60"
+              [title]="botTooltip(st)"
+            >
+              <ng-container [ngTemplateOutlet]="healthDot" [ngTemplateOutletContext]="{ st }" />
+              <span class="health-label text-surface-400 transition-colors group-hover:text-surface-100">{{ (st.bot.online ? 'health.online' : 'health.offline') | translate }}</span>
+              @if (st.bot.online && st.bot.wsPing != null) {
+                <span class="ml-auto text-[10px] text-surface-600">{{ st.bot.wsPing }} ms</span>
+              }
+              <i class="pi pi-angle-right text-[10px] text-surface-600 transition-colors group-hover:text-surface-300" [class.ml-auto]="!(st.bot.online && st.bot.wsPing != null)"></i>
+            </a>
           } @else {
             <div class="mt-1 flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs" [title]="botTooltip(st)">
-              <span class="relative flex h-2 w-2">
-                @if (st.bot.online) {
-                  <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
-                }
-                <span class="relative inline-flex h-2 w-2 rounded-full" [class.bg-green-500]="st.bot.online" [class.bg-red-500]="!st.bot.online"></span>
-              </span>
+              <ng-container [ngTemplateOutlet]="healthDot" [ngTemplateOutletContext]="{ st }" />
               <span class="text-surface-400">{{ (st.bot.online ? 'health.online' : 'health.offline') | translate }}</span>
               @if (st.bot.online && st.bot.wsPing != null) {
                 <span class="ml-auto text-[10px] text-surface-600">{{ st.bot.wsPing }} ms</span>
@@ -204,6 +192,15 @@ interface ServerLink {
           <i class="pi pi-angle-right text-surface-500"></i>
         </a>
       </div>
+    </ng-template>
+
+    <ng-template #healthDot let-st="st">
+      <span class="relative flex h-2 w-2 shrink-0">
+        @if (st.bot.online) {
+          <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+        }
+        <span class="relative inline-flex h-2 w-2 rounded-full" [class.bg-green-500]="st.bot.online" [class.bg-red-500]="!st.bot.online"></span>
+      </span>
     </ng-template>
   `,
 })
@@ -268,14 +265,6 @@ export class ShellChromeComponent {
     this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe(() => this.mobileOpen.set(false));
-  }
-
-  lastSeenLabel(st: ServiceStatus): string {
-    return st.bot.lastSeen == null ? '—' : this.relativeTime(st.bot.lastSeen);
-  }
-
-  uptimeLabel(st: ServiceStatus): string {
-    return st.bot.uptimeMs == null ? '—' : this.compactDuration(st.bot.uptimeMs);
   }
 
   botTooltip(st: ServiceStatus): string {

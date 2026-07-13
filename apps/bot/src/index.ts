@@ -33,6 +33,8 @@ import {ListInactivesCommand} from "@commands/utility/list-inactives";
 import {TaketimeCommand} from "@commands/fun/taketime";
 import {webEvents} from "@services/web-event-publisher";
 import {botHealth} from "@services/bot-health";
+import {healthMetrics} from "@services/health-metrics";
+import {BotEventsController} from "@controllers/bot-events";
 
 dotenv.config();
 
@@ -59,6 +61,11 @@ async function start(): Promise<void> {
 
     // Services
     const eventDataService = new EventDataService();
+
+    // Record the boot early so crash inference (startup without a preceding
+    // shutdown) also covers boots that never reach ready.
+    void BotEventsController.record('startup');
+    healthMetrics.start();
 
     // Optional live-event bridge to the web service (no-op if not configured).
     webEvents.start();

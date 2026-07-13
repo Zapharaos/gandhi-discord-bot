@@ -37,7 +37,51 @@
       "ws": "Connexions WS",
       "peakToday": "Pic aujourd'hui",
       "peakRecord": "Pic record",
-      "discordMismatch": "Discord annonce {{count}} serveurs"
+      "discordMismatch": "Discord annonce {{count}} serveurs",
+      "details": "Voir le détail"
+    },
+    "healthPage": {
+      "title": "Santé du bot",
+      "subtitle": "Disponibilité, historique des métriques et journal des incidents du service bot.",
+      "back": "Administration"
+    },
+    "healthPanel": {
+      "title": "Santé du bot",
+      "ranges": {
+        "24h": "24 h",
+        "7d": "7 j",
+        "30d": "30 j"
+      },
+      "availability24h": "Disponibilité 24 h",
+      "availability7d": "Disponibilité 7 j",
+      "reconnects": "Reconnexions 24 h",
+      "commandErrors": "Erreurs cmd 24 h",
+      "memory": "Mémoire (RSS)",
+      "loopLag": "Loop lag max",
+      "chartMemory": "Mémoire (RSS)",
+      "chartPing": "Ping gateway",
+      "chartSessions": "Sessions vocales actives",
+      "chartLag": "Event-loop lag max",
+      "peaksLegend": "pics journaliers",
+      "noMetrics": "Aucun échantillon de métriques pour l'instant — ils apparaissent une minute après le démarrage du bot migré.",
+      "events": "Événements récents",
+      "noEvents": "Aucun événement enregistré pour l'instant.",
+      "crashBadge": "crash",
+      "eventTypes": {
+        "startup": "Démarrage",
+        "ready": "Prêt",
+        "shutdown": "Arrêt propre",
+        "shard_disconnect": "Gateway déconnectée",
+        "shard_reconnecting": "Reconnexion",
+        "shard_resume": "Gateway rétablie",
+        "shard_error": "Erreur de shard",
+        "client_error": "Erreur client",
+        "client_warn": "Avertissement client",
+        "command_error": "Erreur de commande"
+      }
+    },
+    "system": {
+      "title": "Système"
     },
     "timeline": {
       "title": "Activité globale (temps connecté, tous serveurs)"

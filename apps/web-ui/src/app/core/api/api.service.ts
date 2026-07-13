@@ -7,12 +7,15 @@ import {
   AdminOverviewResponse,
   AdminTimelineResponse,
   BotAdminGuildsResponse,
+  BotAdminHealthHistoryResponse,
+  BotAdminHealthResponse,
   BotAdminOverviewResponse,
   BotAdminTimelineResponse,
   ConfigResponse,
   GdprDeleteResponse,
   GdprResetResponse,
   GuildRosterResponse,
+  HealthRange,
   MemberLookupResponse,
   MeResponse,
   RankingResponse,
@@ -162,6 +165,17 @@ export class ApiService {
   /** Bot-operator per-guild table. */
   botAdminGuilds(): Observable<BotAdminGuildsResponse> {
     return this.http.get<BotAdminGuildsResponse>(`${this.base}/api/bot-admin/guilds`);
+  }
+
+  /** Bot-operator detailed health: snapshot, availability, counters, event log. */
+  botAdminHealth(): Observable<BotAdminHealthResponse> {
+    return this.http.get<BotAdminHealthResponse>(`${this.base}/api/bot-admin/health`);
+  }
+
+  /** Bot-operator downsampled metric series (memory, ping, lag, sessions, commands). */
+  botAdminHealthHistory(range: HealthRange): Observable<BotAdminHealthHistoryResponse> {
+    const params = new HttpParams().set('range', range);
+    return this.http.get<BotAdminHealthHistoryResponse>(`${this.base}/api/bot-admin/health/history`, { params });
   }
 
   /** Bot-operator global daily timeline (all guilds summed). */

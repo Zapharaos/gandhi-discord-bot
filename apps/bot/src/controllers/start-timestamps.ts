@@ -1,3 +1,4 @@
+import {sql} from 'kysely';
 import {Logger} from "@services/logger";
 import Logs from '../../lang/logs.json';
 import {StatKey, StartTsFields} from "@gandhi/core/models/database/start_timestamps";
@@ -78,6 +79,27 @@ export class StartTimestampsController {
                     .replaceAll('{GUILD_ID}', guildID)
                 , err);
             return [];
+        }
+    }
+
+    /**
+     * Counts currently-active voice sessions across all guilds. Single source of
+     * truth for the "live session" definition (an active start_timestamps row),
+     * shared by the daily concurrency peak and the health metrics sampler.
+     */
+    static async countActiveSessions(): Promise<number> {
+        const db = await getDb();
+        if (!db) return 0;
+
+        try {
+            const row = await db
+                .selectFrom('start_timestamps')
+                .select(sql<number>`COALESCE(SUM(COALESCE(start_connected, 0) > 0), 0)`.as('sessions'))
+                .executeTakeFirst();
+            return row?.sessions ?? 0;
+        } catch (err) {
+            await Logger.error('Error counting active voice sessions', err);
+            return 0;
         }
     }
 

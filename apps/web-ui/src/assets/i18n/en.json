@@ -37,7 +37,51 @@
       "ws": "WS connections",
       "peakToday": "Peak today",
       "peakRecord": "Peak record",
-      "discordMismatch": "Discord reports {{count}} servers"
+      "discordMismatch": "Discord reports {{count}} servers",
+      "details": "View details"
+    },
+    "healthPage": {
+      "title": "Bot health",
+      "subtitle": "Availability, metric history and incident log of the bot service.",
+      "back": "Administration"
+    },
+    "healthPanel": {
+      "title": "Bot health",
+      "ranges": {
+        "24h": "24 h",
+        "7d": "7 d",
+        "30d": "30 d"
+      },
+      "availability24h": "Availability 24 h",
+      "availability7d": "Availability 7 d",
+      "reconnects": "Reconnects 24 h",
+      "commandErrors": "Cmd errors 24 h",
+      "memory": "Memory (RSS)",
+      "loopLag": "Loop lag max",
+      "chartMemory": "Memory (RSS)",
+      "chartPing": "Gateway ping",
+      "chartSessions": "Active voice sessions",
+      "chartLag": "Event-loop lag max",
+      "peaksLegend": "daily peaks",
+      "noMetrics": "No metric samples yet — they appear once the bot has run for a minute after the migration.",
+      "events": "Recent events",
+      "noEvents": "No events recorded yet.",
+      "crashBadge": "crash",
+      "eventTypes": {
+        "startup": "Startup",
+        "ready": "Ready",
+        "shutdown": "Graceful shutdown",
+        "shard_disconnect": "Gateway disconnected",
+        "shard_reconnecting": "Reconnecting",
+        "shard_resume": "Gateway resumed",
+        "shard_error": "Shard error",
+        "client_error": "Client error",
+        "client_warn": "Client warning",
+        "command_error": "Command error"
+      }
+    },
+    "system": {
+      "title": "System"
     },
     "timeline": {
       "title": "Global activity (connected time, all servers)"

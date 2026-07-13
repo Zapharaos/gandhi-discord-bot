@@ -42,6 +42,30 @@ export interface Servers {
   left_at: number | null;
 }
 
+export interface BotMetrics {
+  shard_id: Generated<number>;
+  sampled_at: number;
+  ready: Generated<number>;
+  guild_count: Generated<number>;
+  ws_ping: Generated<number>;
+  rss_bytes: Generated<number>;
+  heap_used_bytes: Generated<number>;
+  loop_lag_mean_ms: Generated<number>;
+  loop_lag_max_ms: Generated<number>;
+  active_sessions: Generated<number>;
+  commands_ok: Generated<number>;
+  commands_error: Generated<number>;
+  command_latency_ms_total: Generated<number>;
+}
+
+export interface BotEvents {
+  id: Generated<number>;
+  shard_id: Generated<number>;
+  timestamp: number;
+  type: string;
+  detail: string | null;
+}
+
 export interface DailyPeaks {
   day_timestamp: number;
   peak_sessions: Generated<number>;
@@ -101,6 +125,8 @@ export interface Channels {
 }
 
 export interface DB {
+  bot_events: BotEvents;
+  bot_metrics: BotMetrics;
   bot_status: BotStatus;
   channels: Channels;
   daily_peaks: DailyPeaks;

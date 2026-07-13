@@ -17,6 +17,8 @@ import {InteractionUtils} from '@utils/interaction';
 import {CommandUtils} from '@utils/command';
 import {EventDataService} from "@services/event-data-service";
 import {ServerController} from "@controllers/server";
+import {BotEventsController} from "@controllers/bot-events";
+import {healthMetrics} from "@services/health-metrics";
 import Logs from '../../lang/logs.json';
 
 export class CommandHandler implements EventHandler {
@@ -137,10 +139,17 @@ export class CommandHandler implements EventHandler {
             args: intr instanceof ChatInputCommandInteraction ? intr.options : undefined,
         });
 
+        const executeStart = Date.now();
         try {
             // Execute the command
             await command.execute(intr, data);
+            healthMetrics.recordCommand(true, Date.now() - executeStart);
         } catch (error) {
+            healthMetrics.recordCommand(false, Date.now() - executeStart);
+            void BotEventsController.record(
+                'command_error',
+                `${commandName}: ${error instanceof Error ? error.message : String(error)}`
+            );
             await this.sendError(intr, data);
 
             // Log command error

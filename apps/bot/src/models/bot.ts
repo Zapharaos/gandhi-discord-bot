@@ -21,6 +21,9 @@ import {Logger} from "@services/logger";
 import Logs from '../../lang/logs.json';
 import {VoiceHandler} from "@events/voice-handler";
 import {StartTimestampsController} from "@controllers/start-timestamps";
+import {BotEventsController} from "@controllers/bot-events";
+import {botHealth} from "@services/bot-health";
+import {webEvents} from "@services/web-event-publisher";
 import {DailyStatsController} from "@controllers/daily-stats";
 import {UserStatsController} from "@controllers/user-stats";
 import {ServerController} from "@controllers/server";
@@ -64,7 +67,14 @@ export class Bot {
             Logger.info(`Received ${signal}, flushing active voice sessions before exit...`);
             this.flushActiveSessions()
                 .catch((err) => Logger.error(Logs.error.voice, err))
-                .finally(() => process.exit(0));
+                // A 'shutdown' event marks this stop as graceful — a later
+                // 'startup' with no preceding 'shutdown' is flagged as a crash.
+                .then(() => BotEventsController.record('shutdown', signal))
+                .finally(() => {
+                    botHealth.stop();
+                    webEvents.stop();
+                    process.exit(0);
+                });
         };
         process.once('SIGINT', () => handler('SIGINT'));
         process.once('SIGTERM', () => handler('SIGTERM'));
@@ -120,6 +130,29 @@ export class Bot {
         this.client.on(Events.ChannelCreate, (channel) => this.onChannelChange(channel));
         this.client.on(Events.ChannelUpdate, (_oldChannel, channel) => this.onChannelChange(channel));
         this.client.on(Events.ChannelDelete, (channel) => this.onChannelDelete(channel));
+
+        // Health event log: gateway lifecycle + client errors/warnings. All
+        // fire-and-forget — BotEventsController.record never throws.
+        this.client.on(Events.Error, (error: Error) => {
+            void Logger.error('Discord client error', error);
+            void BotEventsController.record('client_error', error.message);
+        });
+        this.client.on(Events.Warn, (message: string) => {
+            Logger.warn(`Discord client warning: ${message}`);
+            void BotEventsController.record('client_warn', message);
+        });
+        this.client.on(Events.ShardDisconnect, (event, shardId) => {
+            void BotEventsController.record('shard_disconnect', `shard ${shardId}, close code ${event.code}`);
+        });
+        this.client.on(Events.ShardError, (error: Error, shardId) => {
+            void BotEventsController.record('shard_error', `shard ${shardId}: ${error.message}`);
+        });
+        this.client.on(Events.ShardReconnecting, (shardId) => {
+            void BotEventsController.record('shard_reconnecting', `shard ${shardId}`);
+        });
+        this.client.on(Events.ShardResume, (shardId, replayedEvents) => {
+            void BotEventsController.record('shard_resume', `shard ${shardId}, ${replayedEvents} event(s) replayed`);
+        });
     }
 
     private async login(token: string): Promise<void> {
@@ -157,6 +190,7 @@ export class Bot {
         }
 
         this.ready = true;
+        void BotEventsController.record('ready');
         Logger.info(Logs.info.clientReady);
     }
 

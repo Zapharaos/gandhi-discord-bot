@@ -73,6 +73,11 @@ export const routes: Routes = [
         canActivate: [botAdminGuard],
         loadComponent: () => import('@pages/bot-admin/bot-admin.component').then((m) => m.BotAdminComponent),
       },
+      {
+        path: 'bot-admin/health',
+        canActivate: [botAdminGuard],
+        loadComponent: () => import('@pages/bot-admin/bot-health.component').then((m) => m.BotHealthComponent),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

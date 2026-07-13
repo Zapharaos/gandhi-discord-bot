@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { ApiService } from '@core/api/api.service';
@@ -46,7 +47,7 @@ interface TimeCard {
 @Component({
   selector: 'app-bot-admin',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, TranslatePipe, StatCardComponent, HeatmapComponent, DurationPipe],
+  imports: [DatePipe, DecimalPipe, RouterLink, TranslatePipe, StatCardComponent, HeatmapComponent, DurationPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="mb-6 flex items-center gap-3">
@@ -92,38 +93,35 @@ interface TimeCard {
           }
         </div>
 
-        <!-- Bot health strip -->
-        <div class="mb-6 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-2xl border border-surface-800 bg-surface-900 px-5 py-3 text-sm">
-          <span class="flex items-center gap-2 font-medium" [class.text-green-400]="o.bot.online" [class.text-red-400]="!o.bot.online">
-            <span class="inline-flex h-2.5 w-2.5 rounded-full" [class.bg-green-500]="o.bot.online" [class.bg-red-500]="!o.bot.online"></span>
+        <!-- Bot health summary — click through to the dedicated health page -->
+        <a
+          routerLink="/bot-admin/health"
+          class="group mb-6 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-surface-800 bg-surface-900 px-5 py-3.5 transition-colors hover:border-surface-700 hover:bg-surface-800/60"
+        >
+          <span class="relative flex h-2.5 w-2.5">
+            @if (o.bot.online) {
+              <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+            }
+            <span class="relative inline-flex h-2.5 w-2.5 rounded-full" [class.bg-green-500]="o.bot.online" [class.bg-red-500]="!o.bot.online"></span>
+          </span>
+          <span class="text-sm font-semibold" [class.text-green-400]="o.bot.online" [class.text-red-400]="!o.bot.online">
             {{ (o.bot.online ? 'botAdmin.health.online' : 'botAdmin.health.offline') | translate }}
           </span>
           @if (o.bot.wsPing != null) {
-            <span class="text-surface-400">{{ 'botAdmin.health.ping' | translate }} <span class="font-medium tabular-nums text-surface-200">{{ o.bot.wsPing }} ms</span></span>
+            <span class="text-sm text-surface-400">{{ 'botAdmin.health.ping' | translate }} <span class="font-medium tabular-nums text-surface-200">{{ o.bot.wsPing }} ms</span></span>
           }
           @if (o.bot.uptimeMs != null) {
-            <span class="text-surface-400">{{ 'botAdmin.health.uptime' | translate }} <span class="font-medium tabular-nums text-surface-200">{{ o.bot.uptimeMs | duration }}</span></span>
+            <span class="text-sm text-surface-400">{{ 'botAdmin.health.uptime' | translate }} <span class="font-medium tabular-nums text-surface-200">{{ o.bot.uptimeMs | duration }}</span></span>
           }
-          @if (o.activity.firstDay != null) {
-            <span class="text-surface-400">{{ 'botAdmin.health.since' | translate }} <span class="font-medium text-surface-200">{{ o.activity.firstDay | date: 'mediumDate' }}</span></span>
-          }
-          <span class="text-surface-400">{{ 'botAdmin.health.dbSize' | translate }} <span class="font-medium tabular-nums text-surface-200">{{ dbSize() }}</span></span>
-          <span class="text-surface-400">{{ 'botAdmin.health.rows' | translate }} <span class="font-medium tabular-nums text-surface-200">{{ o.tech.dailyStatsRows | number }}</span></span>
-          <span class="text-surface-400">{{ 'botAdmin.health.ws' | translate }} <span class="font-medium tabular-nums text-surface-200">{{ o.tech.wsConnections | number }}</span></span>
-          <span class="text-surface-400">{{ 'botAdmin.health.peakToday' | translate }} <span class="font-medium tabular-nums text-surface-200">{{ o.live.peakToday | number }}</span></span>
-          <span class="text-surface-400">
-            {{ 'botAdmin.health.peakRecord' | translate }}
-            <span class="font-medium tabular-nums text-surface-200">{{ o.live.peakAllTime | number }}</span>
-            @if (o.live.peakAllTimeDay != null && o.live.peakAllTime > 0) {
-              <span class="text-xs text-surface-500">({{ o.live.peakAllTimeDay | date: 'mediumDate' }})</span>
-            }
-          </span>
           @if (o.servers.discordGuildCount !== o.servers.present) {
-            <span class="ml-auto rounded-lg bg-amber-500/10 px-2.5 py-1 text-xs text-amber-300">
+            <span class="rounded-lg bg-amber-500/10 px-2.5 py-1 text-xs text-amber-300">
               <i class="pi pi-exclamation-triangle mr-1 text-[10px]"></i>{{ 'botAdmin.health.discordMismatch' | translate: { count: o.servers.discordGuildCount } }}
             </span>
           }
-        </div>
+          <span class="ml-auto flex items-center gap-1.5 text-xs font-medium text-surface-500 transition-colors group-hover:text-primary-400">
+            {{ 'botAdmin.health.details' | translate }}<i class="pi pi-arrow-right text-[10px]"></i>
+          </span>
+        </a>
 
         <!-- Global activity heatmap -->
         <section class="mb-6 rounded-2xl border border-surface-800 bg-surface-900 p-5">
@@ -176,7 +174,7 @@ interface TimeCard {
         </div>
 
         <!-- Servers / users detail panels -->
-        <div class="mb-6 grid gap-3 lg:grid-cols-2">
+        <div class="mb-6 grid gap-3 lg:grid-cols-3">
           <section class="rounded-2xl border border-surface-800 bg-surface-900 p-5">
             <h2 class="mb-3 flex items-center gap-2 text-sm font-semibold text-surface-0">
               <i class="pi pi-server text-xs text-primary-400"></i>{{ 'botAdmin.servers.title' | translate }}
@@ -197,6 +195,20 @@ interface TimeCard {
             </h2>
             <div class="flex flex-col divide-y divide-surface-800">
               @for (r of userRows(); track r.labelKey) {
+                <div class="flex items-center justify-between gap-3 py-2 text-sm">
+                  <span class="text-surface-400">{{ r.labelKey | translate }}</span>
+                  <span class="font-medium tabular-nums" [class.text-surface-200]="!r.muted" [class.text-surface-500]="r.muted">{{ r.value }}</span>
+                </div>
+              }
+            </div>
+          </section>
+
+          <section class="rounded-2xl border border-surface-800 bg-surface-900 p-5">
+            <h2 class="mb-3 flex items-center gap-2 text-sm font-semibold text-surface-0">
+              <i class="pi pi-desktop text-xs text-primary-400"></i>{{ 'botAdmin.system.title' | translate }}
+            </h2>
+            <div class="flex flex-col divide-y divide-surface-800">
+              @for (r of systemRows(); track r.labelKey) {
                 <div class="flex items-center justify-between gap-3 py-2 text-sm">
                   <span class="text-surface-400">{{ r.labelKey | translate }}</span>
                   <span class="font-medium tabular-nums" [class.text-surface-200]="!r.muted" [class.text-surface-500]="r.muted">{{ r.value }}</span>
@@ -404,6 +416,24 @@ export class BotAdminComponent implements OnInit {
       { labelKey: 'botAdmin.servers.inactive90', value: this.n(o.servers.inactive90d), muted: o.servers.inactive90d === 0 },
       { labelKey: 'botAdmin.servers.statsEnabled', value: `${this.n(o.servers.statsEnabled)} / ${this.n(o.servers.total)}` },
       { labelKey: 'botAdmin.servers.logsEnabled', value: `${this.n(o.servers.logsEnabled)} / ${this.n(o.servers.total)}` },
+    ];
+  });
+
+  readonly systemRows = computed<Row[]>(() => {
+    const o = this.overview();
+    if (!o) return [];
+    return [
+      { labelKey: 'botAdmin.health.dbSize', value: this.dbSize() },
+      { labelKey: 'botAdmin.health.rows', value: this.n(o.tech.dailyStatsRows) },
+      { labelKey: 'botAdmin.health.ws', value: this.n(o.tech.wsConnections), muted: o.tech.wsConnections === 0 },
+      { labelKey: 'botAdmin.health.peakToday', value: this.n(o.live.peakToday), muted: o.live.peakToday === 0 },
+      {
+        labelKey: 'botAdmin.health.peakRecord',
+        value: o.live.peakAllTimeDay != null && o.live.peakAllTime > 0
+          ? `${this.n(o.live.peakAllTime)} (${new Date(o.live.peakAllTimeDay).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })})`
+          : this.n(o.live.peakAllTime),
+        muted: o.live.peakAllTime === 0,
+      },
     ];
   });
 

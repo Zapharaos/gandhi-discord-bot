@@ -3,9 +3,18 @@ import { Client } from 'discord.js';
 import { Logger } from '@services/logger';
 import { BotStatusController } from '@controllers/bot-status';
 import { DailyPeaksController } from '@controllers/daily-peaks';
+import { BotMetricsController } from '@controllers/bot-metrics';
+import { BotEventsController } from '@controllers/bot-events';
+import { StartTimestampsController } from '@controllers/start-timestamps';
+import { healthMetrics } from '@services/health-metrics';
 
 const SHARD_ID = 0;
 const HEARTBEAT_INTERVAL_MS = 15_000;
+// Persist a detailed bot_metrics sample every Nth heartbeat (4 × 15s = 60s).
+const METRICS_EVERY_N_BEATS = 4;
+const PRUNE_INTERVAL_MS = 60 * 60 * 1000;
+const METRICS_RETENTION_MS = 14 * 24 * 60 * 60 * 1000;
+const EVENTS_RETENTION_MS = 90 * 24 * 60 * 60 * 1000;
 
 // Exposes the bot's liveness two ways:
 //   • a DB heartbeat (read by the web service so the dashboard can show status),
@@ -16,6 +25,8 @@ class BotHealthService {
     private timer: NodeJS.Timeout | null = null;
     private server: http.Server | null = null;
     private startedAt = Date.now();
+    private beatCount = 0;
+    private lastPruneAt = 0;
 
     start(client: Client): void {
         this.client = client;
@@ -51,8 +62,38 @@ class BotHealthService {
             wsPing: s.wsPing,
             startedAt: s.startedAt,
         });
+
         // Piggy-back on the heartbeat cadence to track the daily concurrency peak.
-        if (s.ready) await DailyPeaksController.samplePeak();
+        const sessions = s.ready ? await StartTimestampsController.countActiveSessions() : 0;
+        if (s.ready) await DailyPeaksController.samplePeak(sessions);
+
+        // Every Nth beat, persist a detailed metrics sample and (at most once
+        // an hour) prune old health data.
+        this.beatCount++;
+        if (this.beatCount % METRICS_EVERY_N_BEATS !== 0) return;
+
+        const mem = process.memoryUsage();
+        const drained = healthMetrics.drain();
+        await BotMetricsController.insertSample(SHARD_ID, {
+            ready: s.ready,
+            guildCount: s.guildCount,
+            wsPing: s.wsPing,
+            rssBytes: mem.rss,
+            heapUsedBytes: mem.heapUsed,
+            loopLagMeanMs: drained.loopLagMeanMs,
+            loopLagMaxMs: drained.loopLagMaxMs,
+            activeSessions: sessions,
+            commandsOk: drained.commandsOk,
+            commandsError: drained.commandsError,
+            commandLatencyMsTotal: drained.commandLatencyMsTotal,
+        });
+
+        const now = Date.now();
+        if (now - this.lastPruneAt >= PRUNE_INTERVAL_MS) {
+            this.lastPruneAt = now;
+            await BotMetricsController.prune(now - METRICS_RETENTION_MS);
+            await BotEventsController.prune(now - EVENTS_RETENTION_MS);
+        }
     }
 
     private startHttpServer(): void {

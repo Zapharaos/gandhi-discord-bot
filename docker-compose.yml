@@ -25,12 +25,15 @@ services:
       - gandhi-data:/app/data
       - ./var:/app/var
     restart: unless-stopped
+    # `exec` makes node PID 1 so SIGTERM from `docker stop` reaches it — without
+    # it sh swallows the signal, Docker escalates to SIGKILL, and the graceful
+    # shutdown path (voice-session flush + 'shutdown' health event) never runs.
     command:
         - /bin/sh
         - -c
         - |
             npm run migrate
-            node --enable-source-maps /app/apps/bot/dist/src/index.js
+            exec node --enable-source-maps /app/apps/bot/dist/src/index.js
     healthcheck:
       # The bot serves /health on ${PORT}; it returns 503 until the Discord
       # client is ready, so give it a generous start period to log in.

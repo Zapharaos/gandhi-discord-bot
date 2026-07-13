@@ -259,6 +259,8 @@ export interface ServiceStatus {
   web: boolean;
   db: boolean;
   bot: BotHealth;
+  /** Live browser WebSocket connections currently held by the API instance. */
+  wsConnections: number;
 }
 
 export interface ConfigResponse {
@@ -386,4 +388,71 @@ export interface BotAdminGuildEntry {
 
 export interface BotAdminGuildsResponse {
   guilds: BotAdminGuildEntry[];
+}
+
+// --- Detailed bot health (bot-operator area) ---
+
+export type HealthRange = '24h' | '7d' | '30d';
+
+export interface BotEventEntry {
+  id: number;
+  timestamp: number;
+  type: string;
+  detail: string | null;
+  /** Set on 'startup' events not preceded by a graceful 'shutdown'. */
+  crashed?: boolean;
+}
+
+export interface BotAdminHealth {
+  bot: BotHealth;
+  /** Most recent metrics sample, or null before the first one lands. */
+  current: {
+    sampledAt: number;
+    rssBytes: number;
+    heapUsedBytes: number;
+    loopLagMeanMs: number;
+    loopLagMaxMs: number;
+    activeSessions: number;
+  } | null;
+  /** Sample-presence availability (%, 1 expected per minute), null before any data. */
+  availability: { h24: number | null; d7: number | null };
+  counters24h: {
+    reconnects: number;
+    shardErrors: number;
+    clientErrors: number;
+    commandErrors: number;
+    commandsOk: number;
+  };
+  events: BotEventEntry[];
+  generatedAt: number;
+}
+
+export interface BotMetricPoint {
+  t: number;
+  wsPing: number;
+  rssBytes: number;
+  heapUsedBytes: number;
+  loopLagMeanMs: number;
+  loopLagMaxMs: number;
+  activeSessions: number;
+  commandsOk: number;
+  commandsError: number;
+  /** Average command latency inside the bucket (ms), null when no commands ran. */
+  avgCommandLatencyMs: number | null;
+}
+
+export interface BotAdminHealthHistory {
+  range: HealthRange;
+  bucketMs: number;
+  points: BotMetricPoint[];
+  peaks: { day: number; peakSessions: number }[];
+  generatedAt: number;
+}
+
+export interface BotAdminHealthResponse {
+  health: BotAdminHealth;
+}
+
+export interface BotAdminHealthHistoryResponse {
+  history: BotAdminHealthHistory;
 }
