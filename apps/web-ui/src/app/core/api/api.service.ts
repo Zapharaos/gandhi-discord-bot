@@ -6,6 +6,9 @@ import {
   ActiveMembersResponse,
   AdminOverviewResponse,
   AdminTimelineResponse,
+  BotAdminGuildsResponse,
+  BotAdminOverviewResponse,
+  BotAdminTimelineResponse,
   ConfigResponse,
   GdprDeleteResponse,
   GdprResetResponse,
@@ -149,6 +152,23 @@ export class ApiService {
     return this.http.patch<GuildRosterResponse>(`${this.base}/api/admin/guild/${guildId}/member/${userId}/admin`, {
       localAdmin,
     });
+  }
+
+  /** Bot-operator overview (whole-database aggregates). */
+  botAdminOverview(): Observable<BotAdminOverviewResponse> {
+    return this.http.get<BotAdminOverviewResponse>(`${this.base}/api/bot-admin/overview`);
+  }
+
+  /** Bot-operator per-guild table. */
+  botAdminGuilds(): Observable<BotAdminGuildsResponse> {
+    return this.http.get<BotAdminGuildsResponse>(`${this.base}/api/bot-admin/guilds`);
+  }
+
+  /** Bot-operator global daily timeline (all guilds summed). */
+  botAdminTimeline(stat?: TimelineStat): Observable<BotAdminTimelineResponse> {
+    let params = new HttpParams();
+    if (stat) params = params.set('stat', stat);
+    return this.http.get<BotAdminTimelineResponse>(`${this.base}/api/bot-admin/timeline`, { params });
   }
 
   updateServerSettings(guildId: string, patch: ServerSettingsPatch): Observable<ServerSettingsResponse> {

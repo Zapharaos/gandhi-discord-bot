@@ -13,7 +13,81 @@
   "botAdmin": {
     "nav": "Administration",
     "title": "Administration",
-    "soon": "Nothing here yet — this is the bot-operator area."
+    "subtitle": "Bot-wide aggregates — every server, every user.",
+    "loading": "Loading global stats…",
+    "error": "Couldn't load the global stats.",
+    "kpi": {
+      "servers": "Active servers",
+      "serversSub": "{{total}} ever seen · {{left}} left",
+      "users": "Unique users",
+      "usersSub": "{{count}} memberships",
+      "connected": "Total connected time",
+      "connectedSub": "~{{avg}} per user",
+      "live": "In voice right now",
+      "liveSub": "across {{count}} server(s)"
+    },
+    "health": {
+      "online": "Bot online",
+      "offline": "Bot offline",
+      "ping": "Ping",
+      "uptime": "Uptime",
+      "since": "Tracking since",
+      "dbSize": "Database",
+      "rows": "Daily rows",
+      "ws": "WS connections",
+      "peakToday": "Peak today",
+      "peakRecord": "Peak record",
+      "discordMismatch": "Discord reports {{count}} servers"
+    },
+    "timeline": {
+      "title": "Global activity (connected time, all servers)"
+    },
+    "growth": {
+      "title": "User growth",
+      "hint": "New users per month (first tracked activity)",
+      "barTitle": "{{count}} new · {{cumulative}} total",
+      "retention": "30-day retention",
+      "retentionHint": "Users active in the previous 30 days who are still active",
+      "retentionSub": "{{retained}} of {{previous}} previously active users"
+    },
+    "servers": {
+      "title": "Servers",
+      "avgMembers": "Avg members per server",
+      "gained30": "Joined in the last 30 days",
+      "lost30": "Lost in the last 30 days",
+      "inactive30": "Inactive for 30 days",
+      "inactive90": "Inactive for 90 days",
+      "statsEnabled": "Stats enabled",
+      "logsEnabled": "Logs enabled"
+    },
+    "users": {
+      "title": "Users",
+      "private": "Private mode",
+      "privateAvg": "Private per server (avg)",
+      "statsOptedOut": "Opted out of stats",
+      "today": "Active today",
+      "week": "Active over 7 days",
+      "month": "Active over 30 days",
+      "inactive30": "Inactive for 30 days",
+      "inactive90": "Inactive for 90 days"
+    },
+    "totals": {
+      "title": "Cumulative voice time",
+      "avgPerServer": "Avg connected per server:",
+      "switches": "Channel switches:",
+      "maxStreak": "Best streak (days):"
+    },
+    "guilds": {
+      "title": "Servers detail",
+      "server": "Server",
+      "present": "Present",
+      "members": "Members",
+      "time30d": "Connected (30d)",
+      "timeConnected": "Connected (all-time)",
+      "lastActivity": "Last activity",
+      "private": "Private",
+      "empty": "No servers to show yet."
+    }
   },
   "nav": {
     "view": "View",

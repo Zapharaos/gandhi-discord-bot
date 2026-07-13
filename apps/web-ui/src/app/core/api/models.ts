@@ -264,3 +264,126 @@ export interface ServiceStatus {
 export interface ConfigResponse {
   botInviteUrl: string;
 }
+
+// --- Bot-operator area (BOT_ADMIN_IDS): whole-database aggregates ---
+
+export interface BotAdminOverview {
+  servers: {
+    total: number;
+    present: number;
+    left: number;
+    statsEnabled: number;
+    logsEnabled: number;
+    inactive30d: number;
+    inactive90d: number;
+    /** Joined/departed in the last 30 days (0 until the bot has migrated). */
+    gained30d: number;
+    lost30d: number;
+    avgMembers: number;
+    /** Guild count Discord reported at the last heartbeat (compare to `present`). */
+    discordGuildCount: number;
+  };
+  users: {
+    distinct: number;
+    memberships: number;
+    private: {
+      memberships: number;
+      users: number;
+      percent: number;
+      avgPerServer: number;
+    };
+    statsOptedOut: number;
+    logsOptedOut: number;
+    active30d: number;
+    active90d: number;
+    inactive30d: number;
+    inactive90d: number;
+  };
+  totals: {
+    time_connected: number;
+    time_muted: number;
+    time_deafened: number;
+    time_screen_sharing: number;
+    time_camera: number;
+    count_connected: number;
+    count_muted: number;
+    count_deafened: number;
+    count_screen_sharing: number;
+    count_camera: number;
+    count_switch: number;
+    max_connected: number;
+    max_muted: number;
+    max_deafened: number;
+    max_screen_sharing: number;
+    max_camera: number;
+    max_daily_streak: number;
+    avgConnectedPerMembership: number;
+    avgConnectedPerUser: number;
+    avgConnectedPerServer: number;
+  };
+  live: {
+    sessions: number;
+    guilds: number;
+    /** Peak concurrent sessions today / all-time (0 until the bot has migrated). */
+    peakToday: number;
+    peakAllTime: number;
+    peakAllTimeDay: number | null;
+  };
+  activity: {
+    day: number;
+    week: number;
+    month: number;
+    firstDay: number | null;
+  };
+  growth: {
+    /** Last 12 calendar months (UTC), oldest first. */
+    months: BotAdminGrowthMonth[];
+    retention: {
+      previousActive: number;
+      retained: number;
+      percent: number;
+    };
+  };
+  tech: {
+    dbSizeBytes: number | null;
+    dailyStatsRows: number;
+    wsConnections: number;
+  };
+  bot: BotHealth;
+  generatedAt: number;
+}
+
+export interface BotAdminGrowthMonth {
+  /** UTC month start (epoch ms). */
+  month: number;
+  newUsers: number;
+  cumulative: number;
+}
+
+export interface BotAdminTimelineResponse {
+  stat: TimelineStat;
+  points: TimelinePoint[];
+}
+
+export interface BotAdminOverviewResponse {
+  overview: BotAdminOverview;
+}
+
+export interface BotAdminGuildEntry {
+  guildId: string;
+  name: string | null;
+  icon: string | null;
+  botPresent: boolean;
+  statsEnabled: boolean;
+  logsEnabled: boolean;
+  members: number;
+  privateMembers: number;
+  lastActivity: number;
+  timeConnected: number;
+  /** Connected time over the last 30 days (ms). */
+  timeConnected30d: number;
+}
+
+export interface BotAdminGuildsResponse {
+  guilds: BotAdminGuildEntry[];
+}

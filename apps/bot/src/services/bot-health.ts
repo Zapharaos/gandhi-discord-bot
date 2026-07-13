@@ -2,6 +2,7 @@ import http from 'node:http';
 import { Client } from 'discord.js';
 import { Logger } from '@services/logger';
 import { BotStatusController } from '@controllers/bot-status';
+import { DailyPeaksController } from '@controllers/daily-peaks';
 
 const SHARD_ID = 0;
 const HEARTBEAT_INTERVAL_MS = 15_000;
@@ -50,6 +51,8 @@ class BotHealthService {
             wsPing: s.wsPing,
             startedAt: s.startedAt,
         });
+        // Piggy-back on the heartbeat cadence to track the daily concurrency peak.
+        if (s.ready) await DailyPeaksController.samplePeak();
     }
 
     private startHttpServer(): void {

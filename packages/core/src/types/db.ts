@@ -38,6 +38,14 @@ export interface Servers {
   guild_icon: string | null;
   bot_present: Generated<number | null>;
   owner_id: string | null;
+  joined_at: number | null;
+  left_at: number | null;
+}
+
+export interface DailyPeaks {
+  day_timestamp: number;
+  peak_sessions: Generated<number>;
+  updated_at: number | null;
 }
 
 export interface StartTimestamps {
@@ -95,6 +103,7 @@ export interface Channels {
 export interface DB {
   bot_status: BotStatus;
   channels: Channels;
+  daily_peaks: DailyPeaks;
   daily_stats: DailyStats;
   servers: Servers;
   start_timestamps: StartTimestamps;

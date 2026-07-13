@@ -1,3 +1,4 @@
+import {sql} from 'kysely';
 import {Logger} from '@services/logger';
 import Logs from '../../lang/logs.json';
 import {getDb} from '@services/database'
@@ -95,11 +96,18 @@ export class ServerController {
             return;
         }
         try {
+            const now = Date.now();
             const values = { guild_name: guildName, guild_icon: guildIcon, bot_present: 1, owner_id: ownerId ?? null };
             await db
                 .insertInto('servers')
-                .values({ guild_id: guildID, ...values })
-                .onConflict((oc) => oc.column('guild_id').doUpdateSet(values))
+                .values({ guild_id: guildID, ...values, joined_at: now, left_at: null })
+                .onConflict((oc) => oc.column('guild_id').doUpdateSet({
+                    ...values,
+                    // Stamp joined_at on the first sync ever and on a re-join after a
+                    // recorded departure; an ordinary re-sync (ready) keeps the original.
+                    joined_at: sql<number>`CASE WHEN servers.joined_at IS NULL OR servers.left_at IS NOT NULL THEN ${now} ELSE servers.joined_at END`,
+                    left_at: null,
+                }))
                 .execute();
         } catch (err) {
             await Logger.error(`Error syncing guild ${guildID}`, err);
@@ -111,7 +119,11 @@ export class ServerController {
         const db = await getDb();
         if (!db) return;
         try {
-            await db.updateTable('servers').set({ bot_present: 0 }).where('guild_id', '=', guildID).execute();
+            await db
+                .updateTable('servers')
+                .set({ bot_present: 0, left_at: Date.now() })
+                .where('guild_id', '=', guildID)
+                .execute();
         } catch (err) {
             await Logger.error(`Error marking guild ${guildID} absent`, err);
         }

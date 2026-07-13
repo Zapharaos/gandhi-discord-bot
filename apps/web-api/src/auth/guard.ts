@@ -1,6 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { getSession, SESSION_COOKIE, type SessionData } from './sessions';
 import { isUserLocalAdmin } from '../stats/queries';
+import { loadConfig } from '../config';
 
 // Augment Fastify's request with the resolved session so route handlers can read
 // it in a typed way once requireAuth has run.
@@ -30,6 +31,23 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply):
         return;
     }
     request.authSession = session;
+}
+
+/**
+ * preHandler (run after requireAuth) that restricts a route to bot operators
+ * (BOT_ADMIN_IDS) — the people running the bot itself, not Discord server admins.
+ */
+export async function requireBotAdmin(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+    const session = request.authSession ?? resolveSession(request);
+    if (!session) {
+        await reply.code(401).send({ error: 'unauthorized' });
+        return;
+    }
+    request.authSession = session;
+
+    if (!loadConfig().botAdminIds.includes(session.userId)) {
+        await reply.code(403).send({ error: 'forbidden' });
+    }
 }
 
 /**

@@ -13,7 +13,81 @@
   "botAdmin": {
     "nav": "Administration",
     "title": "Administration",
-    "soon": "Rien ici pour l'instant — c'est l'espace des admins du bot."
+    "subtitle": "Agrégats globaux du bot — tous les serveurs, tous les utilisateurs.",
+    "loading": "Chargement des stats globales…",
+    "error": "Impossible de charger les stats globales.",
+    "kpi": {
+      "servers": "Serveurs actifs",
+      "serversSub": "{{total}} connus · {{left}} quittés",
+      "users": "Utilisateurs uniques",
+      "usersSub": "{{count}} adhésions",
+      "connected": "Temps connecté total",
+      "connectedSub": "~{{avg}} par utilisateur",
+      "live": "En vocal maintenant",
+      "liveSub": "sur {{count}} serveur(s)"
+    },
+    "health": {
+      "online": "Bot en ligne",
+      "offline": "Bot hors ligne",
+      "ping": "Ping",
+      "uptime": "Uptime",
+      "since": "Suivi depuis le",
+      "dbSize": "Base de données",
+      "rows": "Lignes journalières",
+      "ws": "Connexions WS",
+      "peakToday": "Pic aujourd'hui",
+      "peakRecord": "Pic record",
+      "discordMismatch": "Discord annonce {{count}} serveurs"
+    },
+    "timeline": {
+      "title": "Activité globale (temps connecté, tous serveurs)"
+    },
+    "growth": {
+      "title": "Croissance des utilisateurs",
+      "hint": "Nouveaux utilisateurs par mois (première activité suivie)",
+      "barTitle": "{{count}} nouveaux · {{cumulative}} au total",
+      "retention": "Rétention 30 jours",
+      "retentionHint": "Utilisateurs actifs les 30 jours précédents encore actifs depuis",
+      "retentionSub": "{{retained}} des {{previous}} utilisateurs actifs précédemment"
+    },
+    "servers": {
+      "title": "Serveurs",
+      "avgMembers": "Membres par serveur (moy.)",
+      "gained30": "Rejoints sur 30 jours",
+      "lost30": "Perdus sur 30 jours",
+      "inactive30": "Inactifs depuis 30 jours",
+      "inactive90": "Inactifs depuis 90 jours",
+      "statsEnabled": "Stats activées",
+      "logsEnabled": "Logs activés"
+    },
+    "users": {
+      "title": "Utilisateurs",
+      "private": "Mode privé",
+      "privateAvg": "Privés par serveur (moy.)",
+      "statsOptedOut": "Opt-out des stats",
+      "today": "Actifs aujourd'hui",
+      "week": "Actifs sur 7 jours",
+      "month": "Actifs sur 30 jours",
+      "inactive30": "Inactifs depuis 30 jours",
+      "inactive90": "Inactifs depuis 90 jours"
+    },
+    "totals": {
+      "title": "Temps vocal cumulé",
+      "avgPerServer": "Connexion moy. par serveur :",
+      "switches": "Changements de salon :",
+      "maxStreak": "Meilleure série (jours) :"
+    },
+    "guilds": {
+      "title": "Détail des serveurs",
+      "server": "Serveur",
+      "present": "Présent",
+      "members": "Membres",
+      "time30d": "Connecté (30 j)",
+      "timeConnected": "Connecté (total)",
+      "lastActivity": "Dernière activité",
+      "private": "Privés",
+      "empty": "Aucun serveur à afficher pour l'instant."
+    }
   },
   "nav": {
     "view": "Vue",
