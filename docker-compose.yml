@@ -5,6 +5,10 @@ services:
       # workspace graph and compile @gandhi/core before the bot.
       context: .
       dockerfile: apps/bot/Dockerfile
+    # The bot's secrets (DISCORD_TOKEN, APP_ID, …) come from .env at runtime — they
+    # are NOT baked into the image. `environment` below overrides any of these.
+    env_file:
+      - .env
     environment:
       # Keep the runtime in UTC so day bucketing and date rendering stay consistent.
       - TZ=UTC
@@ -53,6 +57,7 @@ services:
       - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
       - SESSION_SECRET=${SESSION_SECRET}
       - INTERNAL_WS_TOKEN=${INTERNAL_WS_TOKEN}
+      - BOT_ADMIN_IDS=${BOT_ADMIN_IDS}
       - WEB_CORS_ORIGIN=${WEB_CORS_ORIGIN}
     ports:
       - "${WEB_PORT}:${WEB_PORT}"

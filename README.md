@@ -204,11 +204,14 @@ Endpoints (all `/api/*` require an authenticated session cookie):
 |---|---|
 | `GET /auth/login` · `GET /auth/callback` · `POST /auth/logout` | Discord OAuth2 login/logout |
 | `GET /health` · `GET /api/status` | Liveness. `/health` = this service only (Docker probe); `/api/status` = whole stack (web + db + **bot**), **public** |
-| `GET /api/me` | Current user + their guilds (with `hasData` / `isAdmin` flags) |
+| `GET /api/me` | Current user + the guilds they share with the bot or have data on (with `hasData` / `botPresent` / `isAdmin` flags and icon URLs) |
 | `GET /api/stats/global` · `GET /api/stats/guild/:guildId` | Aggregated stats (with live session folded in) |
+| `GET /api/stats/session` | The user's current voice session (live elapsed times), if any |
+| `GET /api/stats/guild/:id/ranking?stat=` | Server leaderboard, visible to any member; private members excluded, includes the viewer's own rank |
 | `GET /api/timeline?guildId=&stat=&from=&to=` | Daily series for the heatmap |
+| `GET /api/settings` · `PATCH /api/settings` | Read / update the user's own opt-in settings (stats, logs, private) — per server or globally |
 | `GET /api/export?guildId=&format=json\|csv` | Download the user's data (JSON = all tables, CSV = long-format daily stats) |
-| `GET /api/admin/guild/:id/overview` · `.../members` · `.../timeline` | Server-wide admin view (requires admin on the guild) |
+| `GET /api/admin/guild/:id/overview` · `.../members` · `.../timeline` · `.../member/:userId` | Server-wide admin view + member lookup by id (requires admin; member lookup respects private mode) |
 | `WS /ws` | Authenticated browser stream (live voice events) |
 | `WS /internal/events?token=` | Internal endpoint the bot pushes events to |
 
@@ -281,10 +284,13 @@ expected, the monitor turns green once it's connected.
 The web service is built to run behind a TLS-terminating reverse proxy and to
 expose the smallest possible surface:
 
-- **Read-only database.** `web-api` opens the SQLite file read-only
-  (`PRAGMA query_only`); the bot is the sole writer and enables WAL, so the two
-  processes never contend. They only need to share the `./data` volume — deploy
-  them on the same host, independently of each other.
+- **Near read-only database.** `web-api` reads through a connection opened
+  read-only (`PRAGMA query_only`). The one exception is a **single narrow write
+  path** — the profile page persisting the signed-in user's own opt-in settings
+  (stats/logs/private) — which uses a separate read-write connection. SQLite's
+  WAL + `busy_timeout` serialise these occasional writes safely against the bot's.
+  The bot remains the writer for everything else; the two only share the `./data`
+  volume, deployed on the same host.
 - **Secrets.** Generate strong values for `SESSION_SECRET` (cookie signing) and
   `INTERNAL_WS_TOKEN` (bot → web-api event channel), e.g. `openssl rand -hex 32`.
   Never commit them; they are read from the environment.

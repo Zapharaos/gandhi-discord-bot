@@ -14,6 +14,7 @@ import {Logger} from "@services/logger";
 import Logs from "../../lang/logs.json";
 import {StartTimestampsModel} from "@gandhi/core/models/database/start_timestamps";
 import {UserStatsController} from "@controllers/user-stats";
+import {UserController} from "@controllers/user";
 import {webEvents} from "@services/web-event-publisher";
 import type {VoiceEventType} from "@gandhi/core/ws/protocol";
 
@@ -84,6 +85,8 @@ export class VoiceHandler implements EventHandler {
         // Update the user last activity and streak (only if stats are enabled)
         if (statsEnabled) {
             await UserStatsController.updateLastActivityAndStreak(guild.id, user.id, Date.now());
+            // Cache the user's identity for the web leaderboard (best-effort).
+            void UserController.syncIdentity(user.id, user.username, user.globalName ?? null, user.avatar ?? null);
         }
 
         // Retrieve the user start timestamps (only if stats are enabled)

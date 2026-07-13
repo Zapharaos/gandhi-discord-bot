@@ -9,12 +9,19 @@ dotenv.config();
 const isProduction = process.env.NODE_ENV === "production";
 const logsDir = process.env.LOGS_DIR || "./var/log";
 
+// In production, log to BOTH stdout (so `docker compose logs bot` works and
+// container log drivers capture output) and a rotating file for local history.
 const transportProd = pino.transport({
-    target: 'pino/file',
-    options: {
-        destination: logsDir + "/gandhi-prod_" + Date.now() + ".log",
-        mkdir: true
-    }
+    targets: [
+        { target: 'pino/file', options: { destination: 1 } }, // fd 1 = stdout
+        {
+            target: 'pino/file',
+            options: {
+                destination: logsDir + "/gandhi-prod_" + Date.now() + ".log",
+                mkdir: true,
+            },
+        },
+    ],
 });
 
 const transportDev = pino.transport({

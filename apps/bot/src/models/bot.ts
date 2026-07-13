@@ -3,7 +3,7 @@ import {
     ChannelType,
     Client,
     CommandInteraction,
-    Events, GuildMember,
+    Events, Guild, GuildMember,
     Interaction, PartialGuildMember, VoiceState,
     MessageReaction, User as DiscordUser, PartialMessageReaction, PartialUser
 } from 'discord.js';
@@ -107,6 +107,9 @@ export class Bot {
         this.client.on(Events.InteractionCreate, (intr: Interaction) => this.onInteraction(intr));
         this.client.on(Events.VoiceStateUpdate, (oldState: VoiceState, newState: VoiceState) => this.onVoiceState(oldState, newState));
         this.client.on(Events.GuildMemberRemove, (member: GuildMember | PartialGuildMember) => this.onGuildMemberRemove(member));
+        this.client.on(Events.GuildCreate, (guild: Guild) => this.onGuildChange(guild));
+        this.client.on(Events.GuildUpdate, (_oldGuild: Guild, guild: Guild) => this.onGuildChange(guild));
+        this.client.on(Events.GuildDelete, (guild: Guild) => this.onGuildDelete(guild));
         this.client.on(Events.MessageReactionAdd, (reaction, user) => this.onMessageReactionAdd(reaction, user));
     }
 
@@ -136,8 +139,41 @@ export class Bot {
             }
         }
 
+        // Refresh the cached list of guilds the bot is in (name, icon, presence)
+        // so the web dashboard can list only the servers it shares with the user.
+        try {
+            await this.syncAllGuilds();
+        } catch (error) {
+            await Logger.error('Failed to sync guilds on ready', error);
+        }
+
         this.ready = true;
         Logger.info(Logs.info.clientReady);
+    }
+
+    /** Reconcile the servers table with the guilds the bot is currently in. */
+    private async syncAllGuilds(): Promise<void> {
+        await ServerController.markAllGuildsAbsent();
+        for (const guild of this.client.guilds.cache.values()) {
+            await ServerController.syncGuild(guild.id, guild.name, guild.iconURL());
+        }
+        Logger.info(`Synced ${this.client.guilds.cache.size} guild(s) into the servers table`);
+    }
+
+    private async onGuildChange(guild: Guild): Promise<void> {
+        try {
+            await ServerController.syncGuild(guild.id, guild.name, guild.iconURL());
+        } catch (error) {
+            await Logger.error(`Failed to sync guild ${guild.id}`, error);
+        }
+    }
+
+    private async onGuildDelete(guild: Guild): Promise<void> {
+        try {
+            await ServerController.markGuildAbsent(guild.id);
+        } catch (error) {
+            await Logger.error(`Failed to mark guild ${guild.id} absent`, error);
+        }
     }
 
     /**

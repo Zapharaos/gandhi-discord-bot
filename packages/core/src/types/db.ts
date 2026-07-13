@@ -36,6 +36,7 @@ export interface Servers {
   logs: Generated<number | null>;
   guild_name: string | null;
   guild_icon: string | null;
+  bot_present: Generated<number | null>;
 }
 
 export interface StartTimestamps {
@@ -75,10 +76,19 @@ export interface UserStats {
   user_id: string | null;
 }
 
+export interface Users {
+  user_id: string;
+  username: string | null;
+  global_name: string | null;
+  avatar: string | null;
+  updated_at: number | null;
+}
+
 export interface DB {
   bot_status: BotStatus;
   daily_stats: DailyStats;
   servers: Servers;
   start_timestamps: StartTimestamps;
   user_stats: UserStats;
+  users: Users;
 }

@@ -79,6 +79,54 @@ export class ServerController {
         }
     }
 
+    /**
+     * Upsert a guild's cached metadata and mark the bot as present in it. Called
+     * for every guild on ready and on guildCreate/guildUpdate.
+     */
+    static async syncGuild(
+        guildID: string,
+        guildName: string | null,
+        guildIcon: string | null,
+    ): Promise<void> {
+        const db = await getDb();
+        if (!db) {
+            await Logger.error(Logs.error.databaseNotFound);
+            return;
+        }
+        try {
+            const values = { guild_name: guildName, guild_icon: guildIcon, bot_present: 1 };
+            await db
+                .insertInto('servers')
+                .values({ guild_id: guildID, ...values })
+                .onConflict((oc) => oc.column('guild_id').doUpdateSet(values))
+                .execute();
+        } catch (err) {
+            await Logger.error(`Error syncing guild ${guildID}`, err);
+        }
+    }
+
+    /** Mark the bot as no longer a member of a guild (keeps its saved settings). */
+    static async markGuildAbsent(guildID: string): Promise<void> {
+        const db = await getDb();
+        if (!db) return;
+        try {
+            await db.updateTable('servers').set({ bot_present: 0 }).where('guild_id', '=', guildID).execute();
+        } catch (err) {
+            await Logger.error(`Error marking guild ${guildID} absent`, err);
+        }
+    }
+
+    /** Reset presence for every guild (used before re-syncing on ready). */
+    static async markAllGuildsAbsent(): Promise<void> {
+        const db = await getDb();
+        if (!db) return;
+        try {
+            await db.updateTable('servers').set({ bot_present: 0 }).execute();
+        } catch (err) {
+            await Logger.error('Error resetting guild presence', err);
+        }
+    }
+
     static async updateMetadata(
         guildID: string,
         guildName: string | null,
