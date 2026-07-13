@@ -5,6 +5,10 @@ import type { ServerMessage } from './protocol';
 // Room-based fan-out over browser WebSocket connections. A "room" is an opaque
 // string (see protocol.rooms) such as `user:123` or `guild:456`. A socket may be
 // in several rooms; a room may hold several sockets.
+//
+// NOTE (scaling): this hub is in-memory and single-process. Running more than one
+// web-api instance requires a shared pub/sub (e.g. Redis) or sticky sessions —
+// otherwise an event published on instance A never reaches sockets on instance B.
 class WsHub {
     private readonly roomToSockets = new Map<string, Set<WebSocket>>();
     private readonly socketToRooms = new Map<WebSocket, Set<string>>();
@@ -51,6 +55,16 @@ class WsHub {
 
     roomsOf(socket: WebSocket): string[] {
         return [...(this.socketToRooms.get(socket) ?? [])];
+    }
+
+    /** How many rooms the socket is in (used to cap a client's subscriptions). */
+    roomCount(socket: WebSocket): number {
+        return this.socketToRooms.get(socket)?.size ?? 0;
+    }
+
+    /** Every currently-tracked socket (used by the heartbeat sweep). */
+    sockets(): IterableIterator<WebSocket> {
+        return this.socketToRooms.keys();
     }
 
     /** Send a message to every socket currently in the given room. */

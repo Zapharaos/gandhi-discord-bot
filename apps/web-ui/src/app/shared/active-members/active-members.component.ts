@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { combineLatest, switchMap, map, catchError, of, timer } from 'rxjs';
+import { combineLatest, switchMap, map, catchError, of, merge, startWith, filter } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ApiService } from '@core/api/api.service';
+import { WsService } from '@core/ws/ws.service';
+import { VisibilityService } from '@core/visibility/visibility.service';
 import { ActiveMember, RankStat } from '@core/api/models';
 import { DurationPipe } from '@shared/pipes/duration.pipe';
 import { StatIconComponent } from '@shared/stat-icon/stat-icon.component';
@@ -71,13 +73,22 @@ import { StatIconComponent } from '@shared/stat-icon/stat-icon.component';
 })
 export class ActiveMembersComponent {
   private readonly api = inject(ApiService);
+  private readonly ws = inject(WsService);
+  private readonly visibility = inject(VisibilityService);
 
   readonly guildId = input.required<string>();
   /** When true, still render the section (with an empty state) when nobody is active. */
   readonly showEmpty = input(false);
 
+  // Refetch on a visibility-aware poll AND whenever this guild reports live
+  // activity over the WS (identity-free ping), so the list stays current.
+  private readonly refresh$ = merge(
+    this.visibility.pollTimer(20000),
+    this.ws.guildActivity.pipe(filter((a) => a.guildId === this.guildId())),
+  ).pipe(startWith(null));
+
   readonly members = toSignal(
-    combineLatest([toObservable(this.guildId), timer(0, 20000)]).pipe(
+    combineLatest([toObservable(this.guildId), this.refresh$]).pipe(
       switchMap(([gid]) =>
         this.api.guildActiveMembers(gid).pipe(
           map((r) => r.members),

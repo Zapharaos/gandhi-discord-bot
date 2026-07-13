@@ -1,5 +1,6 @@
 import type { BotStatus } from '@gandhi/core/types/db';
 import { getBotStatusRow } from '../stats/queries';
+import { hub } from '../ws/hub';
 
 // A heartbeat older than this means the bot is considered offline (it writes
 // every ~15s, so 45s tolerates a couple of missed beats).
@@ -42,15 +43,18 @@ export interface ServiceStatus {
     /** The SQLite database could be read. */
     db: boolean;
     bot: BotHealth;
+    /** Live browser WebSocket connections currently held by this instance. */
+    wsConnections: number;
 }
 
 // Never throws: a DB failure is reported as db:false + an offline bot, so the
 // status endpoint stays a reliable liveness probe.
 export async function getServiceStatus(): Promise<ServiceStatus> {
+    const wsConnections = hub.connectionCount;
     try {
         const row = await getBotStatusRow();
-        return { web: true, db: true, bot: computeBotHealth(row, Date.now()) };
+        return { web: true, db: true, bot: computeBotHealth(row, Date.now()), wsConnections };
     } catch {
-        return { web: true, db: false, bot: computeBotHealth(undefined, Date.now()) };
+        return { web: true, db: false, bot: computeBotHealth(undefined, Date.now()), wsConnections };
     }
 }

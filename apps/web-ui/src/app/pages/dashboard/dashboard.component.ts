@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, OnDestroy, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgTemplateOutlet } from '@angular/common';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { toObservable, toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { combineLatest, startWith, Subject, switchMap, map, auditTime, of, timer, catchError } from 'rxjs';
+import { combineLatest, startWith, Subject, switchMap, map, auditTime, of, catchError } from 'rxjs';
 import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
@@ -12,6 +12,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { ApiService } from '@core/api/api.service';
 import { AuthService } from '@core/auth/auth.service';
 import { WsService } from '@core/ws/ws.service';
+import { VisibilityService } from '@core/visibility/visibility.service';
 import { TimelinePoint, TimelineStat } from '@core/api/models';
 import { StatCardComponent, StatMetric } from '@shared/stat-card/stat-card.component';
 import { HeatmapComponent } from '@shared/heatmap/heatmap.component';
@@ -198,10 +199,11 @@ interface TabDef {
     </ng-template>
   `,
 })
-export class DashboardComponent implements OnDestroy {
+export class DashboardComponent {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly ws = inject(WsService);
+  private readonly visibility = inject(VisibilityService);
 
   /** Bound from the route param on /server/:guildId; undefined for global/session. */
   readonly guildId = input<string>();
@@ -306,7 +308,7 @@ export class DashboardComponent implements OnDestroy {
   // live banner on the total dashboard, or on the per-server dashboard when the
   // ongoing session is in that guild.
   private readonly session = toSignal(
-    combineLatest([timer(0, 20000), this.refresh$.pipe(startWith(undefined))]).pipe(
+    combineLatest([this.visibility.pollTimer(20000), this.refresh$.pipe(startWith(undefined))]).pipe(
       switchMap(() => this.api.sessionStats().pipe(catchError(() => of(null)))),
     ),
     { initialValue: null },
@@ -335,18 +337,15 @@ export class DashboardComponent implements OnDestroy {
   });
 
   constructor() {
-    this.ws.connect();
-    // Live: re-fetch (throttled) whenever a voice event lands for a room we're in.
-    this.ws.events.pipe(auditTime(1500)).subscribe(() => this.refresh$.next());
+    // Live: re-fetch (throttled) whenever a voice event lands for a room we're in,
+    // and once on every (re)connect to catch up on anything missed during a gap.
+    this.ws.events.pipe(auditTime(1500), takeUntilDestroyed()).subscribe(() => this.refresh$.next());
+    this.ws.opened.pipe(takeUntilDestroyed()).subscribe(() => this.refresh$.next());
   }
 
   export(format: 'json' | 'csv'): void {
     // Full-page navigation so the browser handles the file download (the session
     // cookie is sent automatically).
     window.location.href = this.api.exportUrl(format, this.guildId());
-  }
-
-  ngOnDestroy(): void {
-    this.ws.disconnect();
   }
 }

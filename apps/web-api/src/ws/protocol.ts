@@ -19,11 +19,19 @@ export type ClientMessage =
 export type ServerMessage =
     | { type: 'ready'; rooms: string[] }
     | { type: 'voice_event'; event: VoiceEvent }
+    // Privacy-safe "something happened in this guild" ping (no user identity), so
+    // any member can refresh the (private-filtered) active list without learning
+    // who is private. The raw voice_event stays limited to the user + admin rooms.
+    | { type: 'guild_activity'; guildId: string }
     | { type: 'pong' }
     | { type: 'error'; error: string };
 
 /** Room helpers — the single source of truth for room naming. */
 export const rooms = {
+    /** The user's own events (their full activity, wherever it happens). */
     user: (userId: string): string => `user:${userId}`,
+    /** Raw voice events for a guild — admins only (carries user ids). */
     guild: (guildId: string): string => `guild:${guildId}`,
+    /** Content-free activity pings for a guild — any member may subscribe. */
+    guildPublic: (guildId: string): string => `guild-pub:${guildId}`,
 };

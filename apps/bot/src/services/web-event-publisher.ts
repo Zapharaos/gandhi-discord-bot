@@ -57,8 +57,9 @@ class WebEventPublisher {
 
     private open(): void {
         if (!this.url) return;
-        const separator = this.url.includes('?') ? '&' : '?';
-        const socket = new WebSocket(`${this.url}${separator}token=${encodeURIComponent(this.token)}`);
+        // Send the shared secret in a header (not the query string, which can leak
+        // into proxy/access logs).
+        const socket = new WebSocket(this.url, { headers: { 'x-internal-token': this.token } });
         this.socket = socket;
 
         socket.on('open', () => {
@@ -69,7 +70,9 @@ class WebEventPublisher {
         socket.on('close', () => {
             this.socket = null;
             if (!this.stopped) {
-                setTimeout(() => this.open(), this.reconnectDelay);
+                // Jittered backoff so all bots/clients don't reconnect in lockstep.
+                const jitter = 0.8 + Math.random() * 0.4;
+                setTimeout(() => this.open(), Math.round(this.reconnectDelay * jitter));
                 this.reconnectDelay = Math.min(this.reconnectDelay * 2, 30000);
             }
         });

@@ -2,11 +2,12 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { NgTemplateOutlet } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { catchError, filter, map, of, switchMap, timer } from 'rxjs';
+import { catchError, filter, map, of, switchMap } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ApiService } from '@core/api/api.service';
 import { ServiceStatus } from '@core/api/models';
 import { AuthService } from '@core/auth/auth.service';
+import { VisibilityService } from '@core/visibility/visibility.service';
 
 interface ServerLink {
   id: string;
@@ -215,18 +216,19 @@ export class ShellChromeComponent {
   private readonly auth = inject(AuthService);
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
+  private readonly visibility = inject(VisibilityService);
 
   readonly mobileOpen = signal(false);
 
   readonly status = toSignal(
-    timer(0, 20000).pipe(switchMap(() => this.api.status().pipe(catchError(() => of(null))))),
+    this.visibility.pollTimer(20000).pipe(switchMap(() => this.api.status().pipe(catchError(() => of(null))))),
     { initialValue: null },
   );
 
   // Current voice session: whether the user is live, and in which guilds — drives
   // the pulse dots next to the Dashboard item and any server they're active in.
   readonly session = toSignal(
-    timer(0, 20000).pipe(
+    this.visibility.pollTimer(20000).pipe(
       switchMap(() =>
         this.api.sessionStats().pipe(
           map((r) => ({ active: r.active, guildIds: r.guildIds })),
