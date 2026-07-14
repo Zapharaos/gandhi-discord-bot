@@ -123,9 +123,9 @@ This project uses Node and optionally Docker.
 
 | Service | Folder | Default port | Role |
 |---|---|---|---|
-| `bot` | `apps/bot` | `3000` (`PORT`) | The Discord bot — the only process that **writes** to SQLite |
-| `web-api` | `apps/web-api` | `3001` (`WEB_PORT`) | Read-only HTTP + WebSocket API |
-| `web-ui` | `apps/web-ui` | `8080` (`WEB_UI_PORT`) prod / `4200` dev | Angular front-end |
+| `bot` | `apps/bot` | `3006` (`PORT`) | The Discord bot — the only process that **writes** to SQLite |
+| `web-api` | `apps/web-api` | `3007` (`WEB_PORT`) | Read-only HTTP + WebSocket API |
+| `web-ui` | `apps/web-ui` | `8082` (`WEB_UI_PORT`) prod / `4200` dev | Angular front-end |
 
 The bot works on its own; the web-api and web-ui are optional and can be added
 (and redeployed) independently.
@@ -149,7 +149,7 @@ docker compose up            # bot + web-api + web-ui
 docker compose up bot        # or just the bot
 ```
 
-The dashboard is then at `http://localhost:${WEB_UI_PORT:-8080}`.
+The dashboard is then at `http://localhost:${WEB_UI_PORT:-8082}`.
 
 ### 3. Or run locally without Docker
 
@@ -222,7 +222,7 @@ the leaderboard or per-member list — a `hiddenCount` reports how many were
 withheld.
 
 Live updates flow bot → web-api → browser: set `WEB_INTERNAL_WS_URL`
-(e.g. `ws://web-api:3001/internal/events`) and a shared `INTERNAL_WS_TOKEN` on the
+(e.g. `ws://web-api:3007/internal/events`) and a shared `INTERNAL_WS_TOKEN` on the
 bot to enable it. Leaving `WEB_INTERNAL_WS_URL` unset makes the bot run
 standalone — the dashboard still works, just without real-time pushes.
 
@@ -270,12 +270,12 @@ they can be monitored as **two independent HTTP monitors** (expected status `200
 
 | Monitor | Same Docker network | Kuma outside the stack |
 |---|---|---|
-| Bot | `http://bot:3000/health` | `http://<host>:3000/health` |
-| web-api | `http://web-api:3001/health` | `http://<host>:3001/health` |
+| Bot | `http://bot:3006/health` | `http://<host>:3006/health` |
+| web-api | `http://web-api:3007/health` | `http://<host>:3007/health` |
 
 If Uptime Kuma runs in the same compose/network, use the service names
 (`bot`, `web-api`) and you don't need to publish those ports publicly. Otherwise
-the ports (`PORT`, `WEB_PORT`) are already mapped to the host. The bot briefly
+publish the ports (`PORT`, `WEB_PORT`) on the host. The bot briefly
 returns `503` during startup (until the Discord client is ready) — that's
 expected, the monitor turns green once it's connected.
 
@@ -328,29 +328,65 @@ Tests run automatically in CI on every pull request against `main` or `develop` 
 
 ## Database Backups
 
-If you want, you can setup a cron job to run the backup script periodically.
+The database is stored as a bind-mounted file at `./data/gandhi-bot.db` on the
+host, so backups need no Docker access — `scripts/db-backup.sh` copies it
+directly using SQLite's online backup API (safe while the bot is running).
+
+**Requires `sqlite3` on the host:**
 ```bash
-chmod +x scripts/docker-db-backup.sh # Make the script executable
-realpath scripts/docker-db-backup.sh # Get the full path to the script
+apt-get install -y sqlite3
 ```
 
-Use the output of the last command to setup a cron job. For example, to run the script every week at 5 AM:
+**Manual backup** (keeps the 7 most recent by default):
 ```bash
-crontab -e # This will open the crontab file in your default editor
-0 5 * * 1 /realpath/to/docker-db-backup.sh # Add this line to the file and save it
+chmod +x scripts/db-backup.sh
+./scripts/db-backup.sh           # keep 7 backups
+./scripts/db-backup.sh 14        # keep 14 backups
+./scripts/db-backup.sh 0         # keep all (no rotation)
 ```
 
-If you want to watch the logs of the cron job, you can update the cronjob line :
+Backups are written to `var/db-backups/gandhi-bot_YYYYMMDDHHMMSS.db` and
+rotation is logged to `var/db-backups/backup.log`.
+
+**Pre-deployment backup** (before a major upgrade):
 ```bash
+./scripts/db-backup.sh 0         # unlimited — keep everything before the migration
+```
+
+**Automated backup with cron:**
+```bash
+# Get the absolute path
+realpath scripts/db-backup.sh
+
+# Open the crontab editor
 crontab -e
-0 5 * * 1 /realpath/to/docker-db-backup.sh 2>&1 | logger -t gandhi-bot-docker-db-backup
-
-# Then, to read logs, you can run the following commands:
-grep 'gandhi-bot-docker-db-backup' /var/log/syslog
-journalctl | grep 'gandhi-bot-docker-db-backup'
 ```
 
-Now the database will be backed up every week on Monday at 5 AM. The backups will be stored inside the project's `var/db-backups` directory where you can also find the script's execution logs.
+Add one of these lines (adjust the path):
+```
+# Every day at 3 AM, keep 14 backups
+0 3 * * * /home/dev/matthieu/gandhi-discord-bot/scripts/db-backup.sh 14
+
+# Every day at 3 AM, with syslog output for monitoring
+0 3 * * * /home/dev/matthieu/gandhi-discord-bot/scripts/db-backup.sh 14 2>&1 | logger -t gandhi-db-backup
+```
+
+**Read cron logs:**
+```bash
+grep 'gandhi-db-backup' /var/log/syslog
+# or
+journalctl -t gandhi-db-backup
+```
+
+**Restore from a backup:**
+```bash
+# Stop the bot first to avoid write conflicts
+docker compose stop bot
+
+cp var/db-backups/gandhi-bot_YYYYMMDDHHMMSS.db data/gandhi-bot.db
+
+docker compose start bot
+```
 
 ## License
 
