@@ -15,7 +15,7 @@ import { ServerSettings, ServerSettingsPatch } from '@core/api/models';
   imports: [FormsModule, ButtonModule, ToggleSwitchModule, SelectModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="rounded-2xl border border-surface-800 bg-surface-900 p-5">
+    <section class="card p-5">
       <h2 class="text-base font-semibold text-surface-0">{{ 'admin.settings.title' | translate }}</h2>
       <p class="mb-4 text-sm text-surface-400">{{ 'admin.settings.hint' | translate }}</p>
 

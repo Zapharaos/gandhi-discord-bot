@@ -19,6 +19,8 @@ import { RankingComponent } from '@shared/ranking/ranking.component';
 import { ActiveMembersComponent } from '@shared/active-members/active-members.component';
 import { ServerSettingsComponent } from '@shared/server-settings/server-settings.component';
 import { MemberAdminComponent } from '@shared/member-admin/member-admin.component';
+import { PageHeaderComponent } from '@shared/page-header/page-header.component';
+import { RevealOnScrollDirective } from '@shared/reveal/reveal-on-scroll.directive';
 import { DurationPipe } from '@shared/pipes/duration.pipe';
 
 interface StatOption {
@@ -49,45 +51,41 @@ interface TabDef {
     ActiveMembersComponent,
     ServerSettingsComponent,
     MemberAdminComponent,
+    PageHeaderComponent,
+    RevealOnScrollDirective,
     DurationPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <header class="flex flex-wrap items-center gap-3">
-      @if (guild(); as g) {
-        @if (g.icon) {
-          <img [src]="g.icon" alt="" class="h-11 w-11 shrink-0 rounded-xl object-cover" />
-        } @else {
-          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-surface-700 text-lg font-semibold uppercase text-surface-200">{{ (g.name || '?').charAt(0) }}</span>
-        }
-      }
-      <div class="min-w-0">
-        <h1 class="truncate text-2xl font-bold text-surface-0">{{ title() }}</h1>
-        <p class="text-sm text-surface-400">{{ subtitleKey() | translate }}</p>
-      </div>
+    <app-page-header
+      kicker="dashboard.kicker"
+      [title]="title()"
+      [subtitleKey]="subtitleKey()"
+      [avatarUrl]="guild()?.icon || null"
+      [avatarFallback]="guildInitial()"
+      [icon]="headerIcon()"
+    >
       @if (isSession() && stats()?.isLive) {
         <p-tag severity="success" [value]="'dashboard.live' | translate" icon="pi pi-circle-fill" />
       }
       @if (!isSession() && (!guildId() || tab() === 'stats')) {
-        <div class="ml-auto flex flex-wrap items-center gap-2">
-          <p-button size="small" severity="secondary" [text]="true" icon="pi pi-download" label="JSON" (onClick)="export('json')" />
-          <p-button size="small" severity="secondary" [text]="true" icon="pi pi-download" label="CSV" (onClick)="export('csv')" />
-        </div>
+        <p-button size="small" severity="secondary" [text]="true" icon="pi pi-download" label="JSON" (onClick)="export('json')" />
+        <p-button size="small" severity="secondary" [text]="true" icon="pi pi-download" label="CSV" (onClick)="export('csv')" />
       }
-    </header>
+    </app-page-header>
 
     @if (guildId(); as gid) {
-      <!-- Server view: tabbed. -->
-      <nav class="mt-6 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-surface-800">
+      <!-- Server view: tabbed (pill-style). -->
+      <nav class="flex gap-1.5 overflow-x-auto overflow-y-hidden pb-1">
         @for (t of serverTabs(); track t.id) {
           <button
             type="button"
             (click)="tab.set(t.id)"
-            class="-mb-px flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-colors"
-            [class.border-primary-500]="tab() === t.id"
+            class="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-colors"
+            [class.bg-primary-500/15]="tab() === t.id"
             [class.text-primary-300]="tab() === t.id"
-            [class.border-transparent]="tab() !== t.id"
             [class.text-surface-400]="tab() !== t.id"
+            [class.hover:bg-surface-800/60]="tab() !== t.id"
             [class.hover:text-surface-100]="tab() !== t.id"
           >
             <i [class]="'pi text-xs ' + t.icon"></i>{{ t.labelKey | translate }}
@@ -133,12 +131,12 @@ interface TabDef {
     <!-- KPI cards. -->
     <ng-template #cardsPanel>
       @if (isSession() && !stats()?.isLive) {
-        <div class="rounded-2xl border border-dashed border-surface-800 p-10 text-center text-surface-400">
+        <div class="rounded-3xl border border-dashed border-surface-800 p-10 text-center text-surface-400">
           <i class="pi pi-headphones mb-3 block text-3xl text-surface-600"></i>
           {{ 'session.none' | translate }}
         </div>
       } @else if (stats(); as s) {
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <div appReveal class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           <app-stat-card stat="time_connected" [label]="'stats.connected' | translate" [value]="s.time_connected | duration" [liveMs]="liveSession()?.stats?.time_connected ?? null" [metrics]="metricsFor(s.time_connected, s.time_connected, s.count_connected, s.max_connected, false)" />
           <app-stat-card stat="time_muted" [label]="'stats.muted' | translate" [value]="s.time_muted | duration" [liveMs]="liveSession()?.stats?.time_muted ?? null" [metrics]="metricsFor(s.time_muted, s.time_connected, s.count_muted, s.max_muted, true)" />
           <app-stat-card stat="time_deafened" [label]="'stats.deafened' | translate" [value]="s.time_deafened | duration" [liveMs]="liveSession()?.stats?.time_deafened ?? null" [metrics]="metricsFor(s.time_deafened, s.time_connected, s.count_deafened, s.max_deafened, true)" />
@@ -157,7 +155,7 @@ interface TabDef {
     <!-- Reusable activity-heatmap section: pass { points, titleKey } via context. -->
     <ng-template #heatmapSection let-points="points" let-titleKey="titleKey">
       @if (!isSession()) {
-        <section>
+        <section appReveal>
           <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
             <h2 class="text-lg font-semibold text-surface-0">{{ titleKey | translate }}</h2>
             <p-select
@@ -169,7 +167,7 @@ interface TabDef {
               size="small"
             />
           </div>
-          <div class="rounded-2xl border border-surface-800 bg-surface-900 p-4">
+          <div class="card p-4">
             <app-heatmap [points]="points" />
           </div>
         </section>
@@ -196,6 +194,18 @@ export class DashboardComponent {
     const gid = this.guildId();
     if (!gid) return null;
     return this.auth.me()?.guilds.find((g) => g.id === gid) ?? null;
+  });
+
+  /** Initial letter shown in the header when a guild has no icon. */
+  readonly guildInitial = computed(() => {
+    const g = this.guild();
+    return g && !g.icon ? (g.name || '?').charAt(0) : null;
+  });
+
+  /** Header icon for the total/session views (guilds use their avatar instead). */
+  readonly headerIcon = computed(() => {
+    if (this.guild()) return null;
+    return this.isSession() ? 'pi-circle-fill' : 'pi-home';
   });
 
   /** True when viewing a server the user manages (Discord admin/owner OR local manager). */

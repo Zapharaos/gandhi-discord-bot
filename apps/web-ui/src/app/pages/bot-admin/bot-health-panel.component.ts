@@ -8,6 +8,7 @@ import { ApiService } from '@core/api/api.service';
 import { BotAdminHealth, BotAdminHealthHistory, BotEventEntry, HealthRange } from '@core/api/models';
 import { VisibilityService } from '@core/visibility/visibility.service';
 import { SparklineComponent, SparkPoint } from '@shared/sparkline/sparkline.component';
+import { RevealOnScrollDirective } from '@shared/reveal/reveal-on-scroll.directive';
 
 interface Tile {
   labelKey: string;
@@ -45,10 +46,10 @@ const HOUR_MS = 3_600_000;
 @Component({
   selector: 'app-bot-health-panel',
   standalone: true,
-  imports: [DatePipe, TranslatePipe, SparklineComponent],
+  imports: [DatePipe, TranslatePipe, SparklineComponent, RevealOnScrollDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="mb-6 rounded-2xl border border-surface-800 bg-surface-900 p-5">
+    <section appReveal class="card mb-6 p-5">
       <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <span class="text-[11px] font-medium uppercase tracking-wide text-surface-500">{{ 'botAdmin.healthPanel.title' | translate }}</span>
         <div class="flex rounded-lg border border-surface-700 p-0.5 text-xs">

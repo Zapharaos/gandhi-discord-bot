@@ -44,7 +44,15 @@ interface ServerLink {
         </div>
       }
 
-      <div class="flex min-w-0 flex-1 flex-col">
+      <div class="relative flex min-w-0 flex-1 flex-col">
+        <!-- Ambient background (subtle dot-grid + soft top glow), shared by every page. -->
+        <div class="pointer-events-none absolute inset-0 overflow-hidden">
+          <div
+            class="absolute inset-x-0 top-0 h-[420px] bg-dot-grid bg-[length:22px_22px] opacity-40 [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]"
+          ></div>
+          <div class="absolute -top-24 left-1/2 h-72 w-[38rem] -translate-x-1/2 rounded-full bg-primary-500/10 blur-3xl"></div>
+        </div>
+
         <header
           class="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-surface-800 bg-surface-950/90 px-4 backdrop-blur md:hidden"
         >
@@ -58,7 +66,7 @@ interface ServerLink {
           }
         </header>
 
-        <main class="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-8 md:py-10">
+        <main class="relative z-10 mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-8 md:py-10">
           <ng-content />
         </main>
       </div>
@@ -78,7 +86,7 @@ interface ServerLink {
           routerLinkActive="!bg-primary-500/15 !text-primary-400 font-medium [&_i]:!text-primary-400"
           class="group flex h-10 items-center gap-3 rounded-lg px-3 text-sm text-surface-300 transition-colors hover:bg-surface-800/60 hover:text-surface-100"
         >
-          <i class="pi pi-objects-column w-5 text-center text-primary-400 transition-transform group-hover:scale-110"></i>
+          <i class="pi pi-home w-5 text-center transition-transform group-hover:scale-110"></i>
           <span class="flex-1">{{ 'nav.stats' | translate }}</span>
         </a>
       </div>

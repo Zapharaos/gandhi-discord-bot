@@ -103,7 +103,7 @@ const DAY = 86_400_000;
 
     @if (ranking(); as r) {
       <!-- Server total for the selected stat + period -->
-      <div class="mb-5 flex items-center gap-3 rounded-2xl border border-surface-800 bg-surface-900 p-4">
+      <div class="card mb-5 flex items-center gap-3 p-4">
         <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-500/15 text-primary-400">
           <app-stat-icon [stat]="selectedStat()" class="h-5 w-5" />
         </span>

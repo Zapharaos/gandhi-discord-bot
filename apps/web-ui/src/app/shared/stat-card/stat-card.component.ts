@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { CardStat } from '@core/api/models';
 import { StatIconComponent } from '@shared/stat-icon/stat-icon.component';
+import { statAccentTile } from '@shared/stat-icon/stat-accent';
 import { DurationPipe } from '@shared/pipes/duration.pipe';
 
 export interface StatMetric {
@@ -18,12 +19,10 @@ export interface StatMetric {
   host: { class: 'block h-full' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div
-      class="group flex h-full flex-col rounded-2xl border border-surface-800 bg-surface-900 p-4 transition-colors hover:border-surface-600"
-    >
+    <div class="card card-hover group flex h-full flex-col p-4">
       <div class="flex items-center gap-2.5">
         <span
-          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-500/15 text-primary-400"
+          [class]="'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ' + accentTile()"
         >
           <app-stat-icon [stat]="stat()" class="h-4 w-4" />
         </span>
@@ -64,4 +63,7 @@ export class StatCardComponent {
   readonly liveMs = input<number | null>(null);
   /** Optional labelled sub-metrics rendered under the value. */
   readonly metrics = input<StatMetric[]>();
+
+  /** Neon accent classes for the icon tile, by stat domain. */
+  readonly accentTile = computed(() => statAccentTile(this.stat()));
 }

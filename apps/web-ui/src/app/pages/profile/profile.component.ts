@@ -10,20 +10,18 @@ import { ApiService } from '@core/api/api.service';
 import { GuildSettings } from '@core/api/models';
 import { AuthService } from '@core/auth/auth.service';
 import { LanguageService, SUPPORTED_LANGUAGES } from '@core/i18n/language.service';
+import { PageHeaderComponent } from '@shared/page-header/page-header.component';
+import { RevealOnScrollDirective } from '@shared/reveal/reveal-on-scroll.directive';
 
 type Flag = 'stats' | 'logs' | 'private';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [RouterLink, FormsModule, ToggleSwitchModule, SelectModule, ButtonModule, TranslatePipe],
+  imports: [RouterLink, FormsModule, ToggleSwitchModule, SelectModule, ButtonModule, TranslatePipe, PageHeaderComponent, RevealOnScrollDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <header class="mb-6 flex items-center justify-between gap-3">
-      <div class="min-w-0">
-        <h1 class="text-2xl font-bold text-surface-0">{{ 'profile.title' | translate }}</h1>
-        <p class="text-sm text-surface-400">{{ 'profile.subtitle' | translate }}</p>
-      </div>
+    <app-page-header kicker="profile.kicker" titleKey="profile.title" subtitleKey="profile.subtitle" icon="pi-user">
       <p-button
         size="small"
         severity="danger"
@@ -32,14 +30,14 @@ type Flag = 'stats' | 'logs' | 'private';
         [label]="'app.logout' | translate"
         (onClick)="logout()"
       />
-    </header>
+    </app-page-header>
 
     <!-- Account -->
     @if (user(); as u) {
-      <section class="mb-6 rounded-2xl border border-surface-800 bg-surface-900 p-5">
+      <section appReveal class="card mb-6 p-5">
         <div class="flex items-center gap-4">
           @if (avatarUrl(); as url) {
-            <img [src]="url" alt="" class="h-14 w-14 rounded-full object-cover" />
+            <img [src]="url" alt="" class="h-14 w-14 rounded-full object-cover ring-2 ring-primary-500/30" />
           } @else {
             <span class="flex h-14 w-14 items-center justify-center rounded-full bg-surface-700 text-xl"><i class="pi pi-user"></i></span>
           }
@@ -63,7 +61,7 @@ type Flag = 'stats' | 'logs' | 'private';
     }
 
     <!-- Language -->
-    <section class="mb-6 rounded-2xl border border-surface-800 bg-surface-900 p-5">
+    <section appReveal class="card mb-6 p-5">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 class="text-base font-semibold text-surface-0">{{ 'profile.language' | translate }}</h2>
@@ -82,7 +80,7 @@ type Flag = 'stats' | 'logs' | 'private';
     </section>
 
     <!-- Preferences -->
-    <section class="rounded-2xl border border-surface-800 bg-surface-900 p-5">
+    <section appReveal class="card p-5">
       <h2 class="text-base font-semibold text-surface-0">{{ 'profile.prefs' | translate }}</h2>
       <p class="mb-4 text-sm text-surface-400">{{ 'profile.prefsHint' | translate }}</p>
 
@@ -155,7 +153,7 @@ type Flag = 'stats' | 'logs' | 'private';
     </section>
 
     <!-- Your data (GDPR: export / reset / delete) -->
-    <section class="mt-6 rounded-2xl border border-surface-800 bg-surface-900 p-5">
+    <section appReveal class="card mt-6 p-5">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 class="text-base font-semibold text-surface-0">{{ 'profile.data.title' | translate }}</h2>
@@ -265,8 +263,9 @@ type Flag = 'stats' | 'logs' | 'private';
 
     <!-- Support shortcut -->
     <a
+      appReveal
       routerLink="/support"
-      class="mt-6 flex items-center gap-3 rounded-2xl border border-surface-800 bg-surface-900 p-4 transition-colors hover:border-surface-600"
+      class="card card-hover mt-6 flex items-center gap-3 p-4"
     >
       <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-500/15 text-primary-400">
         <i class="pi pi-question-circle"></i>

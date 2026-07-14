@@ -13,6 +13,7 @@
   "botAdmin": {
     "nav": "Administration",
     "title": "Administration",
+    "kicker": "Operator",
     "subtitle": "Bot-wide aggregates — every server, every user.",
     "loading": "Loading global stats…",
     "error": "Couldn't load the global stats.",
@@ -41,6 +42,7 @@
       "details": "View details"
     },
     "healthPage": {
+      "kicker": "Monitoring",
       "title": "Bot health",
       "subtitle": "Availability, metric history and incident log of the bot service.",
       "back": "Administration"
@@ -217,6 +219,7 @@
     "fr": "Français"
   },
   "profile": {
+    "kicker": "Account",
     "title": "Profile",
     "subtitle": "Your language and tracking preferences.",
     "discordId": "Discord ID",
@@ -297,6 +300,7 @@
     "legalPrivacy": "Privacy Policy"
   },
   "dashboard": {
+    "kicker": "Your activity",
     "live": "Live",
     "loading": "Loading your stats…",
     "activity": "Activity",

@@ -7,6 +7,8 @@ import { ApiService } from '@core/api/api.service';
 import { BotAdminGuildEntry, BotAdminOverview, TimelinePoint } from '@core/api/models';
 import { StatCardComponent, StatMetric } from '@shared/stat-card/stat-card.component';
 import { HeatmapComponent } from '@shared/heatmap/heatmap.component';
+import { PageHeaderComponent } from '@shared/page-header/page-header.component';
+import { RevealOnScrollDirective } from '@shared/reveal/reveal-on-scroll.directive';
 import { DurationPipe } from '@shared/pipes/duration.pipe';
 
 type GuildSort = 'members' | 'timeConnected30d' | 'timeConnected' | 'lastActivity';
@@ -22,6 +24,8 @@ interface GrowthBar {
 
 interface Kpi {
   icon: string;
+  /** Tailwind text-color class for the icon accent. */
+  accent: string;
   labelKey: string;
   value: string;
   subKey?: string;
@@ -47,18 +51,10 @@ interface TimeCard {
 @Component({
   selector: 'app-bot-admin',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, RouterLink, TranslatePipe, StatCardComponent, HeatmapComponent, DurationPipe],
+  imports: [DatePipe, DecimalPipe, RouterLink, TranslatePipe, StatCardComponent, HeatmapComponent, PageHeaderComponent, RevealOnScrollDirective, DurationPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <header class="mb-6 flex items-center gap-3">
-      <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500/15 text-primary-400">
-        <i class="pi pi-cog"></i>
-      </span>
-      <div class="min-w-0">
-        <h1 class="text-2xl font-bold text-surface-0">{{ 'botAdmin.title' | translate }}</h1>
-        <p class="text-sm text-surface-400">{{ 'botAdmin.subtitle' | translate }}</p>
-      </div>
-    </header>
+    <app-page-header kicker="botAdmin.kicker" titleKey="botAdmin.title" subtitleKey="botAdmin.subtitle" icon="pi-cog" />
 
     @if (error()) {
       <p class="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
@@ -72,11 +68,11 @@ interface TimeCard {
     } @else {
       @if (overview(); as o) {
         <!-- Key figures -->
-        <div class="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div appReveal class="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
           @for (k of kpis(); track k.labelKey) {
-            <div class="rounded-2xl border border-surface-800 bg-surface-900 p-5">
+            <div class="card p-5">
               <div class="flex items-center gap-2">
-                <i class="pi {{ k.icon }} text-sm text-primary-400"></i>
+                <i class="pi {{ k.icon }} text-sm {{ k.accent }}"></i>
                 <span class="truncate text-xs font-medium uppercase tracking-wide text-surface-400">{{ k.labelKey | translate }}</span>
                 @if (k.live) {
                   <span class="relative ml-auto flex h-2 w-2 shrink-0">
@@ -96,7 +92,7 @@ interface TimeCard {
         <!-- Bot health summary — click through to the dedicated health page -->
         <a
           routerLink="/bot-admin/health"
-          class="group mb-6 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-surface-800 bg-surface-900 px-5 py-3.5 transition-colors hover:border-surface-700 hover:bg-surface-800/60"
+          class="card card-hover group mb-6 flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3.5"
         >
           <span class="relative flex h-2.5 w-2.5">
             @if (o.bot.online) {
@@ -124,7 +120,7 @@ interface TimeCard {
         </a>
 
         <!-- Global activity heatmap -->
-        <section class="mb-6 rounded-2xl border border-surface-800 bg-surface-900 p-5">
+        <section class="mb-6 card p-5">
           <h2 class="mb-3 flex items-center gap-2 text-sm font-semibold text-surface-0">
             <i class="pi pi-calendar text-xs text-primary-400"></i>{{ 'botAdmin.timeline.title' | translate }}
           </h2>
@@ -133,7 +129,7 @@ interface TimeCard {
 
         <!-- Growth & retention -->
         <div class="mb-6 grid gap-3 lg:grid-cols-3">
-          <section class="rounded-2xl border border-surface-800 bg-surface-900 p-5 lg:col-span-2">
+          <section class="card p-5 lg:col-span-2">
             <h2 class="mb-1 flex items-center gap-2 text-sm font-semibold text-surface-0">
               <i class="pi pi-chart-bar text-xs text-primary-400"></i>{{ 'botAdmin.growth.title' | translate }}
             </h2>
@@ -157,7 +153,7 @@ interface TimeCard {
             </div>
           </section>
 
-          <section class="flex flex-col justify-center rounded-2xl border border-surface-800 bg-surface-900 p-5">
+          <section class="flex flex-col justify-center card p-5">
             <h2 class="mb-1 flex items-center gap-2 text-sm font-semibold text-surface-0">
               <i class="pi pi-sync text-xs text-primary-400"></i>{{ 'botAdmin.growth.retention' | translate }}
             </h2>
@@ -175,7 +171,7 @@ interface TimeCard {
 
         <!-- Servers / users detail panels -->
         <div class="mb-6 grid gap-3 lg:grid-cols-3">
-          <section class="rounded-2xl border border-surface-800 bg-surface-900 p-5">
+          <section class="card p-5">
             <h2 class="mb-3 flex items-center gap-2 text-sm font-semibold text-surface-0">
               <i class="pi pi-server text-xs text-primary-400"></i>{{ 'botAdmin.servers.title' | translate }}
             </h2>
@@ -189,7 +185,7 @@ interface TimeCard {
             </div>
           </section>
 
-          <section class="rounded-2xl border border-surface-800 bg-surface-900 p-5">
+          <section class="card p-5">
             <h2 class="mb-3 flex items-center gap-2 text-sm font-semibold text-surface-0">
               <i class="pi pi-users text-xs text-primary-400"></i>{{ 'botAdmin.users.title' | translate }}
             </h2>
@@ -203,7 +199,7 @@ interface TimeCard {
             </div>
           </section>
 
-          <section class="rounded-2xl border border-surface-800 bg-surface-900 p-5">
+          <section class="card p-5">
             <h2 class="mb-3 flex items-center gap-2 text-sm font-semibold text-surface-0">
               <i class="pi pi-desktop text-xs text-primary-400"></i>{{ 'botAdmin.system.title' | translate }}
             </h2>
@@ -230,7 +226,7 @@ interface TimeCard {
             />
           }
         </div>
-        <div class="mb-6 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-2xl border border-surface-800 bg-surface-900 px-5 py-3 text-sm">
+        <div class="card mb-6 flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3 text-sm">
           <span class="text-surface-400">{{ 'botAdmin.totals.avgPerServer' | translate }} <span class="font-medium tabular-nums text-surface-200">{{ o.totals.avgConnectedPerServer | duration }}</span></span>
           <span class="text-surface-400">{{ 'botAdmin.totals.switches' | translate }} <span class="font-medium tabular-nums text-surface-200">{{ o.totals.count_switch | number }}</span></span>
           <span class="text-surface-400">{{ 'botAdmin.totals.maxStreak' | translate }} <span class="font-medium tabular-nums text-surface-200">{{ o.totals.max_daily_streak | number }}</span></span>
@@ -375,6 +371,7 @@ export class BotAdminComponent implements OnInit {
     return [
       {
         icon: 'pi-server',
+        accent: 'text-primary-400',
         labelKey: 'botAdmin.kpi.servers',
         value: this.n(o.servers.present),
         subKey: 'botAdmin.kpi.serversSub',
@@ -382,6 +379,7 @@ export class BotAdminComponent implements OnInit {
       },
       {
         icon: 'pi-users',
+        accent: 'text-neon-cyan',
         labelKey: 'botAdmin.kpi.users',
         value: this.n(o.users.distinct),
         subKey: 'botAdmin.kpi.usersSub',
@@ -389,6 +387,7 @@ export class BotAdminComponent implements OnInit {
       },
       {
         icon: 'pi-clock',
+        accent: 'text-neon-green',
         labelKey: 'botAdmin.kpi.connected',
         value: this.duration.transform(o.totals.time_connected),
         subKey: 'botAdmin.kpi.connectedSub',
@@ -396,6 +395,7 @@ export class BotAdminComponent implements OnInit {
       },
       {
         icon: 'pi-headphones',
+        accent: 'text-neon-pink',
         labelKey: 'botAdmin.kpi.live',
         value: this.n(o.live.sessions),
         subKey: 'botAdmin.kpi.liveSub',

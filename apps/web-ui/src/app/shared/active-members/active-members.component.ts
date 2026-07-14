@@ -27,14 +27,14 @@ import { StatIconComponent } from '@shared/stat-icon/stat-icon.component';
         </h2>
 
         @if (!members().length) {
-          <p class="rounded-2xl border border-dashed border-surface-800 p-8 text-center text-surface-500">
+          <p class="rounded-3xl border border-dashed border-surface-800 p-8 text-center text-surface-500">
             {{ 'active.empty' | translate }}
           </p>
         }
 
         <div class="grid gap-3 sm:grid-cols-2">
           @for (m of members(); track m.userId) {
-            <div class="flex items-center gap-3.5 rounded-2xl border border-surface-800 bg-surface-900 p-4">
+            <div class="card flex items-center gap-3.5 p-4">
               <div class="relative h-12 w-12 shrink-0">
                 @if (m.avatar) {
                   <img [src]="m.avatar" alt="" class="h-12 w-12 rounded-full object-cover" />

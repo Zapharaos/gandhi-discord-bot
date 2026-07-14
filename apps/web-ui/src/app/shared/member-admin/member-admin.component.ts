@@ -15,7 +15,7 @@ import { GuildRosterResponse, RosterMember } from '@core/api/models';
   imports: [FormsModule, TableModule, ToggleSwitchModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="rounded-2xl border border-surface-800 bg-surface-900 p-5">
+    <section class="card p-5">
       <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 class="text-base font-semibold text-surface-0">{{ 'members.title' | translate }}</h2>

@@ -51,6 +51,19 @@ body {
   transform: none;
 }
 
+/* --- Cards ---
+   Shared surface for the authenticated pages, echoing the landing's rounded-3xl
+   translucent cards. Pair `.card` with your own padding (p-4/p-5). */
+.card {
+  @apply rounded-3xl border border-surface-800 bg-surface-900/60 backdrop-blur-sm transition-colors;
+}
+.card-hover {
+  @apply hover:border-surface-600;
+}
+.card-title {
+  @apply flex items-center gap-2 text-sm font-semibold text-surface-0;
+}
+
 /* --- Legal pages ---
    Shared prose/table styling so the four legal pages don't repeat markup.
    `@apply` inherits the tailwindcss-primeui color mapping (surface/primary). */
