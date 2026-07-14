@@ -42,13 +42,10 @@ export async function getGuildRoster(guildId: string): Promise<GuildRoster> {
 
     // Backfill: fetch from Discord API any IDs we have no cached identity for.
     const botToken = loadConfig().discordBotToken;
-    console.log(`[roster] botToken present=${!!botToken}, identIds=${identIds.length}, idents found=${idents.size}`);
     if (botToken) {
         const missing = identIds.filter((id) => !idents.has(id));
-        console.log(`[roster] missing identities: ${missing.length}`, missing);
         if (missing.length > 0) {
             const fetched = await fetchUsersByIds(missing, botToken);
-            console.log(`[roster] fetched from Discord: ${fetched.size}/${missing.length}`);
             const toUpsert = [...fetched.entries()].map(([userId, u]) => ({
                 userId,
                 username: u.username,

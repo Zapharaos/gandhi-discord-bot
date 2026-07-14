@@ -107,7 +107,7 @@ export class UserStatsModel {
         this.last_activity = data.last_activity ?? 0;
         this.max_camera = data.max_camera ?? 0;
         this.max_connected = data.max_connected ?? 0;
-        this.max_daily_streak = data.daily_streak ?? 0;
+        this.max_daily_streak = data.max_daily_streak ?? 0;
         this.max_deafened = data.max_deafened ?? 0;
         this.max_muted = data.max_muted ?? 0;
         this.max_screen_sharing = data.max_screen_sharing ?? 0;
