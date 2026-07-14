@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /session
+Disallow: /server/
+Disallow: /profile
+Disallow: /bot-admin
+Disallow: /login
+
+Sitemap: https://gandhibot.freits.fr/sitemap.xml

@@ -42,12 +42,16 @@ You can enable/disable stats tracking, enable/disable event logs, and set the lo
 Additionally, each user can configure their own personal settings:
 - `/usersettings [stats] [logs] [private]` - Configure your personal settings for stats tracking, event logs, and privacy.
 
+Stats and event logs are **opt-in per user**: by default you are not tracked, and you must explicitly enable each feature for yourself before anything is recorded. Both settings are independent.
+
 For example:
-- `/usersettings stats:OFF` - Opt-out of stats tracking for yourself
-- `/usersettings logs:OFF` - Opt-out of event logs for yourself
+- `/usersettings stats:ON` - Opt-in to stats tracking for yourself
+- `/usersettings logs:ON` - Opt-in to event logs for yourself
+- `/usersettings stats:OFF` - Opt back out of stats tracking
+- `/usersettings logs:OFF` - Opt back out of event logs
 - `/usersettings private:ON` - Enable private mode (hide from others)
 
-**Note:** Both server and user settings must be enabled for a feature to work. If either the server or the user has disabled stats/logs, the feature will be disabled for that user.
+**Note:** Both server and user settings must be enabled for a feature to work. The server must allow stats/logs *and* the user must have opted in; if either side has it disabled, the feature is disabled for that user.
 
 **Private Mode:** When enabled, other users cannot:
 - Target you with commands like `/stats`, `/biggusdickus`, or `/heatmap`
@@ -61,56 +65,328 @@ Now every user's actions in voice channels will be tracked and/or logged based o
 The following commands are available:
 - `/serversettings [stats] [logs] [logchannel]` - Configure server settings for stats tracking and event logs.
 - `/usersettings [stats] [logs] [private]` - Configure your personal settings for stats tracking, event logs, and privacy (private response).
+- `/myservers` - Lists every server where we hold stats data linked to you, with the tracking status for each (private response).
+- `/reset-stats [scope]` - Resets your stats to zero on this server or all servers; keeps your settings and daily history (private response, asks for confirmation).
+- `/delete-data [scope]` - Permanently deletes all data linked to you (stats, daily history, settings) on this server or all servers (private response, asks for confirmation).
+- `/export [scope]` - Exports a copy of all data linked to you as a JSON file, for this server or all servers (private response; gzip-compressed if large).
 - `/stats [user]` - Returns the stats for a specific user (default: yourself).
 - `/rank [stat]` - Returns the server ranking for a specific stat (default: time connected).
 - `/heatmap [target] [target-all] [stat] [format]` - Returns the yearly calendar heatmap (default: yourself, time connected, png).
 - `/list-inactive [days]` - Returns the list of inactive users (default: 100 days).
 
+## Data & Privacy
+
+The bot only stores the minimum needed to produce statistics: aggregated per-user/per-guild counters and time totals (`user_stats`), a per-day activity history (`daily_stats`), and your personal settings. No message content is stored. In-progress voice sessions (`start_timestamps`) are transient live state — the elapsed time is committed to your stats only once the session ends (or on a graceful shutdown, see below).
+
+**Opt-in by design.** Nothing about a user is recorded until *both* the server enables the feature *and* the user opts in via `/usersettings`. By default a user is not tracked.
+
+**Data preservation and lifecycle.** Your data lives only as long as it is relevant:
+- **Leaving a server:** when a member leaves (or is removed from) a guild, all data linked to that user on that guild — stats, daily history and start timestamps — is automatically deleted. Nothing is kept behind after you leave.
+- **Restart safety:** restarts never inflate your totals. On a graceful shutdown (e.g. `SIGINT`/`SIGTERM`) the bot flushes in-progress sessions, saving the time elapsed so far. On startup it discards any stale live state (which would otherwise count downtime as activity) and re-seeds currently-connected members from "now" by scanning the voice channels. The net effect is that only the gap between stop and start is lost — never a whole session, and never inflated by the downtime. Sessions that could not be flushed (a crash or `SIGKILL`) are covered by the startup re-seed. This reconciliation only runs in production; in development the live state is preserved across restarts.
+- **Backups:** the database can be backed up on a schedule (see [Database Backups](#database-backups)). Backups are stored locally by the server operator and are the only place historical copies of the data may persist.
+
+**Your rights over your data.** Every user can inspect and manage their own data at any time, without needing an admin. All of these commands reply privately (only you see the response) and are scoped to either the current server or all servers you share with the bot:
+- `/myservers` — **list**: see every server where the bot holds data linked to you, and the tracking status for each. This is your data-access overview.
+- `/reset-stats [scope]` — **reset**: zero out your aggregated stats while keeping your settings and daily history. Asks for confirmation; the reset totals cannot be recovered.
+- `/delete-data [scope]` — **delete/erasure**: permanently remove *all* data linked to you (stats, daily history and settings). Asks for confirmation; you revert to the default "not tracked" state.
+- `/export [scope]` — **export/portability**: download a copy of everything the bot holds about you as a JSON file (gzip-compressed automatically if it is too large for a single Discord upload).
+
+For the `scope` option, the default is the current server; choosing "all servers" applies the action across every server you share with the bot (use it from a DM to act globally).
+
 ## Development
 
 First follow the official Discord documentation [here](https://discord.com/developers/docs/quick-start/getting-started) to setup a bot, get the credentials and update the .env file.
 
+This repository is an [npm workspaces](https://docs.npmjs.com/cli/using-npm/workspaces) monorepo:
+
+```
+packages/core   # @gandhi/core — shared pure domain layer (DB types, models, helpers)
+apps/bot        # the Discord bot (depends on @gandhi/core)
+apps/web-api    # @gandhi/web-api — read-only web + WebSocket service (depends on @gandhi/core)
+apps/web-ui     # Angular front-end (PrimeNG + Tailwind + ngx-translate); own toolchain
+```
+
+`packages/core`, `apps/bot` and `apps/web-api` are npm workspaces installed from
+the repo root. `apps/web-ui` is intentionally **not** a workspace member — it is a
+self-contained Angular app with its own `node_modules` and toolchain, so install
+and build it from its own folder (`cd apps/web-ui && npm install`).
+
+The shared `data/`, `var/` and `.env` live at the repository root, and the root
+`package.json` scripts (`build`, `start`, `migrate`, …) are the canonical entry
+points — run them from the repo root so `dotenv` and the SQLite path resolve
+correctly. This layout lets a future web service (`apps/*`) reuse `@gandhi/core`
+and be deployed independently of the bot.
+
 This project uses Node and optionally Docker.
 
-To run the bot with Docker (recommended), use the following command:
+### The three services at a glance
+
+| Service | Folder | Default port | Role |
+|---|---|---|---|
+| `bot` | `apps/bot` | `3006` (`PORT`) | The Discord bot — the only process that **writes** to SQLite |
+| `web-api` | `apps/web-api` | `3007` (`WEB_PORT`) | Read-only HTTP + WebSocket API |
+| `web-ui` | `apps/web-ui` | `8082` (`WEB_UI_PORT`) prod / `4200` dev | Angular front-end |
+
+The bot works on its own; the web-api and web-ui are optional and can be added
+(and redeployed) independently.
+
+### 1. Configure
+
 ```bash
-docker compose build --progress=plain
-docker compose up
+cp .env.sample .env
+# then fill in the bot credentials and, if you want the web dashboard,
+# the "Web service" / "Web front-end" blocks (see the sections below).
 ```
 
-To run the bot without Docker, use the following command:
+### 2. Run everything with Docker (recommended)
+
+`docker compose up` builds and starts all three services and runs the DB
+migrations for you:
+
 ```bash
-npm run migrate # To setup the database and run the migrations
-npm run generate # To generate the database models for TypeScript
-npm run build # To build the project
-npm run start # To build and run the project
+docker compose build --progress=plain
+docker compose up            # bot + web-api + web-ui
+docker compose up bot        # or just the bot
 ```
+
+The dashboard is then at `http://localhost:${WEB_UI_PORT:-8082}`.
+
+### 3. Or run locally without Docker
+
+The bot alone:
+
+```bash
+npm install       # installs the workspace (core + bot + web-api)
+npm run migrate   # create the database and run migrations
+npm run generate  # (optional) regenerate the TS DB models after a schema change
+npm run start     # build @gandhi/core + the bot, then run it
+```
+
+To also run the web dashboard in dev, use three terminals from the repo root:
+
+```bash
+npm run start:web                 # terminal 1 — web-api on :3001
+cd apps/web-ui && npm install && npm start   # terminal 2 — Angular dev server on :4200
+# terminal 3 is your already-running bot (npm run start)
+```
+
+Open `http://localhost:4200` — the Angular dev server proxies `/api`, `/auth`
+and `/ws` to the web-api on `:3001` (see `apps/web-ui/proxy.conf.json`).
+
+## Web service (`apps/web-api`)
+
+A read-only HTTP + WebSocket service (Fastify) that lets users view their own
+stats through a web front-end, plus a per-server (admin) view for server
+managers. It is deployed **independently of the bot**: it shares only the
+SQLite file — opened
+**read-only** at the app level, since the bot is the sole writer — and receives
+the bot's live events over an internal WebSocket. You can redeploy the web
+service without touching the bot, and vice versa.
+
+Setup:
+
+1. In the [Discord Developer Portal](https://discord.com/developers/applications),
+   under **OAuth2**, add the redirect URI `${WEB_BASE_URL}/auth/callback` and note
+   the **Client ID** / **Client Secret**.
+2. Fill the `# Web service` block in `.env` (see `.env.sample`): `WEB_BASE_URL`,
+   `WEB_FRONTEND_URL`, `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`,
+   `SESSION_SECRET`, `INTERNAL_WS_TOKEN`, and (dev only) `WEB_CORS_ORIGIN`.
+3. Run it:
+
+```bash
+docker compose up web-api      # with Docker (recommended)
+npm run start:web              # or directly (builds @gandhi/core first)
+```
+
+Endpoints (all `/api/*` require an authenticated session cookie):
+
+| Route | Purpose |
+|---|---|
+| `GET /auth/login` · `GET /auth/callback` · `POST /auth/logout` | Discord OAuth2 login/logout |
+| `GET /health` · `GET /api/status` | Liveness. `/health` = this service only (Docker probe); `/api/status` = whole stack (web + db + **bot**), **public** |
+| `GET /api/me` | Current user + the guilds they share with the bot or have data on (with `hasData` / `botPresent` / `isAdmin` flags and icon URLs) |
+| `GET /api/stats/global` · `GET /api/stats/guild/:guildId` | Aggregated stats (with live session folded in) |
+| `GET /api/stats/session` | The user's current voice session (live elapsed times), if any |
+| `GET /api/stats/guild/:id/ranking?stat=` | Server leaderboard, visible to any member; private members excluded, includes the viewer's own rank |
+| `GET /api/timeline?guildId=&stat=&from=&to=` | Daily series for the heatmap |
+| `GET /api/settings` · `PATCH /api/settings` | Read / update the user's own opt-in settings (stats, logs, private) — per server or globally |
+| `GET /api/export?guildId=&format=json\|csv` | Download the user's data (JSON = all tables, CSV = long-format daily stats) |
+| `GET /api/admin/guild/:id/overview` · `.../members` · `.../timeline` · `.../member/:userId` | Server-wide admin view + member lookup by id (requires admin; member lookup respects private mode) |
+| `WS /ws` | Authenticated browser stream (live voice events) |
+| `WS /internal/events?token=` | Internal endpoint the bot pushes events to |
+
+Admin routes require the caller to have `ADMINISTRATOR` / `MANAGE_GUILD` on the
+target guild (from the Discord `guilds` OAuth scope). **Privacy policy:** members
+who enabled private mode are counted in the server-wide totals but never named in
+the leaderboard or per-member list — a `hiddenCount` reports how many were
+withheld.
+
+Live updates flow bot → web-api → browser: set `WEB_INTERNAL_WS_URL`
+(e.g. `ws://web-api:3007/internal/events`) and a shared `INTERNAL_WS_TOKEN` on the
+bot to enable it. Leaving `WEB_INTERNAL_WS_URL` unset makes the bot run
+standalone — the dashboard still works, just without real-time pushes.
+
+## Web front-end (`apps/web-ui`)
+
+An [Angular](https://angular.dev/) SPA (standalone components, PrimeNG + Tailwind,
+`ngx-translate` for en/fr) that renders the dashboard: per-server and global
+stat cards, a GitHub-style contribution heatmap, and live updates over the
+WebSocket. It talks only to `apps/web-api`.
+
+```bash
+cd apps/web-ui
+npm install
+npm start                 # dev server on :4200, proxies /api,/auth,/ws to :3001
+npm run build             # production build -> dist/gandhi-web-ui/browser
+docker compose up web-ui  # or serve it with nginx (reverse-proxies to web-api)
+```
+
+In the nginx-fronted (Docker) setup the SPA is served **same-origin** with the
+API, so no CORS is needed; point `WEB_BASE_URL` / `WEB_FRONTEND_URL` at the
+front-end's public origin (e.g. `http://localhost:8080`).
+
+## Health & monitoring
+
+Every service reports liveness, and the dashboard shows the bot's health directly:
+
+- **Bot** — serves `GET /health` on `PORT` (returns `503` until the Discord
+  client is ready, `200` after), used as its Docker healthcheck. It also writes a
+  heartbeat (guild count, gateway ping, uptime) to the `bot_status` table every
+  ~15s.
+- **web-api** — `GET /health` is its own liveness (Docker probe). `GET /api/status`
+  is a **public** endpoint that reports the whole stack: the web service, whether
+  the database is readable, and the bot's health (derived from the heartbeat —
+  "online" means ready *and* a heartbeat within the last 45s). It never 500s, so
+  it's a safe probe.
+- **web-ui** — a green/red **bot indicator** in the header polls `/api/status`
+  every 20s (hover for guild count, ping and last-seen time).
+
+`docker compose ps` shows all three services' healthcheck state.
+
+### Monitoring with Uptime Kuma
+
+The bot and the web-api each expose their own `/health` on a separate port, so
+they can be monitored as **two independent HTTP monitors** (expected status `200`):
+
+| Monitor | Same Docker network | Kuma outside the stack |
+|---|---|---|
+| Bot | `http://bot:3006/health` | `http://<host>:3006/health` |
+| web-api | `http://web-api:3007/health` | `http://<host>:3007/health` |
+
+If Uptime Kuma runs in the same compose/network, use the service names
+(`bot`, `web-api`) and you don't need to publish those ports publicly. Otherwise
+publish the ports (`PORT`, `WEB_PORT`) on the host. The bot briefly
+returns `503` during startup (until the Discord client is ready) — that's
+expected, the monitor turns green once it's connected.
+
+## Security & deployment
+
+The web service is built to run behind a TLS-terminating reverse proxy and to
+expose the smallest possible surface:
+
+- **Near read-only database.** `web-api` reads through a connection opened
+  read-only (`PRAGMA query_only`). The one exception is a **single narrow write
+  path** — the profile page persisting the signed-in user's own opt-in settings
+  (stats/logs/private) — which uses a separate read-write connection. SQLite's
+  WAL + `busy_timeout` serialise these occasional writes safely against the bot's.
+  The bot remains the writer for everything else; the two only share the `./data`
+  volume, deployed on the same host.
+- **Secrets.** Generate strong values for `SESSION_SECRET` (cookie signing) and
+  `INTERNAL_WS_TOKEN` (bot → web-api event channel), e.g. `openssl rand -hex 32`.
+  Never commit them; they are read from the environment.
+- **TLS & cookies.** Put a reverse proxy (Caddy, Traefik, nginx) in front,
+  terminating HTTPS. Set `WEB_BASE_URL` / `WEB_FRONTEND_URL` to the public
+  `https://` origin — the session cookie is then issued `Secure`, `HttpOnly`,
+  `SameSite=Lax` and signed. The service already sets `trustProxy`.
+- **Hardening built in.** Security headers ([helmet](https://github.com/fastify/fastify-helmet)),
+  rate limiting (300 req/min per IP, `/health` exempt), a capped body size, and
+  JSON-schema validation on all inputs. Errors return a generic shape and never
+  leak internals.
+- **Least-privilege data access.** Every `/api/*` route is scoped to the
+  authenticated user and only ever returns that user's own data. The `guilds`
+  OAuth scope is used solely to flag which servers the user may administer (for
+  the upcoming admin view). Sessions live in memory only — a `web-api` restart
+  just means users log in again.
+- **OAuth redirect URI** must exactly match `${WEB_BASE_URL}/auth/callback` in
+  the Discord Developer Portal.
+
+## Tests
+
+The project uses [Jest](https://jestjs.io/) (via `ts-jest`) for unit tests. Test files live in `apps/bot/tests/` and follow the `*.test.ts` naming convention.
+
+```bash
+npm test              # Run all tests with a coverage report
+npx jest path/to/file # Run a single test file
+npx jest --watch      # Re-run tests on change
+```
+
+`npm test` runs Jest with `--coverage`, producing a `coverage/` report (including `coverage/lcov.info`, which is uploaded to [Codecov](https://about.codecov.io/) in CI).
+
+The suite covers the pure business-logic layer — the bot utilities (`apps/bot/src/utils`) and the shared `@gandhi/core` helpers and database models (`packages/core/src`), which include the time math, live-stat aggregation and voice-state transitions. Controllers and services are intentionally excluded from the unit tests, as they require a live SQLite binding; they are better exercised through integration tests.
+
+Tests run automatically in CI on every pull request against `main` or `develop` (see [`.github/workflows/node.yml`](.github/workflows/node.yml)), alongside linting and the build. All three must pass before merging.
 
 ## Database Backups
 
-If you want, you can setup a cron job to run the backup script periodically.
+The database is stored as a bind-mounted file at `./data/gandhi-bot.db` on the
+host, so backups need no Docker access — `scripts/db-backup.sh` copies it
+directly using SQLite's online backup API (safe while the bot is running).
+
+**Requires `sqlite3` on the host:**
 ```bash
-chmod +x scripts/docker-db-backup.sh # Make the script executable
-realpath scripts/docker-db-backup.sh # Get the full path to the script
+apt-get install -y sqlite3
 ```
 
-Use the output of the last command to setup a cron job. For example, to run the script every week at 5 AM:
+**Manual backup** (keeps the 7 most recent by default):
 ```bash
-crontab -e # This will open the crontab file in your default editor
-0 5 * * 1 /realpath/to/docker-db-backup.sh # Add this line to the file and save it
+chmod +x scripts/db-backup.sh
+./scripts/db-backup.sh           # keep 7 backups
+./scripts/db-backup.sh 14        # keep 14 backups
+./scripts/db-backup.sh 0         # keep all (no rotation)
 ```
 
-If you want to watch the logs of the cron job, you can update the cronjob line :
+Backups are written to `var/db-backups/gandhi-bot_YYYYMMDDHHMMSS.db` and
+rotation is logged to `var/db-backups/backup.log`.
+
+**Pre-deployment backup** (before a major upgrade):
 ```bash
+./scripts/db-backup.sh 0         # unlimited — keep everything before the migration
+```
+
+**Automated backup with cron:**
+```bash
+# Get the absolute path
+realpath scripts/db-backup.sh
+
+# Open the crontab editor
 crontab -e
-0 5 * * 1 /realpath/to/docker-db-backup.sh 2>&1 | logger -t gandhi-bot-docker-db-backup
-
-# Then, to read logs, you can run the following commands:
-grep 'gandhi-bot-docker-db-backup' /var/log/syslog
-journalctl | grep 'gandhi-bot-docker-db-backup'
 ```
 
-Now the database will be backed up every week on Monday at 5 AM. The backups will be stored inside the project's `var/db-backups` directory where you can also find the script's execution logs.
+Add one of these lines (adjust the path):
+```
+# Every day at 3 AM, keep 14 backups
+0 3 * * * /home/dev/matthieu/gandhi-discord-bot/scripts/db-backup.sh 14
+
+# Every day at 3 AM, with syslog output for monitoring
+0 3 * * * /home/dev/matthieu/gandhi-discord-bot/scripts/db-backup.sh 14 2>&1 | logger -t gandhi-db-backup
+```
+
+**Read cron logs:**
+```bash
+grep 'gandhi-db-backup' /var/log/syslog
+# or
+journalctl -t gandhi-db-backup
+```
+
+**Restore from a backup:**
+```bash
+# Stop the bot first to avoid write conflicts
+docker compose stop bot
+
+cp var/db-backups/gandhi-bot_YYYYMMDDHHMMSS.db data/gandhi-bot.db
+
+docker compose start bot
+```
 
 ## License
 
