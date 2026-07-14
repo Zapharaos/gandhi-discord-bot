@@ -21,6 +21,7 @@ export interface MemberEntry {
     isPrivate: boolean;
     isLive: boolean;
     model: UserStatsModel;
+    startRow?: StartTimestamps;
 }
 
 // Build a per-member live model, carrying the private flag and current-session
@@ -50,6 +51,7 @@ export async function loadMembers(guildId: string): Promise<MemberEntry[]> {
             isPrivate: (row.private as unknown as number | null) === 1,
             isLive,
             model,
+            startRow: startRow ?? undefined,
         };
     });
 }

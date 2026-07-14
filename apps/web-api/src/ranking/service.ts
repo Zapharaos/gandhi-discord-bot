@@ -48,6 +48,11 @@ export interface ActiveMember {
     time_deafened: number;
     time_screen_sharing: number;
     time_camera: number;
+    session_connected: number;
+    session_muted: number;
+    session_deafened: number;
+    session_screen_sharing: number;
+    session_camera: number;
 }
 
 /**
@@ -55,6 +60,7 @@ export interface ActiveMember {
  * members only (private members are never itemised). Visible to any guild member.
  */
 export async function getGuildActiveMembers(guildId: string): Promise<ActiveMember[]> {
+    const now = Date.now();
     const members = await loadMembers(guildId);
     const active = members.filter((m) => m.isLive && !m.isPrivate);
     const idents = await getUsersByIds(active.map((m) => m.userId));
@@ -62,6 +68,12 @@ export async function getGuildActiveMembers(guildId: string): Promise<ActiveMemb
     return active
         .map((m) => {
             const id = idents.get(m.userId);
+            const start = m.startRow ? StartTimestampsModel.fromStartTimestamps(m.startRow) : null;
+            const sessionConnected = start?.start_connected ? Math.max(0, now - start.start_connected) : 0;
+            const sessionMuted = start?.start_muted ? Math.max(0, now - start.start_muted) : 0;
+            const sessionDeafened = start?.start_deafened ? Math.max(0, now - start.start_deafened) : 0;
+            const sessionScreen = start?.start_screen_sharing ? Math.max(0, now - start.start_screen_sharing) : 0;
+            const sessionCamera = start?.start_camera ? Math.max(0, now - start.start_camera) : 0;
             return {
                 userId: m.userId,
                 name: id?.globalName || id?.username || null,
@@ -71,6 +83,11 @@ export async function getGuildActiveMembers(guildId: string): Promise<ActiveMemb
                 time_deafened: m.model.time_deafened,
                 time_screen_sharing: m.model.time_screen_sharing,
                 time_camera: m.model.time_camera,
+                session_connected: sessionConnected,
+                session_muted: sessionMuted,
+                session_deafened: sessionDeafened,
+                session_screen_sharing: sessionScreen,
+                session_camera: sessionCamera,
             };
         })
         .sort((a, b) => b.time_connected - a.time_connected);

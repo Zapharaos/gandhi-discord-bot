@@ -155,6 +155,11 @@ export interface ActiveMember {
   time_deafened: number;
   time_screen_sharing: number;
   time_camera: number;
+  session_connected: number;
+  session_muted: number;
+  session_deafened: number;
+  session_screen_sharing: number;
+  session_camera: number;
 }
 
 export interface ActiveMembersResponse {

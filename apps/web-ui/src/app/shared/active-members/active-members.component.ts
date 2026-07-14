@@ -61,7 +61,7 @@ import { StatIconComponent } from '@shared/stat-icon/stat-icon.component';
               </div>
 
               <div class="shrink-0 text-right">
-                <div class="font-mono text-lg font-semibold text-surface-0">{{ m.time_connected | duration }}</div>
+                <div class="font-mono text-lg font-semibold text-surface-0">{{ m.session_connected | duration }}</div>
                 <div class="text-[10px] font-medium uppercase tracking-wide text-surface-500">{{ 'stats.connected' | translate }}</div>
               </div>
             </div>
@@ -102,10 +102,10 @@ export class ActiveMembersComponent {
   /** Non-zero secondary stats (mute/deafen/screen/camera), or null when there are none. */
   secondary(m: ActiveMember): { stat: RankStat; key: string; value: number }[] | null {
     const out: { stat: RankStat; key: string; value: number }[] = [];
-    if (m.time_muted > 0) out.push({ stat: 'time_muted', key: 'muted', value: m.time_muted });
-    if (m.time_deafened > 0) out.push({ stat: 'time_deafened', key: 'deafened', value: m.time_deafened });
-    if (m.time_screen_sharing > 0) out.push({ stat: 'time_screen_sharing', key: 'screen', value: m.time_screen_sharing });
-    if (m.time_camera > 0) out.push({ stat: 'time_camera', key: 'camera', value: m.time_camera });
+    if (m.session_muted > 0) out.push({ stat: 'time_muted', key: 'muted', value: m.session_muted });
+    if (m.session_deafened > 0) out.push({ stat: 'time_deafened', key: 'deafened', value: m.session_deafened });
+    if (m.session_screen_sharing > 0) out.push({ stat: 'time_screen_sharing', key: 'screen', value: m.session_screen_sharing });
+    if (m.session_camera > 0) out.push({ stat: 'time_camera', key: 'camera', value: m.session_camera });
     return out.length ? out : null;
   }
 

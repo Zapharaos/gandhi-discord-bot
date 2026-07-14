@@ -8,7 +8,7 @@ export const environment = {
   siteUrl: '',
   umami: {
     host: 'https://gandhibot.freits.fr',
-    websiteId: '781f547d-c37c-499b-8bfe-5996d1f2a01c',
+    websiteId: '96f308e9-c0bc-4fdc-8caf-69a883b0032b',
     scriptName: 'stats.js',
     hostUrl: 'https://gandhibot.freits.fr',
   },
