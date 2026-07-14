@@ -35,7 +35,7 @@ import { GuildRosterResponse, RosterMember } from '@core/api/models';
           [value]="r.members"
           [paginator]="true"
           [rows]="10"
-          [rowsPerPageOptions]="[10, 25, 50]"
+          [rowsPerPageOptions]="[50, 100, 250]"
           sortField="lastActivity"
           [sortOrder]="-1"
           [globalFilterFields]="['name', 'userId']"

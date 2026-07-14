@@ -40,7 +40,8 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
   imports: [TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div #wrap class="relative w-full">
+    <div class="w-full overflow-x-auto">
+    <div #wrap class="relative" [style.minWidth.px]="vbWidth()">
       <svg
         #svg
         class="block w-full"
@@ -79,6 +80,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
           <div class="text-[11px] text-surface-400">{{ h.date }}</div>
         </div>
       }
+    </div>
     </div>
 
     <!-- Legend -->
