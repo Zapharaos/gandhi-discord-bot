@@ -788,5 +788,59 @@
         "contact": "Pour toute question, contactez-nous à"
       }
     }
+  },
+  "seo": {
+    "default": {
+      "title": "Gandhi Bot — Statistiques d'activité vocale pour Discord",
+      "desc": "Gandhi suit les habitudes de votre communauté dans les salons vocaux et les transforme en tableau de bord, heatmap annuelle et classements."
+    },
+    "landing": {
+      "title": "Gandhi Bot — Statistiques d'activité vocale pour Discord",
+      "desc": "Gandhi suit les habitudes de votre communauté dans les salons vocaux — temps connecté, séries, partages d'écran — et les transforme en tableau de bord, heatmap annuelle et classements."
+    },
+    "login": {
+      "title": "Connexion · Gandhi Bot",
+      "desc": "Connectez-vous avec Discord pour accéder à votre tableau de bord d'activité vocale."
+    },
+    "legal": {
+      "privacy": {
+        "title": "Politique de confidentialité · Gandhi Bot",
+        "desc": "Découvrez comment Gandhi Bot collecte, utilise et protège vos données, et comment exercer vos droits RGPD."
+      },
+      "terms": {
+        "title": "Conditions d'utilisation · Gandhi Bot",
+        "desc": "Lisez les conditions d'utilisation régissant l'usage de Gandhi Bot et de son tableau de bord."
+      },
+      "notice": {
+        "title": "Mentions légales · Gandhi Bot",
+        "desc": "Informations légales sur l'éditeur et l'hébergeur de Gandhi Bot."
+      },
+      "cookies": {
+        "title": "Politique de cookies · Gandhi Bot",
+        "desc": "Informations sur les cookies et le stockage local utilisés par Gandhi Bot."
+      }
+    },
+    "support": {
+      "hub": {
+        "title": "Support · Gandhi Bot",
+        "desc": "Guides et documentation pour tirer le meilleur parti de Gandhi Bot."
+      },
+      "addBot": {
+        "title": "Ajouter Gandhi Bot à votre serveur",
+        "desc": "Invitez Gandhi Bot sur votre serveur Discord en quelques clics et commencez à suivre l'activité vocale."
+      },
+      "commands": {
+        "title": "Commandes · Gandhi Bot",
+        "desc": "Liste complète des commandes slash disponibles dans Gandhi Bot — stats, heatmap, classement, paramètres et plus encore."
+      },
+      "preferences": {
+        "title": "Préférences · Gandhi Bot",
+        "desc": "Gérez vos préférences de suivi Gandhi Bot — opt-in, opt-out, mode privé et plus encore."
+      },
+      "data": {
+        "title": "Vos données · Gandhi Bot",
+        "desc": "Comment exporter ou supprimer toutes les données que Gandhi Bot détient sur vous."
+      }
+    }
   }
 }

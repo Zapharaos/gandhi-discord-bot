@@ -1,6 +1,4 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
-import { Title } from '@angular/platform-browser';
-import { TranslateService } from '@ngx-translate/core';
 import { ApiService } from '@core/api/api.service';
 import { FooterComponent } from '@shared/footer/footer.component';
 import { PublicHeaderComponent } from '@shared/public-header/public-header.component';
@@ -44,12 +42,9 @@ import { CtaComponent } from './sections/cta.component';
 })
 export class LandingComponent implements OnInit {
   private readonly api = inject(ApiService);
-  private readonly title = inject(Title);
-  private readonly translate = inject(TranslateService);
   readonly inviteUrl = signal<string | null>(null);
 
   ngOnInit(): void {
-    this.translate.get('landing.meta.title').subscribe((t) => this.title.setTitle(t));
     this.api.config().subscribe({
       next: (c) => this.inviteUrl.set(c.botInviteUrl),
       error: () => this.inviteUrl.set(null),

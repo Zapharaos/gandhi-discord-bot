@@ -1,6 +1,5 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input } from '@angular/core';
-import { Title } from '@angular/platform-browser';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 export interface TocEntry {
   id: string;
@@ -67,15 +66,4 @@ export class LegalPageComponent {
   readonly updated = input.required<string>();
   readonly sections = input<TocEntry[]>([]);
   readonly note = input<string | null>(null);
-
-  private readonly titleSvc = inject(Title);
-  private readonly translate = inject(TranslateService);
-
-  constructor() {
-    // Reflect the page title into the browser tab, re-translating on language change.
-    effect(() => {
-      const key = this.title();
-      this.translate.get(key).subscribe((t) => this.titleSvc.setTitle(`${t} · Gandhi Bot`));
-    });
-  }
 }
