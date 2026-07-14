@@ -65,6 +65,7 @@ services:
       - INTERNAL_WS_TOKEN=${INTERNAL_WS_TOKEN}
       - BOT_ADMIN_IDS=${BOT_ADMIN_IDS}
       - WEB_CORS_ORIGIN=${WEB_CORS_ORIGIN}
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
     # Port is reachable by the nginx container over the shared network (back_vps-network).
     # No host binding needed.
     networks:

@@ -154,11 +154,11 @@ export class MemberAdminComponent {
   }
 
   initials(m: RosterMember): string {
-    return m.name?.trim().charAt(0).toUpperCase() || '#';
+    return m.name?.trim().charAt(0).toUpperCase() || m.userId.slice(-2);
   }
 
   lastActivityLabel(ms: number): string | null {
     if (!ms || ms <= 0) return null;
-    return new Date(ms).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+    return new Date(ms).toLocaleString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
   }
 }

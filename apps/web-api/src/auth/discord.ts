@@ -130,4 +130,41 @@ export async function fetchGuilds(accessToken: string): Promise<SessionGuild[]> 
     });
 }
 
+/** Fetch multiple users by ID using the bot token, sequential to respect Discord rate limits. */
+export async function fetchUsersByIds(
+    userIds: string[],
+    botToken: string,
+): Promise<Map<string, DiscordUser>> {
+    const result = new Map<string, DiscordUser>();
+    for (const userId of userIds) {
+        try {
+            const res = await fetch(`${DISCORD_API}/users/${userId}`, {
+                headers: { Authorization: `Bot ${botToken}` },
+            });
+            if (res.status === 429) {
+                const retryAfter = parseFloat(res.headers.get('Retry-After') ?? '1');
+                await new Promise((r) => setTimeout(r, retryAfter * 1000));
+                // Retry once after the cooldown.
+                const retry = await fetch(`${DISCORD_API}/users/${userId}`, {
+                    headers: { Authorization: `Bot ${botToken}` },
+                });
+                if (retry.ok) {
+                    result.set(userId, (await retry.json()) as DiscordUser);
+                }
+            } else if (res.ok) {
+                result.set(userId, (await res.json()) as DiscordUser);
+            }
+            // Remaining header: if we've exhausted the bucket, respect the reset.
+            const remaining = res.headers.get('X-RateLimit-Remaining');
+            const resetAfter = res.headers.get('X-RateLimit-Reset-After');
+            if (remaining === '0' && resetAfter) {
+                await new Promise((r) => setTimeout(r, parseFloat(resetAfter) * 1000));
+            }
+        } catch {
+            // Skip on network error, try the next user.
+        }
+    }
+    return result;
+}
+
 export type { DiscordUser };

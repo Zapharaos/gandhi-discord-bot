@@ -39,6 +39,8 @@ export interface Config {
     corsOrigin: string;
     /** Discord user ids that are bot operators (BOT_ADMIN_IDS), for the bot-admin area. */
     botAdminIds: string[];
+    /** Bot token (DISCORD_TOKEN) used to fetch user identities on demand. Optional — lazy backfill is skipped when absent. */
+    discordBotToken: string | null;
 }
 
 let cached: Config | null = null;
@@ -67,6 +69,7 @@ export function loadConfig(): Config {
             .split(',')
             .map((s) => s.trim())
             .filter((s) => s.length > 0),
+        discordBotToken: process.env['DISCORD_TOKEN'] || null,
     };
 
     return cached;

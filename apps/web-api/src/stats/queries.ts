@@ -1,6 +1,6 @@
 import type { Selectable } from 'kysely';
 import type { UserStats, StartTimestamps, DailyStats, Servers, BotStatus } from '@gandhi/core/types/db';
-import { getDb } from '../db';
+import { getDb, getWriteDb } from '../db';
 
 /** The bot's latest heartbeat row (single shard), or undefined if never written. */
 export async function getBotStatusRow(): Promise<BotStatus | undefined> {
@@ -173,6 +173,23 @@ export async function getUsersByIds(userIds: string[]): Promise<Map<string, User
         });
     }
     return result;
+}
+
+/** Upsert fetched Discord identities into the local cache. */
+export async function upsertUsers(
+    users: Array<{ userId: string; username: string; globalName: string | null; avatar: string | null }>,
+): Promise<void> {
+    if (users.length === 0) return;
+    const now = Date.now();
+    const db = getWriteDb();
+    for (const u of users) {
+        const values = { username: u.username, global_name: u.globalName, avatar: u.avatar, updated_at: now };
+        await db
+            .insertInto('users')
+            .values({ user_id: u.userId, ...values })
+            .onConflict((oc) => oc.column('user_id').doUpdateSet(values))
+            .execute();
+    }
 }
 
 export interface GuildChannel {

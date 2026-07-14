@@ -1,6 +1,8 @@
 import type { UserStats } from '@gandhi/core/types/db';
 import { getWriteDb } from '../db';
-import { getGuildUserStatsRows, getServerOwnerId, getUsersByIds } from '../stats/queries';
+import { getGuildUserStatsRows, getServerOwnerId, getUsersByIds, upsertUsers } from '../stats/queries';
+import { fetchUsersByIds } from '../auth/discord';
+import { loadConfig } from '../config';
 
 export interface RosterMember {
     userId: string;
@@ -37,6 +39,28 @@ export async function getGuildRoster(guildId: string): Promise<GuildRoster> {
     const identIds = rows.map((r) => r.user_id ?? '').filter((id): id is string => id.length > 0);
     if (ownerId && !identIds.includes(ownerId)) identIds.push(ownerId);
     const idents = await getUsersByIds(identIds);
+
+    // Backfill: fetch from Discord API any IDs we have no cached identity for.
+    const botToken = loadConfig().discordBotToken;
+    console.log(`[roster] botToken present=${!!botToken}, identIds=${identIds.length}, idents found=${idents.size}`);
+    if (botToken) {
+        const missing = identIds.filter((id) => !idents.has(id));
+        console.log(`[roster] missing identities: ${missing.length}`, missing);
+        if (missing.length > 0) {
+            const fetched = await fetchUsersByIds(missing, botToken);
+            console.log(`[roster] fetched from Discord: ${fetched.size}/${missing.length}`);
+            const toUpsert = [...fetched.entries()].map(([userId, u]) => ({
+                userId,
+                username: u.username,
+                globalName: u.global_name,
+                avatar: u.avatar,
+            }));
+            await upsertUsers(toUpsert);
+            for (const { userId, username, globalName, avatar } of toUpsert) {
+                idents.set(userId, { username, globalName, avatar });
+            }
+        }
+    }
 
     const build = (uid: string, r?: UserStats): RosterMember => {
         const id = idents.get(uid);
