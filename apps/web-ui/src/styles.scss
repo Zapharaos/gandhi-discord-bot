@@ -1,0 +1,124 @@
+/* Tailwind + PrimeNG share CSS layers so utilities can override component styles predictably. */
+@layer tailwind-base, primeng, tailwind-utilities;
+
+@layer tailwind-base {
+  @tailwind base;
+}
+
+@layer tailwind-utilities {
+  @tailwind components;
+  @tailwind utilities;
+}
+
+@import 'primeicons/primeicons.css';
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* --- Compact PrimeNG controls ---
+   Unlayered rules win over PrimeNG's layered styles. The dropdown panel/options
+   don't inherit the trigger's `size="small"`, so shrink them explicitly. */
+.p-select-label {
+  padding-block: 0.35rem;
+  font-size: 0.8125rem;
+}
+.p-select-overlay .p-select-option {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8125rem;
+}
+.p-select-overlay .p-select-header,
+.p-select-overlay .p-select-filter {
+  padding-block: 0.3rem;
+  font-size: 0.8125rem;
+}
+
+/* --- Scroll reveal (driven by RevealOnScrollDirective) ---
+   Elements start hidden and slide up once they enter the viewport. */
+.reveal {
+  opacity: 0;
+  transform: translateY(1.25rem);
+  transition:
+    opacity 0.6s ease-out,
+    transform 0.6s ease-out;
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* --- Cards ---
+   Shared surface for the authenticated pages, echoing the landing's rounded-3xl
+   translucent cards. Pair `.card` with your own padding (p-4/p-5). */
+.card {
+  @apply rounded-3xl border border-surface-800 bg-surface-900/60 backdrop-blur-sm transition-colors;
+}
+.card-hover {
+  @apply hover:border-surface-600;
+}
+.card-title {
+  @apply flex items-center gap-2 text-sm font-semibold text-surface-0;
+}
+
+/* --- Legal pages ---
+   Shared prose/table styling so the four legal pages don't repeat markup.
+   `@apply` inherits the tailwindcss-primeui color mapping (surface/primary). */
+.legal-prose {
+  @apply leading-relaxed text-surface-300;
+}
+.legal-prose p {
+  @apply my-3;
+}
+.legal-prose a {
+  @apply text-primary-400 underline underline-offset-2 hover:text-primary-300;
+}
+.legal-prose ul {
+  @apply my-3 list-disc pl-5;
+}
+.legal-prose li {
+  @apply my-1.5;
+}
+.legal-prose strong {
+  @apply font-semibold text-surface-100;
+}
+.legal-prose code {
+  @apply rounded-md bg-surface-800/70 px-1.5 py-0.5 text-[0.85em];
+}
+.legal-h2 {
+  @apply mb-2 mt-10 text-xl font-semibold text-surface-0;
+}
+.legal-h3 {
+  @apply mb-1 mt-6 text-base font-semibold text-surface-100;
+}
+.legal-table {
+  @apply w-full border-collapse text-sm;
+}
+.legal-table th,
+.legal-table td {
+  @apply border border-surface-800 px-3 py-2.5 text-left align-top;
+}
+.legal-table th {
+  @apply bg-surface-800/50 font-semibold text-surface-100;
+}
+.legal-table tbody tr:nth-child(even) td {
+  @apply bg-surface-900/40;
+}
+
+/* Respect users who prefer reduced motion: disable all decorative animation. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}

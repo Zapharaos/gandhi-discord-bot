@@ -1,0 +1,7 @@
+node_modules
+dist
+.angular
+out-tsc
+**/*.spec.ts
+Dockerfile
+.dockerignore

@@ -1,21 +1,109 @@
 services:
   bot:
-    build: .
+    build:
+      # Build from the monorepo root so the image can install the whole npm
+      # workspace graph and compile @gandhi/core before the bot.
+      context: .
+      dockerfile: apps/bot/Dockerfile
+    # The bot's secrets (DISCORD_TOKEN, APP_ID, …) come from .env at runtime — they
+    # are NOT baked into the image. `environment` below overrides any of these.
+    env_file:
+      - .env
     environment:
       # Keep the runtime in UTC so day bucketing and date rendering stay consistent.
       - TZ=UTC
-    ports:
-      - "${PORT}:${PORT}"
+      - NODE_ENV=production
+      # Push live voice events to the web service over the internal WebSocket.
+      - WEB_INTERNAL_WS_URL=ws://web-api:${WEB_PORT}/internal/events
+      - INTERNAL_WS_TOKEN=${INTERNAL_WS_TOKEN}
+    # No host port needed — the bot's /health is only used by the Docker
+    # healthcheck (internal), not by nginx or any external service.
+    networks:
+      - default
+      - back_vps-network
     volumes:
       - ./data:/app/data
       - ./var:/app/var
     restart: unless-stopped
+    # `exec` makes node PID 1 so SIGTERM from `docker stop` reaches it — without
+    # it sh swallows the signal, Docker escalates to SIGKILL, and the graceful
+    # shutdown path (voice-session flush + 'shutdown' health event) never runs.
     command:
         - /bin/sh
         - -c
         - |
             npm run migrate
-            node --enable-source-maps /app/dist/src/index.js
+            exec node --enable-source-maps /app/apps/bot/dist/src/index.js
+    healthcheck:
+      # The bot serves /health on ${PORT}; it returns 503 until the Discord
+      # client is ready, so give it a generous start period to log in.
+      test: ["CMD", "node", "-e", "fetch('http://localhost:${PORT}/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
 
-volumes:
-  data:
+  # Read-only web + WebSocket service. Deployable independently of the bot: it
+  # shares only the SQLite file (opened read-only at the app level) and reaches
+  # the bot's live events over the internal WebSocket. Redeploy it without
+  # touching the bot, and vice versa.
+  web-api:
+    build:
+      context: .
+      dockerfile: apps/web-api/Dockerfile
+    environment:
+      - TZ=UTC
+      - NODE_ENV=production
+      - WEB_HOST=0.0.0.0
+      - WEB_PORT=${WEB_PORT}
+      - WEB_BASE_URL=${WEB_BASE_URL}
+      - WEB_FRONTEND_URL=${WEB_FRONTEND_URL}
+      - DATABASE_URL=data/gandhi-bot.db
+      - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
+      - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - INTERNAL_WS_TOKEN=${INTERNAL_WS_TOKEN}
+      - BOT_ADMIN_IDS=${BOT_ADMIN_IDS}
+      - WEB_CORS_ORIGIN=${WEB_CORS_ORIGIN}
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+    # Port is reachable by the nginx container over the shared network (back_vps-network).
+    # No host binding needed.
+    networks:
+      - default
+      - back_vps-network
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:${WEB_PORT}/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Static Angular front-end served by nginx, which reverse-proxies /api, /auth
+  # and /ws to the web service so the SPA is same-origin (no CORS). Deployable
+  # on its own; rebuild/redeploy it without touching the bot or the API.
+  web-ui:
+    build:
+      context: apps/web-ui
+      dockerfile: Dockerfile
+    depends_on:
+      - web-api
+    # Port 80 is reachable by the nginx container over the shared network (back_vps-network).
+    # No host binding needed.
+    networks:
+      - default
+      - back_vps-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  back_vps-network:
+    external: true
+    name: "back_vps-network"
