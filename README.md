@@ -7,6 +7,8 @@
 
 This project is a voice activity tracker for a Discord bot. It tracks various user activities in voice channels and produces statistics.
 
+![Dashboard](docs/dashboard.png)
+
 ## Features
 
 It tracks the following user activities in voice channels:
@@ -140,10 +142,10 @@ cp .env.sample .env
 
 ### 2. Run everything with Docker (recommended)
 
-`docker compose up` builds and starts all three services and runs the DB
-migrations for you:
+Copy the example compose file and start all three services:
 
 ```bash
+cp docker-compose.prod.yml docker-compose.yml
 docker compose build --progress=plain
 docker compose up            # bot + web-api + web-ui
 docker compose up bot        # or just the bot
@@ -365,10 +367,10 @@ crontab -e
 Add one of these lines (adjust the path):
 ```
 # Every day at 3 AM, keep 14 backups
-0 3 * * * /home/dev/matthieu/gandhi-discord-bot/scripts/db-backup.sh 14
+0 3 * * * /path/to/gandhi-discord-bot/scripts/db-backup.sh 14
 
 # Every day at 3 AM, with syslog output for monitoring
-0 3 * * * /home/dev/matthieu/gandhi-discord-bot/scripts/db-backup.sh 14 2>&1 | logger -t gandhi-db-backup
+0 3 * * * /path/to/gandhi-discord-bot/scripts/db-backup.sh 14 2>&1 | logger -t gandhi-db-backup
 ```
 
 **Read cron logs:**
